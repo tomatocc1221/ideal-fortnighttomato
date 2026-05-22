@@ -838,9 +838,9 @@ img { max-width: 100%; display: block; }
 }
 
 .tactics-board {
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 auto;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 10 / 7;
   background: var(--bg-secondary);
   border: 1px solid var(--border-default);
   border-radius: 10px;

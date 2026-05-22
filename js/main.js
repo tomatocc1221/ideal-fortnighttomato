@@ -663,7 +663,7 @@ function initTacticsBoard() {
 
   function draw() {
     const w = board.clientWidth;
-    const h = w * (4 / 3);
+    const h = w * 0.7;
     canvas.style.width = w + "px";
     canvas.style.height = h + "px";
     canvas.width = w * dpr;
@@ -673,94 +673,116 @@ function initTacticsBoard() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    const lineColor = "rgba(255,255,255,0.18)";
+    const lineColor = "rgba(255,255,255,0.25)";
     const gold = "#c9a961";
-    const px = 10, py = 10;
-    const pw = w - 20, ph = h - 20;
+    const pad = w * 0.03;
+    const px = pad, py = pad;
+    const pw = w - pad * 2, ph = h - pad * 2;
     const halfX = px + pw / 2;
 
-    // Pitch background with rounded corners
+    // Pitch background
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(px, py, pw, ph, 8);
+    ctx.roundRect(px, py, pw, ph, 6);
     ctx.clip();
 
-    // Base green
-    ctx.fillStyle = "#1a3a1a";
+    ctx.fillStyle = "#2a5c2a";
     ctx.fillRect(px, py, pw, ph);
 
-    // Lawn stripes — alternating green bands
-    const stripeH = ph / 28;
-    for (let i = 0; i < 28; i++) {
-      ctx.fillStyle = i % 2 === 0 ? "#1a3a1a" : "#1d3d1d";
+    // Lawn stripes — horizontal bands simulating mowing pattern
+    const stripes = 16;
+    const stripeH = ph / stripes;
+    for (let i = 0; i < stripes; i++) {
+      ctx.fillStyle = i % 2 === 0 ? "#2a5c2a" : "#2f6330";
       ctx.fillRect(px, py + i * stripeH, pw, stripeH + 1);
     }
 
     ctx.restore();
 
-    // Border
+    // Pitch border
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(px, py, pw, ph, 8);
+    ctx.roundRect(px, py, pw, ph, 6);
     ctx.stroke();
 
-    // Halfway line
-    ctx.strokeStyle = lineColor;
+    // Halfway line — bottom edge
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(halfX, py);
-    ctx.lineTo(halfX, py + ph);
+    ctx.moveTo(px, py + ph);
+    ctx.lineTo(px + pw, py + ph);
     ctx.stroke();
 
-    // Center circle
+    // Center arc — semicircle from halfway line upward
+    const centerArcR = ph * 0.14;
     ctx.beginPath();
-    ctx.arc(halfX, py + ph * 0.75, ph * 0.12, 0, Math.PI * 2);
+    ctx.arc(halfX, py + ph, centerArcR, Math.PI, 0);
     ctx.stroke();
 
     // Center spot
     ctx.fillStyle = lineColor;
     ctx.beginPath();
-    ctx.arc(halfX, py + ph * 0.75, 3, 0, Math.PI * 2);
+    ctx.arc(halfX, py + ph, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Penalty areas
-    const paW = pw * 0.35, paH = ph * 0.22;
+    // Penalty area (attacking end, top)
+    const paW = pw * 0.4, paH = ph * 0.25;
     ctx.strokeRect(halfX - paW / 2, py, paW, paH);
-    ctx.strokeRect(halfX - paW / 2, py + ph - paH, paW, paH);
 
-    // Goal areas
-    const gaW = pw * 0.18, gaH = ph * 0.08;
+    // Goal area
+    const gaW = pw * 0.2, gaH = ph * 0.1;
     ctx.strokeRect(halfX - gaW / 2, py, gaW, gaH);
-    ctx.strokeRect(halfX - gaW / 2, py + ph - gaH, gaW, gaH);
 
-    // Goals
-    ctx.fillStyle = "rgba(255,255,255,0.08)";
-    ctx.fillRect(halfX - pw * 0.06, py - 2, pw * 0.12, 2);
-    ctx.fillRect(halfX - pw * 0.06, py + ph, pw * 0.12, 2);
+    // Penalty spot
+    const penY = py + paH - ph * 0.07;
+    ctx.fillStyle = lineColor;
+    ctx.beginPath();
+    ctx.arc(halfX, penY, 2, 0, Math.PI * 2);
+    ctx.fill();
 
-    // D at top of penalty area
+    // Penalty arc (D)
     const arcR = ph * 0.08;
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.arc(halfX, py + paH, arcR, Math.PI, 0);
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.arc(halfX, py + ph - paH, arcR, 0, Math.PI);
-    ctx.stroke();
+    // Corner arcs — all curving inside the pitch
+    const cr = pw * 0.025;
+    ctx.lineWidth = 1.5;
+    // top-left
+    ctx.beginPath(); ctx.arc(px, py, cr, 0, Math.PI / 2); ctx.stroke();
+    // top-right
+    ctx.beginPath(); ctx.arc(px + pw, py, cr, Math.PI / 2, Math.PI); ctx.stroke();
+    // bottom-right
+    ctx.beginPath(); ctx.arc(px + pw, py + ph, cr, Math.PI, Math.PI * 1.5); ctx.stroke();
+    // bottom-left
+    ctx.beginPath(); ctx.arc(px, py + ph, cr, Math.PI * 1.5, Math.PI * 2); ctx.stroke();
+
+    // Goal
+    const goalW = pw * 0.16;
+    const goalH = ph * 0.03;
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(halfX - goalW / 2, py - 1, goalW, goalH);
+
+    // Goal net hint
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.fillRect(halfX - goalW / 2, py, goalW, goalH);
 
     // Player positions
     const formation = formations[currentFormation];
-    const marginX = pw * 0.08, marginTop = ph * 0.18;
-    const fieldH = ph * 0.55;
-    const fieldY = py + marginTop;
-    const dotR = Math.max(14, pw * 0.04);
+    const marginX = pw * 0.1;
+    const fieldTop = py + ph * 0.1;
+    const fieldHeight = ph * 0.75;
+    const dotR = Math.max(13, pw * 0.035);
 
     formation.positions.forEach(p => {
       const cx = p.cols === 1
         ? halfX
         : px + marginX + (p.col / (p.cols - 1)) * (pw - marginX * 2);
-      const cy = fieldY + (p.row / (p.rows - 1)) * fieldH;
+      const cy = fieldTop + (p.row / (p.rows - 1)) * fieldHeight;
 
       // Player circle
       ctx.fillStyle = "#1a1a1a";
@@ -778,7 +800,7 @@ function initTacticsBoard() {
       ctx.textBaseline = "middle";
       ctx.fillText(p.number, cx, cy);
 
-      // Name below circle
+      // Name
       const playerName = getPlayerName(p.number);
       if (playerName) {
         ctx.fillStyle = "rgba(201, 169, 97, 0.7)";
