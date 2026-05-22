@@ -197,7 +197,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initScrollReveal();
   initCountUp();
   initBackToTop();
-  initEditMode();
 
   // Load overrides from storage and render with merged data
   await loadAllOverridesAndMerge();
