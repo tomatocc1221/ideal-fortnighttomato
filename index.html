@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日说法足球俱乐部</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 噪点纹理 -->
+  <div class="noise-overlay"></div>
+
+  <!-- ========== 导航栏 ========== -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-brand">
+        <img src="images/logo.jpg" alt="今日说法" class="nav-logo">
+        <span class="nav-name">今日说法</span>
+      </a>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#about" class="nav-link">球队介绍</a></li>
+        <li><a href="#roster" class="nav-link">队员阵容</a></li>
+        <li><a href="#fixtures" class="nav-link">赛程战果</a></li>
+        <li><a href="#gallery" class="nav-link">精彩瞬间</a></li>
+        <li><a href="#tactics" class="nav-link">战术板</a></li>
+        <li><a href="#contact" class="nav-link">联系我们</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========== 英雄区 ========== -->
+  <section class="hero" id="hero">
+    <canvas class="hero-particles" id="heroParticles"></canvas>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <img src="images/logo.jpg" alt="今日说法队徽" class="hero-logo">
+      <p class="hero-subtitle">用脚说话，以球会友</p>
+      <a href="#about" class="hero-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- ========== 球队介绍 ========== -->
+  <section class="section" id="about">
+    <div class="container">
+      <h2 class="section-title">球队介绍</h2>
+      <div class="about-grid">
+        <div class="about-text">
+          <p>重庆市今日说法足球俱乐部于<strong>2025年3月30日</strong>在重庆溉澜溪体育公园足球场正式成立。球队以重庆工商大学近五年历届经典人物为建队班底，是一支充满活力的重庆业余足球新生力量。</p>
+          <p>球队秉持<strong>友谊第一，比赛第二</strong>的核心理念，欢迎各路球友以球会友。我们致力于为重庆业余足球的发展贡献自己的力量与热情。</p>
+        </div>
+        <div class="about-stats">
+          <div class="stat-item">
+            <span class="stat-number">2025</span>
+            <span class="stat-label">建队年份</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">重庆</span>
+            <span class="stat-label">所在城市</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">溉澜溪</span>
+            <span class="stat-label">主场球馆</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">CTBU</span>
+            <span class="stat-label">建队班底</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 队员阵容 ========== -->
+  <section class="section section-dark" id="roster">
+    <div class="container">
+      <h2 class="section-title">队员阵容</h2>
+      <div class="roster-grid" id="rosterGrid"></div>
+    </div>
+  </section>
+
+  <!-- ========== 赛程战果 ========== -->
+  <section class="section" id="fixtures">
+    <div class="container">
+      <h2 class="section-title">赛程战果</h2>
+      <div class="countdown-bar" id="countdownBar">
+        <span class="countdown-label">距下一场比赛</span>
+        <div class="countdown-timer" id="countdownTimer">
+          <span><em>--</em> 天</span>
+          <span><em>--</em> 时</span>
+          <span><em>--</em> 分</span>
+          <span><em>--</em> 秒</span>
+        </div>
+      </div>
+      <div class="fixtures-columns">
+        <div>
+          <h3 class="fixtures-subtitle">近期战果</h3>
+          <div class="fixture-list" id="resultsList"></div>
+        </div>
+        <div>
+          <h3 class="fixtures-subtitle">即将开赛</h3>
+          <div class="fixture-list" id="upcomingList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 精彩瞬间 ========== -->
+  <section class="section section-dark" id="gallery">
+    <div class="container">
+      <h2 class="section-title">精彩瞬间</h2>
+      <div class="carousel" id="carousel">
+        <button class="carousel-arrow carousel-prev" id="carouselPrev" aria-label="上一张">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="carousel-track" id="carouselTrack"></div>
+        <button class="carousel-arrow carousel-next" id="carouselNext" aria-label="下一张">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="carousel-dots" id="carouselDots"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 战术板 ========== -->
+  <section class="section" id="tactics">
+    <div class="container">
+      <h2 class="section-title">阵型战术板</h2>
+      <div class="tactics-controls">
+        <button class="tactics-btn active" data-formation="322">3-2-2</button>
+        <button class="tactics-btn" data-formation="232">2-3-2</button>
+        <button class="tactics-btn" data-formation="331">3-3-1</button>
+      </div>
+      <div class="tactics-board">
+        <canvas id="tacticsCanvas"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 页脚 ========== -->
+  <footer class="footer" id="contact">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-info">
+          <h3>今日说法足球俱乐部</h3>
+          <p>每周六下午 · 重庆溉澜溪体育公园</p>
+          <p>欢迎热爱足球的朋友加入</p>
+        </div>
+        <div class="footer-contact">
+          <h3>联系方式</h3>
+          <p>队长微信：football_law</p>
+          <p>邮箱：jinrishuofa@example.com</p>
+        </div>
+        <div class="footer-social">
+          <h3>关注我们</h3>
+          <div class="social-links">
+            <a href="#" class="social-link">微信</a>
+            <a href="#" class="social-link">抖音</a>
+            <a href="#" class="social-link">微博</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 今日说法足球俱乐部</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========== 队员详情覆盖层 ========== -->
+  <div class="player-overlay" id="playerOverlay">
+    <button class="player-overlay-back" id="playerBack">← 返回</button>
+    <div class="player-overlay-inner">
+      <div class="player-detail-avatar" id="playerDetailAvatar"></div>
+      <div class="player-detail-number" id="playerDetailNumber"></div>
+      <div class="player-detail-name" id="playerDetailName"></div>
+      <div class="player-detail-role" id="playerDetailRole"></div>
+      <div class="player-detail-divider"></div>
+      <div class="player-detail-bio" id="playerDetailBio"></div>
+      <div class="player-detail-info" id="playerDetailInfo"></div>
+      <div class="player-detail-strengths" id="playerDetailStrengths"></div>
+    </div>
+  </div>
+
+  <!-- ========== 灯箱 ========== -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">&times;</button>
+    <img src="" alt="" class="lightbox-img" id="lightboxImg">
+  </div>
+
+  <!-- ========== 照片集覆盖层 ========== -->
+  <div class="gallery-overlay" id="galleryOverlay">
+    <div class="gallery-overlay-top">
+      <button class="gallery-overlay-back" id="galleryOverlayBack">← 返回首页</button>
+      <h2 class="gallery-overlay-title">精彩瞬间</h2>
+      <span class="gallery-overlay-spacer"></span>
+    </div>
+    <div class="gallery-overlay-content" id="galleryOverlayContent"></div>
+  </div>
+
+  <!-- ========== 返回顶部 ========== -->
+  <button class="back-to-top" id="backToTop" aria-label="返回顶部">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M18 15l-6-6-6 6"/>
+    </svg>
+  </button>
+
+
+  <script src="js/main.js"></script>
+</body>
+</html>
