@@ -243,7 +243,7 @@ img { max-width: 100%; display: block; }
   height: auto;
   margin-bottom: 24px;
   animation: fadeUp 1s ease-out;
-  filter: drop-shadow(0 0 24px var(--gold-glow));
+  filter: drop-shadow(0 0 28px rgba(201, 169, 97, 0.5));
 }
 
 .hero-title {

@@ -192,7 +192,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initNav();
   initLightbox();
   initHeroParticles();
-  initTacticsBoard();
   initPlayerDetail();
   initScrollReveal();
   initCountUp();
@@ -200,6 +199,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Load overrides from storage and render with merged data
   await loadAllOverridesAndMerge();
+  initTacticsBoard();
 });
 
 /* ========================================
@@ -375,7 +375,7 @@ function renderFixtures() {
   ];
 
   const upcoming = [
-    { date: "2024.12.22", home: "绿茵竞技", away: "今日说法" },
+    { date: "2026.05.23", home: "绿茵竞技", away: "今日说法" },
     { date: "2025.01.05", home: "今日说法", away: "飓风青年" },
     { date: "2025.01.19", home: "飞鹰FC",   away: "今日说法" },
   ];
@@ -1047,7 +1047,7 @@ function startCountdown() {
   if (!upcoming || !upcoming.length) return;
 
   const firstMatch = upcoming[0];
-  const targetDate = new Date(firstMatch.date.replace(/\./g, "-") + "T15:00:00");
+  const targetDate = new Date(firstMatch.date.replace(/\./g, "-") + "T14:40:00");
 
   const timer = document.getElementById("countdownTimer");
   if (!timer) return;
