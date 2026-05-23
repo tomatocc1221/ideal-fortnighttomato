@@ -189,7 +189,7 @@
       </div>
       <div class="footer-bottom">
         <p>&copy; 2026 今日说法足球俱乐部</p>
-        <p class="footer-version">v1.0.5</p>
+        <p class="footer-version">v1.0.5 · <a href="admin.html">管理</a></p>
       </div>
     </div>
   </footer>
@@ -225,6 +225,74 @@
     <div class="gallery-overlay-content" id="galleryOverlayContent"></div>
   </div>
 
+  <!-- ========== 报名面板 ========== -->
+  <div class="reg-overlay" id="regOverlay" role="dialog" aria-modal="true" aria-label="比赛报名">
+    <div class="reg-panel">
+      <button class="reg-close" id="regClose">&times;</button>
+
+      <!-- 比赛信息 -->
+      <div class="reg-match" id="regMatch"></div>
+
+      <!-- 费用展示 -->
+        <div class="reg-fee" id="regFee" style="display:none"></div>
+
+        <!-- 表单内容区 -->
+        <div class="reg-body">
+          <!-- 身份验证 -->
+          <div class="reg-auth" id="regAuth">
+          <select id="regPlayerName" class="input reg-input">
+            <option value="">选择你的姓名</option>
+          </select>
+          <input type="password" id="regPin" class="input reg-input" placeholder="个人密码">
+          <button class="btn btn-gold reg-btn" id="regVerifyBtn">验证身份</button>
+          <p class="reg-error" id="regError"></p>
+        </div>
+
+      <!-- 报名操作（验证后显示） -->
+      <div class="reg-actions" id="regActions" style="display:none">
+        <p class="reg-current-status" id="regCurrentStatus"></p>
+        <div id="regActionBtns"></div>
+        <div class="reg-cancel-form" id="regCancelForm" style="display:none">
+          <select id="regCancelReason" class="input reg-input">
+            <option value="">请假原因（可选）</option>
+            <option value="临时有事">临时有事</option>
+            <option value="身体不适">身体不适</option>
+            <option value="工作加班">工作加班</option>
+            <option value="家庭事务">家庭事务</option>
+            <option value="其他">其他</option>
+          </select>
+          <input type="text" id="regCancelOther" class="input reg-input" placeholder="请说明原因" style="display:none">
+          <button class="btn btn-cancel reg-btn" id="regCancelBtn">确认请假</button>
+        </div>
+      </div>
+
+      <!-- 报名名单 -->
+      <div class="reg-lists" id="regLists">
+        <div class="reg-list reg-list-confirmed">
+            <div class="reg-list-header">
+              <span class="reg-list-label">正选名单</span>
+              <span class="reg-list-count" id="regConfirmedCount"><strong>0</strong>/14</span>
+            </div>
+            <div id="regConfirmedList"></div>
+          </div>
+          <div class="reg-list reg-list-waitlist">
+            <div class="reg-list-header">
+              <span class="reg-list-label">候补名单</span>
+              <span class="reg-list-count" id="regWaitlistCount"><strong>0</strong>/4</span>
+            </div>
+            <div id="regWaitlistList"></div>
+          </div>
+          <div class="reg-list reg-list-cancelled" id="regCancelledSection">
+            <div class="reg-list-header">
+              <span class="reg-list-label">请假记录</span>
+            </div>
+            <div id="regCancelledList"></div>
+          </div>
+        </div><!-- .reg-body -->
+      </div>
+    </div>
+  </div>
+
   <!-- ========== 返回顶部 ========== -->
   <button class="back-to-top" id="backToTop" aria-label="返回顶部">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -233,6 +301,8 @@
   </button>
 
 
+  <script src="js/api.js"></script>
+  <script src="js/registration.js"></script>
   <script src="data/fixtures.js"></script>
   <script src="data/gallery.js"></script>
   <script src="js/main.js"></script>

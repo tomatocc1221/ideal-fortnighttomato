@@ -1,0 +1,276 @@
+/* ========================================
+   管理后台样式 — 今日说法足球俱乐部
+   ======================================== */
+
+/* === Login === */
+.admin-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.admin-login-card {
+  text-align: center;
+  padding: 56px 36px;
+  background: var(--bg-secondary);
+  border: 1px solid rgba(207,174,90,0.1);
+  border-radius: 12px;
+  max-width: 380px;
+  width: 90%;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  animation: regPanelIn 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.admin-login-card h1 {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  color: var(--gold);
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+}
+
+.admin-login-card p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.admin-login-card .input {
+  margin-bottom: 16px;
+}
+
+.admin-login-error {
+  color: var(--loss);
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+/* === Panel === */
+.admin-panel {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 60px;
+  animation: regPanelIn 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.admin-header h2 {
+  font-family: var(--font-heading);
+  color: var(--gold);
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+}
+
+/* === Tabs === */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.admin-tab {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 8px 18px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast);
+}
+
+.admin-tab:hover { color: var(--text-primary); background: var(--bg-card); }
+.admin-tab.active { color: var(--gold); background: var(--gold-dim); }
+
+.admin-tab-content { display: none; }
+.admin-tab-content.active { display: block; }
+
+/* === Section === */
+.admin-section {
+  margin-bottom: 36px;
+}
+
+.admin-section h3 {
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  font-size: 1.05rem;
+}
+
+.admin-count {
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+/* === Table === */
+.player-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.admin-table th, .admin-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.admin-table th {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.admin-table td {
+  color: var(--text-secondary);
+}
+
+.admin-table tr:hover td {
+  background: rgba(207,174,90,0.03);
+}
+
+/* Custom scrollbar for table wrap */
+.player-table-wrap::-webkit-scrollbar { height: 4px; }
+.player-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.player-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(207,174,90,0.15);
+  border-radius: 4px;
+}
+
+.empty-row {
+  text-align: center !important;
+  color: var(--text-dim) !important;
+  padding: 32px 0 !important;
+}
+
+/* === Status badges === */
+.status-confirmed { color: var(--role-mf); }
+.status-waitlist { color: var(--text-muted); }
+.status-cancelled { color: var(--loss); }
+
+.warn-absence { background: rgba(207,174,90,0.08); }
+.warn-absence:hover td { background: rgba(207,174,90,0.12) !important; }
+
+/* === Form === */
+.admin-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-form-grid .input {
+  min-width: 140px;
+}
+
+/* === Input === */
+.input {
+  padding: 10px 14px;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--duration-fast);
+}
+
+.input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(207,174,90,0.06); }
+
+.input-sm { width: 100px; }
+
+select.input {
+  min-width: 200px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+}
+
+/* === Button === */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--duration-fast);
+}
+
+.btn-gold {
+  background: var(--gold);
+  color: #0d0d0d;
+}
+
+.btn-gold:hover { background: #dbb96a; }
+
+.btn-cancel {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border-muted);
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 0.82rem;
+}
+
+.btn-edit {
+  background: var(--gold-dim);
+  color: var(--gold);
+  border: 1px solid rgba(207,174,90,0.25);
+}
+
+.btn-del {
+  background: rgba(192,57,43,0.12);
+  color: var(--loss);
+  border: 1px solid rgba(192,57,43,0.2);
+  margin-left: 6px;
+}
+
+.btn-edit:hover { background: rgba(207,174,90,0.2); }
+.btn-del:hover { background: rgba(192,57,43,0.2); }
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-tabs {
+    flex-wrap: wrap;
+  }
+
+  .admin-form {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .input-sm { width: 100%; }
+}

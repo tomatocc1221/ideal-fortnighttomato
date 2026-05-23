@@ -690,6 +690,14 @@ img { max-width: 100%; display: block; }
   letter-spacing: 0.03em;
 }
 
+.fixture-empty {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  padding: 24px 0;
+  letter-spacing: 0.04em;
+}
+
 /* 战果折叠 */
 .results-hidden {
   overflow: hidden;
@@ -1525,6 +1533,304 @@ img { max-width: 100%; display: block; }
   font-weight: 600;
   letter-spacing: 0.06em;
 }
+.countdown-live {
+  color: #4ade80;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  animation: livePulse 2s ease-in-out infinite;
+}
+.countdown-remaining {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ========================================
+   Registration Overlay
+   ======================================== */
+.reg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(6,6,6,0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.reg-overlay.open { display: flex; }
+
+.reg-panel {
+  background: var(--bg-secondary);
+  border: 1px solid rgba(207,174,90,0.12);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 0;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+
+.reg-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 10;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 6px;
+  transition: color 0.2s;
+}
+.reg-close:hover { color: var(--text-primary); }
+
+/* ——— 头部 ——— */
+.reg-match {
+  text-align: center;
+  padding: 32px 28px 0;
+}
+.reg-match-teams {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+.reg-match-meta {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* 费用展示 */
+.reg-fee {
+  text-align: center;
+  padding: 10px 28px 0;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.reg-fee-per { color: var(--gold); font-weight: 500; }
+
+/* ——— 表单 ——— */
+.reg-body {
+  padding: 24px 28px 28px;
+}
+
+.reg-auth { text-align: center; }
+.reg-input {
+  width: 100%;
+  margin-bottom: 10px;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: 6px !important;
+  padding: 11px 14px !important;
+  color: var(--text-primary) !important;
+  font-size: 0.92rem;
+  transition: border-color 0.2s;
+}
+.reg-input:focus {
+  border-color: rgba(207,174,90,0.3) !important;
+  outline: none;
+}
+.reg-input::placeholder { color: var(--text-faint); }
+
+.reg-error {
+  color: #c0392b;
+  font-size: 0.82rem;
+  margin-top: 4px;
+}
+
+.reg-btn { width: 100%; margin-top: 2px; }
+
+/* ——— 状态标签 ——— */
+.reg-current-status { text-align: center; margin-bottom: 12px; }
+.reg-tag {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.reg-tag.confirmed { color: var(--gold); background: var(--gold-dim); }
+.reg-tag.waitlist  { color: var(--text-dim); background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
+.reg-tag.cancelled { color: var(--text-faint); background: transparent; }
+.reg-tag.closed     { color: var(--text-faint); background: transparent; }
+.reg-tag.open       { color: var(--gold); background: var(--gold-dim); }
+
+/* ——— 操作区 ——— */
+.reg-actions { text-align: center; margin-bottom: 24px; }
+.reg-cancel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+}
+
+/* ——— 名单 ——— */
+.reg-lists {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.reg-list-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+.reg-list-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}
+.reg-list-count {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+.reg-list-count strong { color: var(--gold); font-weight: 500; }
+
+.reg-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.9rem;
+}
+.reg-slot:last-child { border-bottom: none; }
+
+.reg-slot-idx {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 22px;
+  text-align: center;
+  font-family: var(--font-heading);
+}
+.reg-slot-status {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.reg-slot-name { flex: 1; color: var(--text-secondary); }
+.reg-slot-num {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-family: var(--font-heading);
+  letter-spacing: 0.04em;
+}
+.reg-slot.cancelled .reg-slot-name {
+  text-decoration: line-through;
+  color: var(--text-faint);
+}
+.reg-cancel-reason {
+  font-size: 0.73rem;
+  color: var(--text-faint);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+.reg-empty {
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  padding: 10px 0;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* ——— 请假列表 ——— */
+.reg-list-cancelled {
+  border-top: 1px solid var(--border-default);
+  padding-top: 4px;
+}
+.reg-list-cancelled .reg-list-header {
+  border-bottom: none;
+  padding-bottom: 4px;
+  margin-bottom: 0;
+}
+.reg-list-cancelled .reg-list-label {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+/* ——— 报名入口按钮（主页） ——— */
+.reg-entry-btn {
+  display: inline-block;
+  padding: 5px 16px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  letter-spacing: 0.04em;
+  text-align: center;
+  min-width: 90px;
+}
+.reg-entry-btn.open {
+  background: var(--gold);
+  color: #0d0d0d;
+  border-color: var(--gold);
+}
+.reg-entry-btn.open:hover { background: #dbb96a; }
+.reg-entry-btn.closed {
+  background: transparent;
+  color: var(--text-faint);
+  border-color: var(--border-muted);
+  cursor: default;
+}
+.reg-entry-btn.upcoming {
+  background: transparent;
+  color: var(--text-dim);
+  border-color: var(--border-muted);
+  cursor: default;
+}
+.reg-entry-warning {
+  font-size: 0.75rem;
+  color: #c0392b;
+  margin-top: 4px;
+  letter-spacing: 0.03em;
+}
+
+/* ——— 移动端 ——— */
+@media (max-width: 768px) {
+  .reg-panel { max-height: 92vh; border-radius: 10px; }
+  .reg-match { padding: 28px 20px 0; }
+  .reg-match-teams { font-size: 1.15rem; }
+  .reg-body { padding: 20px 20px 24px; }
+  .reg-slot { font-size: 0.84rem; }
+  .reg-input { font-size: 0.88rem; padding: 10px 12px !important; }
+}
 
 /* ========================================
    Back to Top Button
@@ -1583,6 +1889,36 @@ img { max-width: 100%; display: block; }
   object-fit: cover;
   position: absolute;
   inset: 0;
+}
+
+/* === Registration Panel Animations === */
+@keyframes regPanelIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.reg-overlay.open .reg-panel {
+  animation: regPanelIn 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Custom scrollbar for reg panel */
+.reg-panel::-webkit-scrollbar { width: 4px; }
+.reg-panel::-webkit-scrollbar-track { background: transparent; }
+.reg-panel::-webkit-scrollbar-thumb {
+  background: rgba(207,174,90,0.2);
+  border-radius: 4px;
+}
+.reg-panel::-webkit-scrollbar-thumb:hover { background: rgba(207,174,90,0.35); }
+
+/* Select styling in reg panel */
+.reg-input select,
+select.reg-input {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  padding-right: 40px !important;
+  cursor: pointer;
 }
 
 /* === Focus visible === */

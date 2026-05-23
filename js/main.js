@@ -225,6 +225,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadAllOverridesAndMerge();
   initScrollReveal();
   initTacticsBoard();
+  initRegButtons();
 });
 
 /* ========================================
@@ -296,7 +297,7 @@ async function loadAllOverridesAndMerge() {
 
   // Render with merged data
   renderRoster(mergedPlayers);
-  renderFixtures();
+  await renderFixtures();
   initCarousel(mergedSlides);
   initGalleryOverlay(mergedAlbums);
 
@@ -426,88 +427,236 @@ function renderRoster(playersOverride) {
 }
 
 /* === Fixtures === */
-function renderFixtures() {
+async function renderFixtures() {
   const data = window.__fixturesData || { results: [], upcoming: [] };
-  const results = data.results || [];
+  let results = data.results || [];
   const upcoming = data.upcoming || [];
+
+  // 从 API 拉取赛果并合并（API 赛果优先于静态数据）
+  try {
+    const apiResults = await API.getResults();
+    if (apiResults.length) {
+      const apiMap = new Map();
+      apiResults.forEach(m => {
+        const score = m.home_score + ':' + m.away_score;
+        const scorers = (m.scorers || []).map(s => ({ name: s.name, num: s.number || s.num }));
+        const assisters = (m.assisters || []).map(s => ({ name: s.name, num: s.number || s.num }));
+        const key = m.date + '|' + m.away_team;
+        apiMap.set(key, {
+          date: m.date.replace(/-/g, '.'),
+          home: m.home_team || '今日说法',
+          away: m.away_team,
+          score,
+          result: m.result,
+          scorers,
+          assisters
+        });
+      });
+      // API 赛果覆盖或追加
+      results = results.filter(r => !apiMap.has(r.date + '|' + r.away));
+      const extra = [];
+      apiMap.forEach((v, k) => {
+        const exists = data.results.some(r => (r.date + '|' + r.away) === k);
+        if (exists) {
+          results.unshift(v);
+        } else {
+          extra.push(v);
+        }
+      });
+      results = [...extra.reverse(), ...results];
+    }
+  } catch (e) { /* API 不可用时降级到纯静态数据 */ }
 
   const statusText = { win: "胜", draw: "平", loss: "负" };
   const statusClass = { win: "win", draw: "draw", loss: "loss" };
 
+  // === 近期战果 ===
   const resultsEl = document.getElementById("resultsList");
-  if (!resultsEl) return;
+  if (resultsEl) {
+    const MAX_VISIBLE = 5;
+    const visibleResults = results.slice(0, MAX_VISIBLE);
+    const hiddenResults = results.slice(MAX_VISIBLE);
 
-  const MAX_VISIBLE = 5;
-  const visibleResults = results.slice(0, MAX_VISIBLE);
-  const hiddenResults = results.slice(MAX_VISIBLE);
+    const renderItem = m => {
+      const hasGoals = m.scorers && m.scorers.length > 0;
+      const hasAssists = m.assisters && m.assisters.length > 0;
+      const detailHTML = (hasGoals || hasAssists) ? `
+        <div class="fixture-detail">
+          ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+          ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+        </div>` : "";
 
-  const renderItem = m => {
-    const hasGoals = m.scorers && m.scorers.length > 0;
-    const hasAssists = m.assisters && m.assisters.length > 0;
-    const detailHTML = (hasGoals || hasAssists) ? `
-      <div class="fixture-detail">
-        ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
-        ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
-      </div>` : "";
-
-    return `
-    <div class="fixture-item">
-      <div class="fixture-item-main">
-        <span class="fixture-date">${m.date}</span>
-        <span class="fixture-teams">${m.home} vs ${m.away}</span>
-        <span class="fixture-score ${statusClass[m.result]}">${m.score} ${statusText[m.result]}</span>
-      </div>
-      ${detailHTML}
-    </div>`;
-  };
-
-  let html = visibleResults.map(renderItem).join("");
-
-  if (hiddenResults.length > 0) {
-    html += `
-    <div class="results-hidden" id="resultsHidden" style="display:none;">
-      ${hiddenResults.map(renderItem).join("")}
-    </div>
-    <button class="results-toggle" id="resultsToggle">
-      查看全部战绩（${results.length} 场）
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-    </button>`;
-  }
-
-  resultsEl.innerHTML = html;
-
-  if (hiddenResults.length > 0) {
-    const toggle = document.getElementById("resultsToggle");
-    const hidden = document.getElementById("resultsHidden");
-    const arrow = toggle.querySelector("svg");
-    toggle.addEventListener("click", () => {
-      const isOpen = hidden.style.display !== "none";
-      hidden.style.display = isOpen ? "none" : "block";
-      toggle.innerHTML = isOpen
-        ? `查看全部战绩（${results.length} 场） <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>`
-        : `收起战绩 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate(180deg)"><path d="M6 9l6 6 6-6"/></svg>`;
-    });
-  }
-
-  window.__upcoming = upcoming;
-
-  const upcomingEl = document.getElementById("upcomingList");
-  if (upcomingEl) {
-    upcomingEl.innerHTML = upcoming.map(m => {
-      const jerseyBadge = m.jersey ? `<span class="fixture-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}色</span>` : "";
       return `
-    <div class="fixture-item">
+      <div class="fixture-item">
+        <div class="fixture-item-main">
+          <span class="fixture-date">${m.date}</span>
+          <span class="fixture-teams">${m.home} vs ${m.away}</span>
+          <span class="fixture-score ${statusClass[m.result]}">${m.score} ${statusText[m.result]}</span>
+        </div>
+        ${detailHTML}
+      </div>`;
+    };
+
+    let html = visibleResults.map(renderItem).join("");
+
+    if (hiddenResults.length > 0) {
+      html += `
+      <div class="results-hidden" id="resultsHidden" style="display:none;">
+        ${hiddenResults.map(renderItem).join("")}
+      </div>
+      <button class="results-toggle" id="resultsToggle">
+        查看全部战绩（${results.length} 场）
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>`;
+    }
+
+    resultsEl.innerHTML = html;
+
+    if (hiddenResults.length > 0) {
+      const toggle = document.getElementById("resultsToggle");
+      const hidden = document.getElementById("resultsHidden");
+      toggle.addEventListener("click", () => {
+        const isOpen = hidden.style.display !== "none";
+        hidden.style.display = isOpen ? "none" : "block";
+        toggle.innerHTML = isOpen
+          ? `查看全部战绩（${results.length} 场） <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>`
+          : `收起战绩 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate(180deg)"><path d="M6 9l6 6 6-6"/></svg>`;
+      });
+    }
+  }
+
+  // === 即将开赛 ===
+  const upcomingEl = document.getElementById("upcomingList");
+  let upcomingFiltered = upcoming; // 默认值，防止块作用域问题
+  if (upcomingEl) {
+    const now = new Date();
+    upcomingFiltered = upcoming.filter(m => {
+      if (!m || !m.date) return false;
+      const startTime = new Date(m.date.replace(/\./g, "-") + "T" + (m.time || "14:40") + ":00");
+      if (isNaN(startTime.getTime())) return false;
+      const endTime = new Date(startTime.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
+      return now < endTime; // 比赛未结束才显示
+    });
+
+    if (upcomingFiltered.length === 0) {
+      upcomingEl.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
+    } else {
+      upcomingEl.innerHTML = upcomingFiltered.map((m, i) => {
+        const jerseyBadge = m.jersey ? `<span class="fixture-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}</span>` : "";
+        return `
+    <div class="fixture-item" data-upcoming-idx="${i}">
       <div class="fixture-item-main">
         <span class="fixture-date">${m.date}</span>
         <span class="fixture-teams">${m.home} vs ${m.away} ${jerseyBadge}</span>
-        <span class="fixture-upcoming">即将开赛</span>
+        <span class="reg-entry-btn upcoming" data-reg-idx="${i}">—</span>
       </div>
       <div class="fixture-meta">${m.time || ""} · ${m.venue || ""}</div>
+      <div class="reg-entry-warning" data-warn-idx="${i}" style="display:none"></div>
     </div>
     `}).join("");
+    }
   }
 
+  // 存储过滤后的 upcoming，供 countdown 和 reg buttons 使用
+  window.__upcoming = upcomingFiltered;
+
   startCountdown();
+}
+
+/* === Registration Buttons === */
+async function initRegButtons() {
+  const upcoming = window.__upcoming || [];
+
+  let apiMatches = [];
+  try { apiMatches = await API.getMatches(); } catch (e) { /* API unavailable */ }
+
+  const now = new Date();
+
+  // 找出 API 中有但静态数据中没有的 upcoming 比赛（排除已结束的）
+  const staticKeys = new Set(upcoming.map(m => m.date.replace(/\./g, '-') + '|' + m.away));
+  const extraMatches = apiMatches.filter(m => {
+    if (staticKeys.has(m.date + '|' + m.away_team)) return false;
+    const matchStart = new Date(m.date + 'T' + (m.time || '14:40') + ':00');
+    const matchEnd = new Date(matchStart.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
+    return now < matchEnd;
+  });
+
+  // 将额外的 API 比赛追加到 upcoming 列表
+  if (extraMatches.length > 0) {
+    const upcomingEl = document.getElementById('upcomingList');
+    const baseCount = upcoming.length;
+    const extraHTML = extraMatches.map((m, i) => {
+      const jerseyBadge = m.jersey ? `<span class="fixture-jersey" style="background:${m.jersey_color};color:#fff">${m.jersey}</span>` : '';
+      const idx = baseCount + i;
+      return `
+    <div class="fixture-item" data-upcoming-idx="${idx}">
+      <div class="fixture-item-main">
+        <span class="fixture-date">${m.date}</span>
+        <span class="fixture-teams">${m.home_team || '今日说法'} vs ${m.away_team} ${jerseyBadge}</span>
+        <span class="reg-entry-btn upcoming" data-reg-idx="${idx}">—</span>
+      </div>
+      <div class="fixture-meta">${m.time || ''} · ${m.venue || ''}</div>
+      <div class="reg-entry-warning" data-warn-idx="${idx}" style="display:none"></div>
+    </div>`;
+    }).join('');
+    upcomingEl.insertAdjacentHTML('beforeend', extraHTML);
+    // 扩展 upcoming 数组以便后续处理
+    extraMatches.forEach(m => {
+      upcoming.push({
+        date: m.date, time: m.time, home: m.home_team || '今日说法', away: m.away_team,
+        venue: m.venue, jersey: m.jersey, jerseyColor: m.jersey_color,
+        _apiMatch: m
+      });
+    });
+  }
+
+  if (!upcoming.length) return;
+
+  upcoming.forEach((m, i) => {
+    const btn = document.querySelector(`[data-reg-idx="${i}"]`);
+    const warn = document.querySelector(`[data-warn-idx="${i}"]`);
+    if (!btn) return;
+
+    // 使用已有的 API 匹配或静态数据中的 API 匹配
+    const apiMatch = m._apiMatch || apiMatches.find(am => am.date === m.date && am.away_team === m.away);
+    const match = apiMatch || m;
+
+    if (!match.reg_open_at || !match.reg_close_at) {
+      btn.textContent = '—';
+      btn.className = 'reg-entry-btn closed';
+      return;
+    }
+
+    const regOpen = new Date(match.reg_open_at);
+    const regClose = new Date(match.reg_close_at);
+
+    if (now < regOpen) {
+      btn.textContent = '未开启';
+      btn.className = 'reg-entry-btn upcoming';
+    } else if (now >= regOpen && now <= regClose) {
+      btn.className = 'reg-entry-btn open';
+      btn.style.cursor = 'pointer';
+      if (match.id) {
+        API.getRegistrations(match.id).then(list => {
+          const n = list.filter(r => r.status === 'confirmed').length;
+          btn.textContent = `报名中 (${n}/14)`;
+          const twoHBefore = new Date(regClose.getTime() - 2 * 60 * 60 * 1000);
+          if (now >= twoHBefore && n < 14 && warn) {
+            warn.style.display = 'block';
+            warn.textContent = `距截止不足2小时，仅${n}人报名`;
+          }
+        }).catch(() => { btn.textContent = '报名中'; });
+      } else {
+        btn.textContent = '报名中';
+      }
+      btn.addEventListener('click', () => {
+        if (match.id) window.openRegPanel(match);
+      });
+    } else {
+      btn.textContent = '已截止';
+      btn.className = 'reg-entry-btn closed';
+    }
+  });
 }
 
 /* === Lightbox (shared) === */
@@ -1157,26 +1306,50 @@ function initBackToTop() {
 }
 
 /* === Countdown Timer === */
+const MATCH_DURATION_HOURS = 2; // 每场比赛2小时
+
 function startCountdown() {
   const upcoming = window.__upcoming;
   if (!upcoming || !upcoming.length) return;
 
-  const m = upcoming[0];
-  if (!m || !m.date) return;
-  const timeStr = m.time || "14:40";
-  const dateStr = m.date.replace(/\./g, "-") + "T" + timeStr + ":00";
-  const targetDate = new Date(dateStr);
-  if (isNaN(targetDate.getTime())) return;
+  const now = new Date();
+
+  // 找到第一场未结束的比赛（开始时间+2小时后才算结束）
+  let matchIndex = -1;
+  for (let i = 0; i < upcoming.length; i++) {
+    const m = upcoming[i];
+    if (!m || !m.date) continue;
+    const timeStr = m.time || "14:40";
+    const startDate = new Date(m.date.replace(/\./g, "-") + "T" + timeStr + ":00");
+    if (isNaN(startDate.getTime())) continue;
+    const endDate = new Date(startDate.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
+    if (now < endDate) {
+      matchIndex = i;
+      break;
+    }
+  }
 
   const timer = document.getElementById("countdownTimer");
   const matchEl = document.getElementById("countdownMatch");
   if (!timer) return;
 
+  // 所有比赛都已结束
+  if (matchIndex === -1) {
+    if (matchEl) matchEl.innerHTML = '<div class="countdown-teams"><span>—</span><span class="countdown-vs">vs</span><span>—</span></div><div class="countdown-meta">暂无比赛</div>';
+    timer.innerHTML = `<span class="countdown-ended">等待新赛程</span>`;
+    return;
+  }
+
+  const m = upcoming[matchIndex];
+  const timeStr = m.time || "14:40";
+  const targetDate = new Date(m.date.replace(/\./g, "-") + "T" + timeStr + ":00");
+  const endDate = new Date(targetDate.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
+
   if (matchEl) {
     const d = new Date(targetDate);
     const weekdays = ["周日","周一","周二","周三","周四","周五","周六"];
     const wd = weekdays[d.getDay()];
-    const jerseyHTML = m.jersey ? `<span class="countdown-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}色球衣</span>` : "";
+    const jerseyHTML = m.jersey ? `<span class="countdown-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}球衣</span>` : "";
     matchEl.innerHTML = `
       <div class="countdown-teams"><span>${m.home}</span><span class="countdown-vs">vs</span><span>${m.away}</span></div>
       <div class="countdown-meta">${m.date.replace(/\./, "年").replace(/\./, "月")}日 ${wd} · ${timeStr}</div>
@@ -1188,11 +1361,29 @@ function startCountdown() {
     const now = new Date();
     const diff = targetDate - now;
 
-    if (diff <= 0) {
-      timer.innerHTML = `<span class="countdown-ended">比赛进行中</span>`;
+    // 比赛进行中（开始时间已过但未到结束时间）
+    if (diff <= 0 && now < endDate) {
+      const remaining = endDate - now;
+      const rHours = Math.floor(remaining / (1000 * 60 * 60));
+      const rMinutes = Math.floor((remaining / (1000 * 60)) % 60);
+      const rSeconds = Math.floor((remaining / 1000) % 60);
+      const timeStr = rHours > 0
+        ? `${rHours}时${String(rMinutes).padStart(2, "0")}分${String(rSeconds).padStart(2, "0")}秒`
+        : `${rMinutes}分${String(rSeconds).padStart(2, "0")}秒`;
+      timer.innerHTML = `
+        <span class="countdown-live">比赛进行中</span>
+        <span class="countdown-remaining">剩余 ${timeStr}</span>
+      `;
       return;
     }
 
+    // 比赛已结束，切换到下一场
+    if (now >= endDate) {
+      startCountdown();
+      return;
+    }
+
+    // 比赛未开始，倒计时
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const minutes = Math.floor((diff / (1000 * 60)) % 60);

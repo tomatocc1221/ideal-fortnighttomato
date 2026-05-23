@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 — 今日说法足球俱乐部</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="noise-overlay" aria-hidden="true"></div>
+
+  <!-- ========== 登录 ========== -->
+  <div class="admin-login" id="adminLogin">
+    <div class="admin-login-card">
+      <h1>今日说法</h1>
+      <p>管理后台</p>
+      <input type="password" id="loginPwd" placeholder="管理员密码" class="input">
+      <button class="btn btn-gold" id="loginBtn">登录</button>
+      <p class="admin-login-error" id="loginError"></p>
+    </div>
+  </div>
+
+  <!-- ========== 主面板 ========== -->
+  <div class="admin-panel" id="adminPanel" style="display:none">
+    <header class="admin-header">
+      <h2>管理后台</h2>
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="players">队员管理</button>
+        <button class="admin-tab" data-tab="matches">比赛管理</button>
+        <button class="admin-tab" data-tab="registrations">报名记录</button>
+	        <button class="admin-tab" data-tab="stats">出勤统计</button>
+	        <button class="admin-tab" data-tab="results">赛后录入</button>
+      </div>
+      <a href="index.html" class="btn btn-sm" style="text-decoration:none">← 主页</a>
+      <button class="btn btn-sm" id="logoutBtn">退出</button>
+    </header>
+
+    <!-- === 队员管理 === -->
+    <div class="admin-tab-content active" id="tab-players">
+      <div class="admin-section">
+        <h3>队员列表</h3>
+        <div class="player-table-wrap">
+          <table class="admin-table" id="playerTable">
+            <thead><tr><th>号码</th><th>姓名</th><th>角色</th><th>密码</th><th>操作</th></tr></thead>
+            <tbody id="playerTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="admin-section">
+        <h3 id="playerFormTitle">添加队员</h3>
+        <div class="admin-form">
+          <input type="text" id="pfName" placeholder="姓名" class="input">
+          <input type="number" id="pfNumber" placeholder="号码" class="input input-sm" min="0">
+          <input type="text" id="pfPin" placeholder="个人密码" class="input input-sm">
+          <input type="hidden" id="pfId">
+          <button class="btn btn-gold" id="playerSaveBtn">保存</button>
+          <button class="btn btn-cancel" id="playerCancelBtn" style="display:none">取消编辑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- === 比赛管理 === -->
+    <div class="admin-tab-content" id="tab-matches">
+      <div class="admin-section">
+        <h3>比赛列表</h3>
+        <div class="player-table-wrap">
+          <table class="admin-table" id="matchTable">
+            <thead><tr><th>日期</th><th>对手</th><th>报名窗口</th><th>操作</th></tr></thead>
+            <tbody id="matchTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="admin-section">
+        <h3 id="matchFormTitle">创建比赛</h3>
+        <div class="admin-form admin-form-grid">
+          <input type="date" id="mfDate" class="input" required>
+          <input type="time" id="mfTime" class="input input-sm" value="14:40">
+          <input type="text" id="mfAway" placeholder="对手队名" class="input" required>
+          <select id="mfVenue" class="input"></select>
+          <input type="text" id="mfVenueNew" placeholder="输入新场地名" class="input" style="display:none">
+          <select id="mfJersey" class="input input-sm">
+            <option value="蓝色">蓝色</option>
+            <option value="粉色">粉色</option>
+          </select>
+          <input type="number" id="mfFee" placeholder="场地费用(元)" class="input input-sm" min="0" step="0.01">
+          <input type="hidden" id="mfJerseyColor" value="#4a90d9">
+          <input type="hidden" id="mfId">
+          <button class="btn btn-gold" id="matchSaveBtn">保存</button>
+          <button class="btn btn-cancel" id="matchCancelBtn" style="display:none">取消编辑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- === 报名记录 === -->
+    <div class="admin-tab-content" id="tab-registrations">
+      <div class="admin-section">
+        <h3>选择比赛</h3>
+        <select class="input" id="regMatchSelect"></select>
+      </div>
+      <div class="admin-section">
+        <h3>报名名单 <span class="admin-count" id="regCount"></span></h3>
+        <div class="player-table-wrap">
+          <table class="admin-table" id="regTable">
+            <thead><tr><th>顺序</th><th>姓名</th><th>号码</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+            <tbody id="regTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- === 出勤统计 === -->
+    <div class="admin-tab-content" id="tab-stats">
+      <div class="admin-section">
+        <h3>出勤统计</h3>
+        <div class="player-table-wrap">
+          <table class="admin-table" id="statsTable">
+            <thead><tr><th>号码</th><th>姓名</th><th>总场次</th><th>正选</th><th>候补</th><th>请假</th><th>出勤率</th></tr></thead>
+            <tbody id="statsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- === 赛后录入 === -->
+    <div class="admin-tab-content" id="tab-results">
+      <div class="admin-section">
+        <h3>选择比赛</h3>
+        <select class="input" id="resultMatchSelect">
+          <option value="">-- 选择已结束的比赛 --</option>
+        </select>
+      </div>
+      <div class="admin-section" id="resultFormSection" style="display:none">
+        <h3>比分录入</h3>
+        <div class="admin-form">
+          <input type="number" id="rfHomeScore" placeholder="主队进球" class="input input-sm" min="0">
+          <span style="color:var(--text-dim);align-self:center">:</span>
+          <input type="number" id="rfAwayScore" placeholder="客队进球" class="input input-sm" min="0">
+          <select id="rfJersey" class="input input-sm" style="display:none"></select>
+        </div>
+        <div style="margin-top:8px">
+          <span style="color:var(--text-dim);font-size:0.85rem">战果：</span>
+          <span id="rfResultPreview" style="color:var(--gold);font-weight:600"></span>
+        </div>
+      </div>
+      <div class="admin-section" id="resultScorersSection" style="display:none">
+        <h3>进球者</h3>
+        <div id="scorerRows"></div>
+        <button class="btn btn-sm btn-edit" id="addScorerBtn">+ 添加进球</button>
+      </div>
+      <div class="admin-section" id="resultAssistersSection" style="display:none">
+        <h3>助攻者</h3>
+        <div id="assisterRows"></div>
+        <button class="btn btn-sm btn-edit" id="addAssisterBtn">+ 添加助攻</button>
+      </div>
+      <div class="admin-section" id="resultSaveSection" style="display:none">
+        <button class="btn btn-gold" id="resultSaveBtn">保存赛果</button>
+        <button class="btn btn-cancel" id="resultClearBtn" style="margin-left:8px">清除赛果</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="data/fixtures.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
