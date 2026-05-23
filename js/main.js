@@ -49,6 +49,7 @@ function openDB() {
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error("IndexedDB blocked"));
   });
 }
 
@@ -70,7 +71,7 @@ function loadImage(storeName, key) {
       };
       req.onerror = () => { db.close(); resolve(null); };
     });
-  });
+  }).catch(() => null); // IndexedDB 不可用时静默降级，使用默认文件路径
 }
 
 
@@ -248,11 +249,15 @@ async function loadAllOverridesAndMerge() {
     });
   });
 
-  await Promise.all([
-    ...playerImagePromises,
-    ...slideImagePromises,
-    ...albumImagePromises,
-  ]);
+  try {
+    await Promise.all([
+      ...playerImagePromises,
+      ...slideImagePromises,
+      ...albumImagePromises,
+    ]);
+  } catch (e) {
+    // IndexedDB 整体失败时静默降级，渲染照常进行
+  }
 
   // Render with merged data
   renderRoster(mergedPlayers);
