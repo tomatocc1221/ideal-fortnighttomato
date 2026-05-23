@@ -14,3 +14,4 @@ desktop.ini
 # *.jpg  ← 已移除全局忽略，网站需要 JPG 照片
 node_modules/
 images/logo_original.jpg
+*_original.jpg

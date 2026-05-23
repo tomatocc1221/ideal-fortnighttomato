@@ -590,10 +590,19 @@ function initCarousel(slidesOverride) {
   let current = 0;
   let timer;
 
+  // 预加载首张图片
+  if (slides.length > 0 && slides[0]._imageUrl) {
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = slides[0]._imageUrl;
+    document.head.appendChild(link);
+  }
+
   track.innerHTML = slides.map((s, i) => `
     <div class="carousel-slide" data-index="${i}">
       ${s._imageUrl
-        ? `<img class="carousel-slide-img" src="${s._imageUrl}" alt="${s.label}">`
+        ? `<img class="carousel-slide-img" src="${s._imageUrl}" alt="${s.label}" decoding="async"${i === 0 ? ' fetchpriority="high"' : ""}>`
         : `<span class="carousel-slide-placeholder">${s.label}</span>`}
     </div>
   `).join("");
@@ -925,7 +934,7 @@ function initGalleryOverlay(albumsOverride) {
           ${a.photos.map((p, i) => `
             <div class="gallery-photo" data-album="${a.title}" data-idx="${i}">
               ${p._imageUrl
-                ? `<img src="${p._imageUrl}" alt="${p.label}">`
+                ? `<img src="${p._imageUrl}" alt="${p.label}" loading="lazy" decoding="async">`
                 : `<svg class="gallery-photo-camera" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 5V3h8v2"/></svg>`}
             </div>
           `).join("")}
