@@ -74,6 +74,15 @@ function loadImage(storeName, key) {
   }).catch(() => null); // IndexedDB 不可用时静默降级，使用默认文件路径
 }
 
+function checkFileAvatar(number) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve("images/players/" + number + ".jpg");
+    img.onerror = () => resolve(null);
+    img.src = "images/players/" + number + ".jpg";
+  });
+}
+
 
 function loadOverrides() {
   try {
@@ -232,9 +241,12 @@ async function loadAllOverridesAndMerge() {
     return { ...a, photos: mergedPhotos };
   });
 
-  // Load images from IndexedDB in parallel
+  // Load images: file-based avatars first, then IndexedDB fallback
   const playerImagePromises = mergedPlayers.map(p =>
-    loadImage("playerAvatars", p.number).then(url => { if (url) p._avatarUrl = url; })
+    checkFileAvatar(p.number).then(fileUrl => {
+      if (fileUrl) { p._avatarUrl = fileUrl; return; }
+      return loadImage("playerAvatars", p.number).then(url => { if (url) p._avatarUrl = url; });
+    })
   );
   const slideImagePromises = mergedSlides.map((s, i) =>
     loadImage("carouselPhotos", i).then(url => { if (url) s._imageUrl = url; })
