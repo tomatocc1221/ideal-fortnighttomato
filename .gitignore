@@ -11,5 +11,6 @@ desktop.ini
 # 本地文件
 *.xlsx
 *.url
+*.jpg
 node_modules/
 images/logo_original.jpg

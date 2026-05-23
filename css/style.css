@@ -617,6 +617,39 @@ img { max-width: 100%; display: block; }
   letter-spacing: 0.03em;
 }
 
+/* 战果折叠 */
+.results-hidden {
+  overflow: hidden;
+}
+
+.results-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 0;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+}
+
+.results-toggle:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.results-toggle svg {
+  transition: transform 0.25s;
+}
+
 
 /* === Carousel === */
 .carousel {

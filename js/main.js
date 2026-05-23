@@ -382,44 +382,21 @@ function renderRoster(playersOverride) {
 
 /* === Fixtures === */
 function renderFixtures() {
-  const results = [
-    { date: "2025.04.19", home: "今日说法", away: "东吴FC",     score: "3:2", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"古培杰",num:14}],
-      assisters: [{name:"向润杰",num:10},{name:"刘畅",num:7}] },
-    { date: "2025.04.12", home: "今日说法", away: "快乐足球",   score: "2:1", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"刘畅",num:7}],
-      assisters: [{name:"张浩宇",num:9}] },
-    { date: "2025.04.05", home: "铁狼队",   away: "今日说法", score: "0:1", result: "win",
-      scorers: [{name:"向润杰",num:10}],
-      assisters: [{name:"李泽",num:22}] },
-    { date: "2025.03.29", home: "今日说法", away: "蓝月亮",     score: "3:1", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"刘畅",num:7}],
-      assisters: [{name:"李泽",num:22},{name:"张浩宇",num:9}] },
-    { date: "2025.03.22", home: "东风FC",   away: "今日说法", score: "1:1", result: "draw",
-      scorers: [{name:"张浩宇",num:9}],
-      assisters: [{name:"向润杰",num:10}] },
-    { date: "2025.03.15", home: "今日说法", away: "老男孩FC",   score: "4:2", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"李泽",num:22},{name:"张浩宇",num:9},{name:"唐文",num:18}],
-      assisters: [{name:"刘畅",num:7},{name:"向润杰",num:10}] },
-    { date: "2025.03.08", home: "飓风青年", away: "今日说法", score: "2:0", result: "loss",
-      scorers: [],
-      assisters: [] },
-    { date: "2025.03.01", home: "今日说法", away: "雄狮联盟",   score: "5:3", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"刘畅",num:7},{name:"唐文",num:18}],
-      assisters: [{name:"张浩宇",num:9},{name:"李泽",num:22},{name:"向润杰",num:10}] },
-  ];
-
-  const upcoming = [
-    { date: "2026.05.23", time: "14:40", home: "今日说法", away: "重庆龮枥", venue: "奥体驰骋足球场2号场", jersey: "蓝", jerseyColor: "#4a90d9" },
-    { date: "2026.05.24", time: "19:00", home: "飞虎",     away: "今日说法", venue: "华侨城足球公园",     jersey: "粉", jerseyColor: "#f0a0b0" },
-  ];
+  const data = window.__fixturesData || { results: [], upcoming: [] };
+  const results = data.results || [];
+  const upcoming = data.upcoming || [];
 
   const statusText = { win: "胜", draw: "平", loss: "负" };
   const statusClass = { win: "win", draw: "draw", loss: "loss" };
 
   const resultsEl = document.getElementById("resultsList");
   if (!resultsEl) return;
-  resultsEl.innerHTML = results.map(m => {
+
+  const MAX_VISIBLE = 5;
+  const visibleResults = results.slice(0, MAX_VISIBLE);
+  const hiddenResults = results.slice(MAX_VISIBLE);
+
+  const renderItem = m => {
     const hasGoals = m.scorers && m.scorers.length > 0;
     const hasAssists = m.assisters && m.assisters.length > 0;
     const detailHTML = (hasGoals || hasAssists) ? `
@@ -437,7 +414,35 @@ function renderFixtures() {
       </div>
       ${detailHTML}
     </div>`;
-  }).join("");
+  };
+
+  let html = visibleResults.map(renderItem).join("");
+
+  if (hiddenResults.length > 0) {
+    html += `
+    <div class="results-hidden" id="resultsHidden" style="display:none;">
+      ${hiddenResults.map(renderItem).join("")}
+    </div>
+    <button class="results-toggle" id="resultsToggle">
+      查看全部战绩（${results.length} 场）
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </button>`;
+  }
+
+  resultsEl.innerHTML = html;
+
+  if (hiddenResults.length > 0) {
+    const toggle = document.getElementById("resultsToggle");
+    const hidden = document.getElementById("resultsHidden");
+    const arrow = toggle.querySelector("svg");
+    toggle.addEventListener("click", () => {
+      const isOpen = hidden.style.display !== "none";
+      hidden.style.display = isOpen ? "none" : "block";
+      toggle.innerHTML = isOpen
+        ? `查看全部战绩（${results.length} 场） <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>`
+        : `收起战绩 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate(180deg)"><path d="M6 9l6 6 6-6"/></svg>`;
+    });
+  }
 
   window.__upcoming = upcoming;
 
