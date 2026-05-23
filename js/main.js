@@ -329,7 +329,6 @@ function getGroupOrder(role) {
 }
 
 const GROUP_LABELS = { "": "教练", "role-gk": "门将", "role-df": "后场", "role-mf": "中场", "role-fw": "前场" };
-const GROUP_ICONS = { "": "📋", "role-gk": "🧤", "role-df": "🛡️", "role-mf": "⚙️", "role-fw": "🎯" };
 
 function renderRoster(playersOverride) {
   const players = playersOverride || getDefaultPlayers();
@@ -347,7 +346,7 @@ function renderRoster(playersOverride) {
   sorted.forEach((p, i) => {
     const g = getPositionGroup(p.role);
     if (g !== lastGroup) {
-      html += `<div class="roster-group-title ${g}">${GROUP_ICONS[g] || ""} ${GROUP_LABELS[g] || ""}</div>`;
+      html += `<div class="roster-group-title ${g}"><span class="group-dot"></span>${GROUP_LABELS[g] || ""}</div>`;
       lastGroup = g;
     }
     const origIndex = players.indexOf(p);
@@ -358,7 +357,7 @@ function renderRoster(playersOverride) {
             <div class="player-avatar">
               ${p._avatarUrl
                 ? `<img src="${p._avatarUrl}" alt="${p.name}">`
-                : p.avatar}
+                : `<span class="player-avatar-initial">${p.name[0]}</span>`}
             </div>
             <div class="player-number">${p.number}</div>
             <div class="player-name">${p.name}</div>
@@ -401,8 +400,8 @@ function renderFixtures() {
     const hasAssists = m.assisters && m.assisters.length > 0;
     const detailHTML = (hasGoals || hasAssists) ? `
       <div class="fixture-detail">
-        ${hasGoals ? `<span class="fixture-goals">⚽ 进球：${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
-        ${hasAssists ? `<span class="fixture-assists">🅰 助攻：${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+        ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+        ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
       </div>` : "";
 
     return `
@@ -584,8 +583,7 @@ function initCarousel(slidesOverride) {
     <div class="carousel-slide" data-index="${i}">
       ${s._imageUrl
         ? `<img class="carousel-slide-img" src="${s._imageUrl}" alt="${s.label}">`
-        : `<span class="carousel-slide-icon">${s.icon}</span>`}
-      <span class="carousel-slide-label">${s.label}</span>
+        : `<span class="carousel-slide-placeholder">${s.label}</span>`}
     </div>
   `).join("");
 
@@ -643,8 +641,8 @@ function initCarousel(slidesOverride) {
       openLightbox(
         `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
           <rect fill="#1a1a1a" width="800" height="500"/>
-          <text fill="#c9a961" font-size="100" text-anchor="middle" x="400" y="280">${s.icon}</text>
-          <text fill="#555" font-size="22" text-anchor="middle" x="400" y="340">今日说法 · ${s.label}</text>
+          <text fill="#cfae5a" font-size="28" text-anchor="middle" x="400" y="270" font-weight="600">今日说法</text>
+          <text fill="#888" font-size="18" text-anchor="middle" x="400" y="310">${s.label}</text>
         </svg>`
       );
     }
@@ -745,7 +743,7 @@ function initTacticsBoard() {
     ctx.clearRect(0, 0, w, h);
 
     const lineColor = "rgba(255,255,255,0.25)";
-    const gold = "#c9a961";
+    const gold = "#cfae5a";
     const pad = w * 0.03;
     const px = pad, py = pad;
     const pw = w - pad * 2, ph = h - pad * 2;
@@ -917,7 +915,7 @@ function initGalleryOverlay(albumsOverride) {
             <div class="gallery-photo" data-album="${a.title}" data-idx="${i}">
               ${p._imageUrl
                 ? `<img src="${p._imageUrl}" alt="${p.label}">`
-                : `<span>${p.icon}</span>`}
+                : `<svg class="gallery-photo-camera" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 5V3h8v2"/></svg>`}
               <span class="gallery-photo-label">${p.label}</span>
             </div>
           `).join("")}
@@ -965,9 +963,8 @@ function initGalleryOverlay(albumsOverride) {
       openLightbox(
         `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
           <rect fill="#1a1a1a" width="800" height="600"/>
-          <text fill="#c9a961" font-size="120" text-anchor="middle" x="400" y="300">${p.icon}</text>
-          <text fill="#eee" font-size="24" text-anchor="middle" x="400" y="370">${album}</text>
-          <text fill="#777" font-size="18" text-anchor="middle" x="400" y="400">${p.label}</text>
+          <text fill="#cfae5a" font-size="22" text-anchor="middle" x="400" y="280" font-weight="600">${album}</text>
+          <text fill="#888" font-size="16" text-anchor="middle" x="400" y="315">${p.label}</text>
         </svg>`
       );
     }
@@ -1005,7 +1002,7 @@ function openPlayerDetail(index) {
   if (p._avatarUrl) {
     el.avatar.innerHTML = `<img src="${p._avatarUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
   } else {
-    el.avatar.textContent = p.avatar;
+    el.avatar.innerHTML = `<span class="player-detail-avatar-initial">${p.name[0]}</span>`;
   }
 
   el.number.textContent = p.number;
