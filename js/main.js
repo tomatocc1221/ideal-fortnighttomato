@@ -178,12 +178,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   initLightbox();
   initHeroParticles();
   initPlayerDetail();
-  initScrollReveal();
   initCountUp();
   initBackToTop();
 
   // Load overrides from storage and render with merged data
   await loadAllOverridesAndMerge();
+  initScrollReveal();
   initTacticsBoard();
 });
 
@@ -307,31 +307,72 @@ function updateActiveLink() {
 }
 
 /* === Roster === */
+function getPositionGroup(role) {
+  if (!role) return "";
+  const first = role.split("/")[0].trim().toUpperCase();
+  if (["SS","CF","RW","LW","ST"].includes(first)) return "role-fw";
+  if (["AM","DM","CM","OMF","LM","RM"].includes(first)) return "role-mf";
+  if (["GK"].includes(first)) return "role-gk";
+  if (["CB","RB","LB","LIB","SW"].includes(first)) return "role-df";
+  return "";
+}
+
+function getGroupOrder(role) {
+  const g = getPositionGroup(role);
+  if (g === "") return 0;   // coach first
+  if (g === "role-gk") return 1;
+  if (g === "role-df") return 2;
+  if (g === "role-mf") return 3;
+  if (g === "role-fw") return 4;
+  return 5;
+}
+
+const GROUP_LABELS = { "": "教练", "role-gk": "门将", "role-df": "后场", "role-mf": "中场", "role-fw": "前场" };
+const GROUP_ICONS = { "": "📋", "role-gk": "🧤", "role-df": "🛡️", "role-mf": "⚙️", "role-fw": "🎯" };
+
 function renderRoster(playersOverride) {
   const players = playersOverride || getDefaultPlayers();
 
-  const grid = document.getElementById("rosterGrid");
-  grid.innerHTML = players.map((p, i) => `
-    <div class="player-card${p.captain ? " captain" : ""}" data-player-index="${i}" data-player-number="${p.number}" onclick="flipCard(this)">
-      <div class="player-card-inner">
-        <div class="player-card-front">
-          <div class="player-avatar">
-            ${p._avatarUrl
-              ? `<img src="${p._avatarUrl}" alt="${p.name}">`
-              : p.avatar}
+  // Sort by position group, then by number
+  const sorted = [...players].sort((a, b) => {
+    const ga = getGroupOrder(a.role);
+    const gb = getGroupOrder(b.role);
+    if (ga !== gb) return ga - gb;
+    return a.number - b.number;
+  });
+
+  // Build groups
+  let html = "", lastGroup = "";
+  sorted.forEach((p, i) => {
+    const g = getPositionGroup(p.role);
+    if (g !== lastGroup) {
+      html += `<div class="roster-group-title ${g}">${GROUP_ICONS[g] || ""} ${GROUP_LABELS[g] || ""}</div>`;
+      lastGroup = g;
+    }
+    const origIndex = players.indexOf(p);
+    html += `
+      <div class="player-card${p.captain ? " captain" : ""}" data-player-index="${origIndex}" data-player-number="${p.number}" onclick="flipCard(this)">
+        <div class="player-card-inner">
+          <div class="player-card-front">
+            <div class="player-avatar">
+              ${p._avatarUrl
+                ? `<img src="${p._avatarUrl}" alt="${p.name}">`
+                : p.avatar}
+            </div>
+            <div class="player-number">${p.number}</div>
+            <div class="player-name">${p.name}</div>
+            <div class="player-role ${getPositionGroup(p.role)}">${p.role}</div>
           </div>
-          <div class="player-number">${p.number}</div>
-          <div class="player-name">${p.name}</div>
-          <div class="player-role">${p.role}</div>
+          <div class="player-card-back">
+            <div class="player-back-name">${p.name} · ${p.number}号</div>
+            <div class="player-back-bio">${p.bio || "场上位置：" + p.role}</div>
+            <button class="player-back-btn" onclick="event.stopPropagation(); openPlayerDetail(${origIndex})">查看详情</button>
+          </div>
         </div>
-        <div class="player-card-back">
-          <div class="player-back-name">${p.name} · ${p.number}号</div>
-          <div class="player-back-bio">${p.bio || "场上位置：" + p.role}</div>
-          <button class="player-back-btn" onclick="event.stopPropagation(); openPlayerDetail(${i})">查看详情</button>
-        </div>
-      </div>
-    </div>
-  `).join("");
+      </div>`;
+  });
+
+  document.getElementById("rosterGrid").innerHTML = html;
 
   if (!playersOverride) {
     window.__players = players;
@@ -482,20 +523,18 @@ function initHeroParticles() {
 
       ctx.beginPath();
       ctx.arc(px, py, p.r, 0, Math.PI * 2);
-
-      const gradient = ctx.createRadialGradient(px, py, 0, px, py, p.r * 3);
-      gradient.addColorStop(0, `hsla(${hue}, 65%, 75%, ${alpha})`);
-      gradient.addColorStop(0.5, `hsla(${hue}, 55%, 60%, ${alpha * 0.4})`);
-      gradient.addColorStop(1, "transparent");
-      ctx.fillStyle = gradient;
+      ctx.shadowBlur = p.r * 3;
+      ctx.shadowColor = `hsla(${hue}, 65%, 75%, ${alpha})`;
+      ctx.fillStyle = `hsla(${hue}, 65%, 75%, ${alpha})`;
       ctx.fill();
+      ctx.shadowBlur = 0;
     });
 
     if (!paused) requestAnimationFrame(draw);
   }
 
   resize();
-  window.addEventListener("resize", resize);
+  window.addEventListener("resize", rafThrottle(resize));
 
   let paused = false;
   const heroObserver = new IntersectionObserver((entries) => {
@@ -666,6 +705,13 @@ function initTacticsBoard() {
     return p ? p.name : "";
   }
 
+  function getPlayerRole(number) {
+    const map = getPlayerMap();
+    if (!map) return "";
+    const p = map.get(number);
+    return p ? p.role : "";
+  }
+
   function draw() {
     const w = board.clientWidth;
     const h = w * 0.7;
@@ -789,9 +835,12 @@ function initTacticsBoard() {
         : px + marginX + (p.col / (p.cols - 1)) * (pw - marginX * 2);
       const cy = fieldTop + (p.row / (p.rows - 1)) * fieldHeight;
 
-      // Player circle
-      ctx.fillStyle = "#1a1a1a";
-      ctx.strokeStyle = gold;
+      // Player circle — fill by position group
+      const role = getPlayerRole(p.number);
+      const g = getPositionGroup(role);
+      const posColor = g === "role-fw" ? "#f87171" : g === "role-mf" ? "#4ade80" : g === "role-df" ? "#60a5fa" : g === "role-gk" ? "#fb923c" : gold;
+      ctx.fillStyle = posColor + "22";
+      ctx.strokeStyle = posColor;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
@@ -799,7 +848,7 @@ function initTacticsBoard() {
       ctx.stroke();
 
       // Number
-      ctx.fillStyle = gold;
+      ctx.fillStyle = posColor;
       ctx.font = `bold ${Math.max(10, dotR * 1.1)}px -apple-system, "PingFang SC", sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -808,7 +857,7 @@ function initTacticsBoard() {
       // Name
       const playerName = getPlayerName(p.number);
       if (playerName) {
-        ctx.fillStyle = "rgba(201, 169, 97, 0.7)";
+        ctx.fillStyle = posColor + "99";
         ctx.font = `${Math.max(8, dotR * 0.65)}px -apple-system, "PingFang SC", sans-serif`;
         ctx.fillText(playerName, cx, cy + dotR + 12);
       }
@@ -826,7 +875,7 @@ function initTacticsBoard() {
   });
 
   draw();
-  window.addEventListener("resize", draw);
+  window.addEventListener("resize", rafThrottle(draw));
 }
 
 /* === Gallery Overlay === */
@@ -906,9 +955,21 @@ function initGalleryOverlay(albumsOverride) {
 }
 
 /* === Player Detail Overlay === */
+let __pd = null;
 function initPlayerDetail() {
   const overlay = document.getElementById("playerOverlay");
   const backBtn = document.getElementById("playerBack");
+
+  __pd = {
+    overlay,
+    avatar: document.getElementById("playerDetailAvatar"),
+    number: document.getElementById("playerDetailNumber"),
+    name: document.getElementById("playerDetailName"),
+    role: document.getElementById("playerDetailRole"),
+    bio: document.getElementById("playerDetailBio"),
+    info: document.getElementById("playerDetailInfo"),
+    strengths: document.getElementById("playerDetailStrengths"),
+  };
 
   backBtn.addEventListener("click", closePlayerDetail);
   closeOnBackdrop(overlay, closePlayerDetail);
@@ -917,23 +978,23 @@ function initPlayerDetail() {
 
 function openPlayerDetail(index) {
   const p = window.__players[index];
-  if (!p) return;
+  if (!p || !__pd) return;
+  const el = __pd;
 
-  const avatarEl = document.getElementById("playerDetailAvatar");
-  avatarEl.className = "player-detail-avatar";
+  el.avatar.className = "player-detail-avatar";
   if (p._avatarUrl) {
-    avatarEl.innerHTML = `<img src="${p._avatarUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    el.avatar.innerHTML = `<img src="${p._avatarUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
   } else {
-    avatarEl.textContent = p.avatar;
+    el.avatar.textContent = p.avatar;
   }
 
-  document.getElementById("playerDetailNumber").textContent = p.number;
-  document.getElementById("playerDetailName").textContent = p.name;
+  el.number.textContent = p.number;
+  el.name.textContent = p.name;
+  el.role.textContent = p.role;
+  el.role.className = "player-detail-role " + getPositionGroup(p.role);
+  el.bio.textContent = p.bio;
 
-  document.getElementById("playerDetailRole").textContent = p.role;
-  document.getElementById("playerDetailBio").textContent = p.bio;
-
-  document.getElementById("playerDetailInfo").innerHTML = `
+  el.info.innerHTML = `
     <div class="player-info-item">
       <div class="player-info-value">${p.age ?? "—"}</div>
       <div class="player-info-label">年龄</div>
@@ -948,16 +1009,17 @@ function openPlayerDetail(index) {
     </div>
   `;
 
-  document.getElementById("playerDetailStrengths").innerHTML = p.strengths.map(s =>
+  el.strengths.innerHTML = p.strengths.map(s =>
     `<span class="player-strength-tag">${s}</span>`
   ).join("");
 
-  document.getElementById("playerOverlay").classList.add("open");
+  el.overlay.classList.add("open");
   document.body.style.overflow = "hidden";
 }
 
 function closePlayerDetail() {
-  document.getElementById("playerOverlay").classList.remove("open");
+  if (!__pd) return;
+  __pd.overlay.classList.remove("open");
   document.body.style.overflow = "";
   document.querySelectorAll(".player-card.flipped").forEach(c => c.classList.remove("flipped"));
 }
