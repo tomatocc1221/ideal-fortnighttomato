@@ -26,7 +26,7 @@
         <li><a href="#tactics" class="nav-link">战术板</a></li>
         <li><a href="#contact" class="nav-link">联系我们</a></li>
       </ul>
-      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+      <button class="nav-toggle" id="navToggle" aria-label="菜单" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
     </div>
@@ -35,12 +35,13 @@
   <!-- ========== 英雄区 ========== -->
   <section class="hero" id="hero">
     <canvas class="hero-particles" id="heroParticles"></canvas>
-    <div class="hero-overlay"></div>
+
     <div class="hero-content">
       <img src="images/logo.jpg" alt="今日说法队徽" class="hero-logo">
+      <h1 class="hero-title">今日说法</h1>
       <p class="hero-subtitle">用脚说话，以球会友</p>
       <a href="#about" class="hero-arrow">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M6 9l6 6 6-6"/>
         </svg>
       </a>
@@ -92,7 +93,7 @@
       <h2 class="section-title">赛程战果</h2>
       <div class="countdown-bar" id="countdownBar">
         <span class="countdown-label">距下一场比赛</span>
-        <div class="countdown-timer" id="countdownTimer">
+        <div class="countdown-timer" id="countdownTimer" aria-live="polite" aria-atomic="true">
           <span><em>--</em> 天</span>
           <span><em>--</em> 时</span>
           <span><em>--</em> 分</span>
@@ -118,11 +119,11 @@
       <h2 class="section-title">精彩瞬间</h2>
       <div class="carousel" id="carousel">
         <button class="carousel-arrow carousel-prev" id="carouselPrev" aria-label="上一张">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div class="carousel-track" id="carouselTrack"></div>
         <button class="carousel-arrow carousel-next" id="carouselNext" aria-label="下一张">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
         </button>
         <div class="carousel-dots" id="carouselDots"></div>
       </div>
@@ -206,7 +207,7 @@
 
   <!-- ========== 返回顶部 ========== -->
   <button class="back-to-top" id="backToTop" aria-label="返回顶部">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
       <path d="M18 15l-6-6-6 6"/>
     </svg>
   </button>

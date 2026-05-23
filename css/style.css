@@ -60,6 +60,22 @@ img { max-width: 100%; display: block; }
 }
 .section-dark {
   background: var(--bg-secondary);
+  position: relative;
+}
+.section-dark::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    transparent 20%,
+    rgba(201, 169, 97, 0.15) 50%,
+    transparent 80%,
+    transparent 100%
+  );
 }
 
 .section-title {
@@ -88,7 +104,7 @@ img { max-width: 100%; display: block; }
   right: 0;
   z-index: 100;
   padding: 20px 0;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, backdrop-filter 0.3s ease, padding 0.3s ease, border-bottom 0.3s ease;
 }
 .nav.scrolled {
   background: rgba(13, 13, 13, 0.92);
@@ -140,7 +156,7 @@ img { max-width: 100%; display: block; }
   width: 0;
   height: 2px;
   background: var(--gold);
-  transition: all 0.3s ease;
+  transition: width 0.3s ease;
   transform: translateX(-50%);
 }
 .nav-link:hover,
@@ -167,7 +183,7 @@ img { max-width: 100%; display: block; }
   width: 24px;
   height: 2px;
   background: var(--gold);
-  transition: all 0.3s;
+  transition: transform 0.3s, opacity 0.3s;
 }
 .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
 .nav-toggle.open span:nth-child(2) { opacity: 0; }
@@ -185,7 +201,7 @@ img { max-width: 100%; display: block; }
   content: "";
   position: fixed;
   inset: 0;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px 256px;
 }
@@ -225,9 +241,6 @@ img { max-width: 100%; display: block; }
   pointer-events: none;
 }
 
-.hero-overlay {
-  display: none; /* kept for future bg image */
-}
 
 .hero-content {
   position: relative;
@@ -350,9 +363,6 @@ img { max-width: 100%; display: block; }
 .player-card:hover {
   transform: translateY(-6px);
 }
-.player-card.flipped:hover {
-  transform: translateY(-6px);
-}
 
 .player-card-inner {
   position: relative;
@@ -386,6 +396,7 @@ img { max-width: 100%; display: block; }
 
 .player-card-front {
   background: var(--bg-card);
+  position: relative;
   transition: border-color 0.35s ease, box-shadow 0.35s ease;
 }
 .player-card:hover .player-card-front {
@@ -436,21 +447,17 @@ img { max-width: 100%; display: block; }
   margin-top: 6px;
 }
 .player-role {
-  font-size: 0.85rem;
-  color: #888;
-  margin-top: 2px;
-}
-.player-badge {
   display: inline-block;
-  margin-top: 8px;
-  padding: 2px 12px;
-  border: 1px solid var(--gold);
+  margin-top: 6px;
+  padding: 3px 14px;
+  background: rgba(201, 169, 97, 0.12);
+  border: 1px solid rgba(201, 169, 97, 0.35);
   border-radius: 20px;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--gold);
   letter-spacing: 0.06em;
 }
-
 /* Back face */
 .player-back-name {
   font-size: 1.15rem;
@@ -472,7 +479,7 @@ img { max-width: 100%; display: block; }
   font-size: 0.78rem;
   cursor: pointer;
   letter-spacing: 0.04em;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 .player-back-btn:hover {
   background: var(--gold);
@@ -555,25 +562,6 @@ img { max-width: 100%; display: block; }
   text-align: center;
 }
 
-/* === Section Divider === */
-.section-dark {
-  position: relative;
-}
-.section-dark::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    transparent 20%,
-    rgba(201, 169, 97, 0.15) 50%,
-    transparent 80%,
-    transparent 100%
-  );
-}
 
 /* === Carousel === */
 .carousel {
@@ -636,7 +624,7 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.25s;
+  transition: opacity 0.25s, background 0.25s, color 0.25s, border-color 0.25s;
   opacity: 0;
 }
 .carousel:hover .carousel-arrow {
@@ -664,7 +652,7 @@ img { max-width: 100%; display: block; }
   border: 1px solid #444;
   background: transparent;
   cursor: pointer;
-  transition: all 0.25s;
+  transition: background 0.25s, border-color 0.25s;
 }
 .carousel-dot.active {
   background: var(--gold);
@@ -706,7 +694,7 @@ img { max-width: 100%; display: block; }
   border-radius: 6px;
   cursor: pointer;
   letter-spacing: 0.04em;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 .gallery-overlay-back:hover {
   border-color: var(--gold);
@@ -772,7 +760,7 @@ img { max-width: 100%; display: block; }
   justify-content: center;
   font-size: 2.5rem;
   color: #444;
-  transition: all 0.3s;
+  transition: border-color 0.3s, color 0.3s;
   position: relative;
   overflow: hidden;
 }
@@ -825,7 +813,7 @@ img { max-width: 100%; display: block; }
   font-size: 0.85rem;
   cursor: pointer;
   letter-spacing: 0.06em;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 .tactics-btn:hover {
   border-color: var(--gold);
@@ -926,7 +914,7 @@ img { max-width: 100%; display: block; }
   border-radius: 4px;
   color: #888;
   font-size: 0.85rem;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s;
 }
 .social-link:hover {
   border-color: var(--gold);
@@ -1047,7 +1035,7 @@ img { max-width: 100%; display: block; }
   border-radius: 6px;
   cursor: pointer;
   letter-spacing: 0.04em;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 .player-overlay-back:hover {
   border-color: var(--gold);
@@ -1090,10 +1078,24 @@ img { max-width: 100%; display: block; }
 }
 
 .player-detail-role {
-  font-size: 0.95rem;
-  color: #888;
-  margin-top: 4px;
-  letter-spacing: 0.04em;
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 24px;
+  background: linear-gradient(135deg, rgba(201, 169, 97, 0.15) 0%, rgba(201, 169, 97, 0.05) 100%);
+  border: 2px solid var(--gold);
+  border-radius: 30px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 20px rgba(201, 169, 97, 0.3);
+  box-shadow: 0 0 16px rgba(201, 169, 97, 0.08), inset 0 0 16px rgba(201, 169, 97, 0.04);
+  position: relative;
+}
+
+.player-detail-role::before {
+  content: "⚽ ";
+  font-size: 0.9rem;
 }
 
 .player-detail-divider {
@@ -1166,6 +1168,7 @@ img { max-width: 100%; display: block; }
   }
   .player-detail-number { font-size: 2.6rem; }
   .player-detail-name { font-size: 1.3rem; }
+  .player-detail-role { font-size: 0.95rem; padding: 6px 18px; }
   .player-detail-info { gap: 28px; }
 }
 
@@ -1232,7 +1235,7 @@ img { max-width: 100%; display: block; }
   opacity: 0;
   pointer-events: none;
   transform: translateY(12px);
-  transition: all 0.35s ease;
+  transition: opacity 0.35s ease, transform 0.35s ease, background 0.35s ease, color 0.35s ease;
 }
 .back-to-top.visible {
   opacity: 1;
@@ -1248,82 +1251,7 @@ img { max-width: 100%; display: block; }
   .countdown-timer { gap: 16px; }
   .countdown-timer em { font-size: 1.5rem; }
   .back-to-top { bottom: 20px; right: 20px; width: 40px; height: 40px; }
-  .edit-toggle { bottom: 20px; left: 20px; width: 40px; height: 40px; }
-}
 
-/* ========================================
-   Edit Mode Toggle
-   ======================================== */
-.edit-toggle {
-  position: fixed;
-  bottom: 32px;
-  left: 32px;
-  z-index: 100;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--gold);
-  background: var(--bg-secondary);
-  color: var(--gold);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.35s ease;
-}
-.edit-toggle:hover {
-  background: rgba(201, 169, 97, 0.12);
-}
-.edit-toggle.active {
-  background: var(--gold);
-  color: var(--bg-primary);
-  box-shadow: 0 0 16px var(--gold-glow);
-}
-
-/* ========================================
-   Edit Mode Indicators
-   ======================================== */
-.edit-indicator {
-  position: absolute;
-  z-index: 10;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.7);
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  cursor: pointer;
-  transition: all 0.25s ease;
-  font-size: 0.85rem;
-}
-.edit-indicator:hover {
-  background: var(--gold);
-  color: var(--bg-primary);
-}
-.edit-indicator-camera {
-  width: 36px;
-  height: 36px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-.edit-mode .edit-indicator {
-  display: flex;
-}
-
-/* Image zone wrapper for edit mode */
-.edit-image-zone {
-  position: relative;
-  cursor: pointer;
-}
-.edit-mode .edit-image-zone {
-  outline: 1px dashed var(--gold);
-  outline-offset: 2px;
-}
-.edit-mode .edit-image-zone:hover {
-  outline-color: var(--gold);
-  outline-width: 2px;
 }
 
 /* Player avatar as image */
@@ -1350,29 +1278,4 @@ img { max-width: 100%; display: block; }
   object-fit: cover;
   position: absolute;
   inset: 0;
-}
-
-/* ========================================
-   Toast
-   ======================================== */
-.toast {
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  z-index: 300;
-  background: var(--gold);
-  color: var(--bg-primary);
-  padding: 10px 28px;
-  border-radius: 24px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.35s ease;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
 }

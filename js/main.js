@@ -3,6 +3,33 @@
    ======================================== */
 
 /* ========================================
+   Utilities
+   ======================================== */
+function rafThrottle(fn) {
+  let ticking = false;
+  return function () {
+    if (!ticking) {
+      requestAnimationFrame(() => { fn(); ticking = false; });
+      ticking = true;
+    }
+  };
+}
+
+function closeOnBackdrop(overlayElement, closeFn) {
+  overlayElement.addEventListener("click", (e) => {
+    if (e.target === overlayElement) closeFn();
+  });
+}
+
+function closeOnEscape(overlayElement, closeFn) {
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlayElement.classList.contains("open")) {
+      closeFn();
+    }
+  });
+}
+
+/* ========================================
    Storage Layer — IndexedDB + localStorage
    ======================================== */
 function openDB() {
@@ -25,20 +52,6 @@ function openDB() {
   });
 }
 
-function saveImage(storeName, key, dataUrl) {
-  return openDB().then(db => {
-    return new Promise((resolve, reject) => {
-      const blob = dataUrlToBlob(dataUrl);
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      const keyField = { playerAvatars: "playerNumber", carouselPhotos: "slideIndex", galleryPhotos: "key" }[storeName];
-      const record = { [keyField]: key, data: blob };
-      store.put(record);
-      tx.oncomplete = () => { db.close(); resolve(); };
-      tx.onerror = () => { db.close(); reject(tx.error); };
-    });
-  });
-}
 
 function loadImage(storeName, key) {
   return openDB().then(db => {
@@ -60,14 +73,6 @@ function loadImage(storeName, key) {
   });
 }
 
-function dataUrlToBlob(dataUrl) {
-  const parts = dataUrl.split(",");
-  const mime = parts[0].match(/:(.*?);/)[1];
-  const bytes = atob(parts[1]);
-  const arr = new Uint8Array(bytes.length);
-  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-  return new Blob([arr], { type: mime });
-}
 
 function loadOverrides() {
   try {
@@ -80,58 +85,38 @@ function loadOverrides() {
   }
 }
 
-function savePlayerOverride(playerNumber, field, value) {
-  const overrides = JSON.parse(localStorage.getItem("jrsf_players") || "{}");
-  if (!overrides[playerNumber]) overrides[playerNumber] = {};
-  overrides[playerNumber][field] = value;
-  localStorage.setItem("jrsf_players", JSON.stringify(overrides));
-}
-
-function saveSlideOverride(slideIndex, field, value) {
-  const overrides = JSON.parse(localStorage.getItem("jrsf_slides") || "{}");
-  if (!overrides[slideIndex]) overrides[slideIndex] = {};
-  overrides[slideIndex][field] = value;
-  localStorage.setItem("jrsf_slides", JSON.stringify(overrides));
-}
-
-function saveAlbumPhotoOverride(albumTitle, photoIndex, field, value) {
-  const overrides = JSON.parse(localStorage.getItem("jrsf_albums") || "{}");
-  const key = albumTitle + "||" + photoIndex;
-  if (!overrides[key]) overrides[key] = {};
-  overrides[key][field] = value;
-  localStorage.setItem("jrsf_albums", JSON.stringify(overrides));
-}
 
 /* ========================================
    Default Data
    ======================================== */
 function getDefaultPlayers() {
   return [
-    { number: 1,  name: "叶乙茏", role: "门将",    captain: false, avatar: "🧤", height: "—", weight: "—", joinYear: "2025", strengths: ["门将"],      bio: "" },
-    { number: 2,  name: "曾松",   role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 4,  name: "李云龙", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 6,  name: "周照航", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 7,  name: "刘畅",   role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 8,  name: "王绪坤", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 9,  name: "张浩宇", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 10, name: "向润杰", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 11, name: "张平",   role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 13, name: "胡纪轩", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 14, name: "古培杰", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 15, name: "洪源",   role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 17, name: "骆浩睿", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 81, name: "唐文",   role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 19, name: "蔡超",   role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 21, name: "唐程伟", role: "教练",    captain: false, avatar: "📋", height: "—", weight: "—", joinYear: "2025", strengths: ["战术指导"],  bio: "球队教练，负责战术安排和临场指挥。" },
-    { number: 22, name: "李泽",   role: "领队 · 队长", captain: true,  avatar: "⭐", height: "—", weight: "—", joinYear: "2025", strengths: ["组织协调"], bio: "球队领队兼队长，负责球队日常管理和场上指挥。" },
-    { number: 24, name: "巫名扬", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 25, name: "陈奎羽", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 26, name: "李毓庭", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 30, name: "刘宇航", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 69, name: "向桐玮", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 77, name: "田佳鹭", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 82, name: "游胡鑫", role: "待定",    captain: false, avatar: "⚽", height: "—", weight: "—", joinYear: "2025", strengths: ["待补充"],    bio: "" },
-    { number: 99, name: "范有为", role: "门将",    captain: false, avatar: "🧤", height: "—", weight: "—", joinYear: "2025", strengths: ["门将"],      bio: "" },
+    { number: 1,  name: "叶乙茏", role: "GK",       avatar: "🧤", age: 24, joinYear: "2025", strengths: ["门将", "反应快", "出击果断"],    bio: "" },
+    { number: 1,  name: "陈政忠", role: "GK",       avatar: "🧤", age: 27, joinYear: "2025", strengths: ["门将", "稳定", "经验丰富"],      bio: "" },
+    { number: 2,  name: "曾松",   role: "LM",       avatar: "⚙️", age: 23, joinYear: "2025", strengths: ["左前卫", "传中精准", "耐力好"],   bio: "" },
+    { number: 4,  name: "李云龙", role: "CB",       avatar: "🛡️", age: 26, joinYear: "2025", strengths: ["中后卫", "头球", "抢断"],         bio: "" },
+    { number: 6,  name: "周照航", role: "RB",       avatar: "🛡️", age: 24, joinYear: "2025", strengths: ["右后卫", "速度", "回追"],         bio: "" },
+    { number: 7,  name: "刘畅",   role: "AM",       avatar: "⚙️", age: 26, joinYear: "2025", strengths: ["攻击型中场", "传球", "远射"],     bio: "" },
+    { number: 8,  name: "王绪坤", role: "AM",       avatar: "⚙️", age: 26, joinYear: "2025", strengths: ["攻击型中场", "盘带", "前插"],     bio: "" },
+    { number: 9,  name: "张浩宇", role: "DM / LB",  avatar: "⚙️", age: 26, joinYear: "2025", strengths: ["防守型中场", "拦截", "覆盖面大"], bio: "" },
+    { number: 10, name: "向润杰", role: "SS",       avatar: "🎯", age: 27, joinYear: "2025", strengths: ["影子前锋", "跑位", "终结"],       bio: "" },
+    { number: 11, name: "张平",   role: "LM",       avatar: "⚙️", age: 28, joinYear: "2025", strengths: ["左前卫", "经验", "传中"],         bio: "" },
+    { number: 13, name: "胡纪轩", role: "CB",       avatar: "🛡️", age: 26, joinYear: "2025", strengths: ["中后卫", "对抗", "卡位"],         bio: "" },
+    { number: 14, name: "古培杰", role: "LIB",      avatar: "🛡️", age: 24, joinYear: "2025", strengths: ["自由人", "出球", "阅读比赛"],     bio: "" },
+    { number: 15, name: "洪源",   role: "DM",       avatar: "⚙️", age: 25, joinYear: "2025", strengths: ["防守型中场", "扫荡", "体能"],     bio: "" },
+    { number: 17, name: "骆浩睿", role: "RW / LW",  avatar: "🎯", age: 23, joinYear: "2025", strengths: ["边锋", "突破", "速度"],           bio: "" },
+    { number: 18, name: "唐文",   role: "CM",       avatar: "⚙️", age: 25, joinYear: "2025", strengths: ["中前卫", "组织", "短传"],         bio: "" },
+    { number: 19, name: "蔡超",   role: "LB / RB / CB", avatar: "🛡️", age: 27, joinYear: "2025", strengths: ["全能后卫", "万金油", "防守意识"], bio: "" },
+    { number: 21, name: "唐程伟", role: "教练",     avatar: "📋", age: 26, joinYear: "2025", strengths: ["战术指导", "临场指挥"],             bio: "球队教练，负责战术安排和临场指挥。" },
+    { number: 22, name: "李泽",   role: "CB",       avatar: "⭐", age: 27, joinYear: "2025", strengths: ["队长", "中后卫", "组织防线"],     bio: "球队领队兼队长，负责球队日常管理和场上指挥。" },
+    { number: 24, name: "巫名扬", role: "DM",       avatar: "⚙️", age: 21, joinYear: "2025", strengths: ["防守型中场", "拼抢", "年轻活力"], bio: "" },
+    { number: 25, name: "陈奎羽", role: "CF",       avatar: "🎯", age: 26, joinYear: "2025", strengths: ["中锋", "支点", "头球"],           bio: "" },
+    { number: 26, name: "李毓庭", role: "OMF",      avatar: "⚙️", age: 25, joinYear: "2025", strengths: ["前腰", "创造力", "关键传球"],     bio: "" },
+    { number: 30, name: "刘宇航", role: "RW / LW",  avatar: "🎯", age: 25, joinYear: "2025", strengths: ["边锋", "盘带", "内切"],           bio: "" },
+    { number: 69, name: "向桐玮", role: "RW / LW",  avatar: "🎯", age: 25, joinYear: "2025", strengths: ["边锋", "速度", "突破"],           bio: "" },
+    { number: 77, name: "田佳鹭", role: "OMF",      avatar: "⚙️", age: 25, joinYear: "2025", strengths: ["前腰", "技术", "远射"],           bio: "" },
+    { number: 82, name: "游胡鑫", role: "CM",       avatar: "⚙️", age: 26, joinYear: "2025", strengths: ["中前卫", "控球", "调度"],         bio: "" },
+    { number: 99, name: "范有为", role: "GK",       avatar: "🧤", age: 24, joinYear: "2025", strengths: ["门将", "扑救", "选位"],           bio: "" },
   ];
 }
 
@@ -225,7 +210,7 @@ async function loadAllOverridesAndMerge() {
   const defaultSlides = getDefaultSlides();
   const mergedSlides = defaultSlides.map((s, i) => {
     const ov = overrides.slides[i] || {};
-    return { ...s, label: ov.label || s.label };
+    return { ...s, label: ov.label ?? s.label };
   });
 
   // Merge album/photo text overrides
@@ -234,7 +219,7 @@ async function loadAllOverridesAndMerge() {
     const mergedPhotos = a.photos.map((p, i) => {
       const key = a.title + "||" + i;
       const ov = overrides.albums[key] || {};
-      return { ...p, label: ov.label || p.label };
+      return { ...p, label: ov.label ?? p.label };
     });
     return { ...a, photos: mergedPhotos };
   });
@@ -276,37 +261,37 @@ function initNav() {
   const nav = document.getElementById("nav");
   const toggle = document.getElementById("navToggle");
   const menu = document.getElementById("navMenu");
+  if (!nav || !toggle || !menu) return;
   const links = menu.querySelectorAll(".nav-link");
 
   toggle.addEventListener("click", () => {
-    toggle.classList.toggle("open");
+    const isOpen = toggle.classList.toggle("open");
     menu.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", isOpen);
   });
 
   links.forEach(link => {
     link.addEventListener("click", () => {
       toggle.classList.remove("open");
       menu.classList.remove("open");
+      toggle.setAttribute("aria-expanded", "false");
     });
   });
 
-  let ticking = false;
-  window.addEventListener("scroll", () => {
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        const scrolled = window.scrollY > 60;
-        nav.classList.toggle("scrolled", scrolled);
-        updateActiveLink();
-        ticking = false;
-      });
-      ticking = true;
-    }
-  });
+  window.addEventListener("scroll", rafThrottle(() => {
+    const scrolled = window.scrollY > 60;
+    nav.classList.toggle("scrolled", scrolled);
+    updateActiveLink();
+  }));
 }
 
 function updateActiveLink() {
-  const sections = document.querySelectorAll("section[id], footer[id]");
-  const links = document.querySelectorAll(".nav-link");
+  if (!updateActiveLink._sections) {
+    updateActiveLink._sections = document.querySelectorAll("section[id], footer[id]");
+    updateActiveLink._navLinks = document.querySelectorAll(".nav-link");
+  }
+  const sections = updateActiveLink._sections;
+  const links = updateActiveLink._navLinks;
   let current = "";
 
   sections.forEach(sec => {
@@ -330,16 +315,14 @@ function renderRoster(playersOverride) {
     <div class="player-card${p.captain ? " captain" : ""}" data-player-index="${i}" data-player-number="${p.number}" onclick="flipCard(this)">
       <div class="player-card-inner">
         <div class="player-card-front">
-          <div class="player-avatar edit-image-zone" data-edit-image="player" data-edit-key="${p.number}">
+          <div class="player-avatar">
             ${p._avatarUrl
               ? `<img src="${p._avatarUrl}" alt="${p.name}">`
               : p.avatar}
-            <span class="edit-indicator edit-indicator-camera" title="更换照片">📷</span>
           </div>
           <div class="player-number">${p.number}</div>
           <div class="player-name">${p.name}</div>
           <div class="player-role">${p.role}</div>
-          ${p.captain ? '<span class="player-badge">CAPTAIN</span>' : ""}
         </div>
         <div class="player-card-back">
           <div class="player-back-name">${p.name} · ${p.number}号</div>
@@ -362,7 +345,7 @@ function renderFixtures() {
       scorers: [{name:"李泽",num:22},{name:"向润杰",num:10},{name:"张浩宇",num:9}],
       assisters: [{name:"向润杰",num:10},{name:"刘畅",num:7}] },
     { date: "2024.11.24", home: "铁狼队",   away: "今日说法", score: "2:2", result: "draw",
-      scorers: [{name:"古培杰",num:14},{name:"唐文",num:81}],
+      scorers: [{name:"古培杰",num:14},{name:"唐文",num:18}],
       assisters: [{name:"李泽",num:22}] },
     { date: "2024.11.10", home: "今日说法", away: "蓝月亮",     score: "0:1", result: "loss",
       scorers: [], assisters: [] },
@@ -383,7 +366,9 @@ function renderFixtures() {
   const statusText = { win: "胜", draw: "平", loss: "负" };
   const statusClass = { win: "win", draw: "draw", loss: "loss" };
 
-  document.getElementById("resultsList").innerHTML = results.map(m => {
+  const resultsEl = document.getElementById("resultsList");
+  if (!resultsEl) return;
+  resultsEl.innerHTML = results.map(m => {
     const hasGoals = m.scorers && m.scorers.length > 0;
     const hasAssists = m.assisters && m.assisters.length > 0;
     const detailHTML = (hasGoals || hasAssists) ? `
@@ -405,13 +390,16 @@ function renderFixtures() {
 
   window.__upcoming = upcoming;
 
-  document.getElementById("upcomingList").innerHTML = upcoming.map(m => `
+  const upcomingEl = document.getElementById("upcomingList");
+  if (upcomingEl) {
+    upcomingEl.innerHTML = upcoming.map(m => `
     <div class="fixture-item">
       <span class="fixture-date">${m.date}</span>
       <span class="fixture-teams">${m.home} vs ${m.away}</span>
       <span class="fixture-upcoming">即将开赛</span>
     </div>
   `).join("");
+  }
 
   startCountdown();
 }
@@ -421,9 +409,8 @@ function initLightbox() {
   const lb = document.getElementById("lightbox");
   const close = document.getElementById("lightboxClose");
   close.addEventListener("click", () => lb.classList.remove("open"));
-  lb.addEventListener("click", (e) => {
-    if (e.target === lb) lb.classList.remove("open");
-  });
+  closeOnBackdrop(lb, () => lb.classList.remove("open"));
+  closeOnEscape(lb, () => lb.classList.remove("open"));
 }
 
 function openLightbox(content) {
@@ -504,12 +491,21 @@ function initHeroParticles() {
       ctx.fill();
     });
 
-    requestAnimationFrame(draw);
+    if (!paused) requestAnimationFrame(draw);
   }
 
   resize();
   window.addEventListener("resize", resize);
-  requestAnimationFrame(draw);
+
+  let paused = false;
+  const heroObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      if (paused) { paused = false; draw(); }
+    } else {
+      paused = true;
+    }
+  }, { threshold: 0 });
+  heroObserver.observe(hero);
 }
 
 /* === Carousel === */
@@ -520,17 +516,17 @@ function initCarousel(slidesOverride) {
   const dots = document.getElementById("carouselDots");
   const prev = document.getElementById("carouselPrev");
   const next = document.getElementById("carouselNext");
+  if (!track || !dots || !prev || !next) return;
 
   let current = 0;
   let timer;
 
   track.innerHTML = slides.map((s, i) => `
-    <div class="carousel-slide edit-image-zone" data-index="${i}" data-edit-image="slide" data-edit-key="${i}">
+    <div class="carousel-slide" data-index="${i}">
       ${s._imageUrl
         ? `<img class="carousel-slide-img" src="${s._imageUrl}" alt="${s.label}">`
         : `<span class="carousel-slide-icon">${s.icon}</span>`}
       <span class="carousel-slide-label">${s.label}</span>
-      <span class="edit-indicator edit-indicator-camera" title="更换照片">📷</span>
     </div>
   `).join("");
 
@@ -576,9 +572,8 @@ function initCarousel(slidesOverride) {
     }
   });
 
-  // Lightbox on click (only in normal mode)
+  // Lightbox on click
   track.addEventListener("click", (e) => {
-    if (document.body.classList.contains("edit-mode")) return;
     const slide = e.target.closest(".carousel-slide");
     if (!slide) return;
     const idx = parseInt(slide.dataset.index, 10);
@@ -607,6 +602,7 @@ function initCarousel(slidesOverride) {
 /* === Tactics Board === */
 function initTacticsBoard() {
   const canvas = document.getElementById("tacticsCanvas");
+  if (!canvas) return;
   const board = canvas.parentElement;
   const dpr = window.devicePixelRatio || 1;
 
@@ -654,10 +650,19 @@ function initTacticsBoard() {
 
   let currentFormation = "322";
 
-  function getPlayerName(number) {
+  let playerMap = null;
+  function getPlayerMap() {
+    if (playerMap) return playerMap;
     const players = window.__players;
-    if (!players) return "";
-    const p = players.find(p => p.number === number);
+    if (!players) return null;
+    playerMap = new Map(players.map(p => [p.number, p]));
+    return playerMap;
+  }
+
+  function getPlayerName(number) {
+    const map = getPlayerMap();
+    if (!map) return "";
+    const p = map.get(number);
     return p ? p.name : "";
   }
 
@@ -840,12 +845,11 @@ function initGalleryOverlay(albumsOverride) {
         </div>
         <div class="gallery-album-grid">
           ${a.photos.map((p, i) => `
-            <div class="gallery-photo edit-image-zone" data-album="${a.title}" data-idx="${i}" data-edit-image="album" data-edit-key="${a.title}||${i}">
+            <div class="gallery-photo" data-album="${a.title}" data-idx="${i}">
               ${p._imageUrl
                 ? `<img src="${p._imageUrl}" alt="${p.label}">`
                 : `<span>${p.icon}</span>`}
               <span class="gallery-photo-label">${p.label}</span>
-              <span class="edit-indicator edit-indicator-camera" title="更换照片">📷</span>
             </div>
           `).join("")}
         </div>
@@ -874,18 +878,11 @@ function initGalleryOverlay(albumsOverride) {
   }
 
   backBtn.addEventListener("click", close);
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) close();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && overlay.classList.contains("open")) {
-      close();
-    }
-  });
+  closeOnBackdrop(overlay, close);
+  closeOnEscape(overlay, close);
 
-  // Photo click → lightbox (only in normal mode)
+  // Photo click → lightbox
   content.addEventListener("click", (e) => {
-    if (document.body.classList.contains("edit-mode")) return;
     const photo = e.target.closest(".gallery-photo");
     if (!photo) return;
     const album = photo.dataset.album;
@@ -914,14 +911,8 @@ function initPlayerDetail() {
   const backBtn = document.getElementById("playerBack");
 
   backBtn.addEventListener("click", closePlayerDetail);
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closePlayerDetail();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && overlay.classList.contains("open")) {
-      closePlayerDetail();
-    }
-  });
+  closeOnBackdrop(overlay, closePlayerDetail);
+  closeOnEscape(overlay, closePlayerDetail);
 }
 
 function openPlayerDetail(index) {
@@ -929,21 +920,11 @@ function openPlayerDetail(index) {
   if (!p) return;
 
   const avatarEl = document.getElementById("playerDetailAvatar");
-  avatarEl.className = "player-detail-avatar edit-image-zone";
-  avatarEl.dataset.editImage = "player";
-  avatarEl.dataset.editKey = p.number;
+  avatarEl.className = "player-detail-avatar";
   if (p._avatarUrl) {
     avatarEl.innerHTML = `<img src="${p._avatarUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
   } else {
     avatarEl.textContent = p.avatar;
-  }
-  // Add camera indicator
-  if (!avatarEl.querySelector(".edit-indicator")) {
-    const indicator = document.createElement("span");
-    indicator.className = "edit-indicator edit-indicator-camera";
-    indicator.title = "更换照片";
-    indicator.textContent = "📷";
-    avatarEl.appendChild(indicator);
   }
 
   document.getElementById("playerDetailNumber").textContent = p.number;
@@ -954,12 +935,12 @@ function openPlayerDetail(index) {
 
   document.getElementById("playerDetailInfo").innerHTML = `
     <div class="player-info-item">
-      <div class="player-info-value">${p.height}</div>
-      <div class="player-info-label">身高</div>
+      <div class="player-info-value">${p.age ?? "—"}</div>
+      <div class="player-info-label">年龄</div>
     </div>
     <div class="player-info-item">
-      <div class="player-info-value">${p.weight}</div>
-      <div class="player-info-label">体重</div>
+      <div class="player-info-value">${p.number}</div>
+      <div class="player-info-label">号码</div>
     </div>
     <div class="player-info-item">
       <div class="player-info-value">${p.joinYear}</div>
@@ -1017,7 +998,7 @@ function initCountUp() {
       const el = entry.target;
       const raw = el.textContent.trim();
       const match = raw.match(/^(\d+)(\+?)$/);
-      if (!match) return;
+      if (!match) { observer.unobserve(el); return; }
       const end = parseInt(match[1], 10);
       const suffix = match[2];
       let start = 0;
@@ -1047,16 +1028,9 @@ function initCountUp() {
 function initBackToTop() {
   const btn = document.getElementById("backToTop");
 
-  let ticking = false;
-  window.addEventListener("scroll", () => {
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        btn.classList.toggle("visible", window.scrollY > window.innerHeight);
-        ticking = false;
-      });
-      ticking = true;
-    }
-  });
+  window.addEventListener("scroll", rafThrottle(() => {
+    btn.classList.toggle("visible", window.scrollY > window.innerHeight);
+  }));
 
   btn.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1069,7 +1043,10 @@ function startCountdown() {
   if (!upcoming || !upcoming.length) return;
 
   const firstMatch = upcoming[0];
-  const targetDate = new Date(firstMatch.date.replace(/\./g, "-") + "T14:40:00");
+  if (!firstMatch || !firstMatch.date) return;
+  const dateStr = firstMatch.date.replace(/\./g, "-") + "T14:40:00";
+  const targetDate = new Date(dateStr);
+  if (isNaN(targetDate.getTime())) return;
 
   const timer = document.getElementById("countdownTimer");
   if (!timer) return;
@@ -1097,7 +1074,19 @@ function startCountdown() {
   }
 
   tick();
-  setInterval(tick, 1000);
+  let countdownId = setInterval(tick, 1000);
+
+  const bar = document.getElementById("countdownBar");
+  if (bar) {
+    new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        if (!countdownId) { tick(); countdownId = setInterval(tick, 1000); }
+      } else {
+        clearInterval(countdownId);
+        countdownId = null;
+      }
+    }, { threshold: 0 }).observe(bar);
+  }
 }
 
 /* === Card Flip === */
@@ -1109,129 +1098,3 @@ function flipCard(card) {
   }
 }
 
-/* ========================================
-   Edit Mode
-   ======================================== */
-function initEditMode() {
-  const toggle = document.getElementById("editToggle");
-  const fileInput = document.getElementById("editFileInput");
-
-  let editModeOn = false;
-  let pendingImageTarget = null; // { type, key }
-
-  // Toggle edit mode
-  toggle.addEventListener("click", () => {
-    editModeOn = !editModeOn;
-    toggle.classList.toggle("active", editModeOn);
-    document.body.classList.toggle("edit-mode", editModeOn);
-  });
-
-  // Delegate click for image zones (only in edit mode)
-  document.addEventListener("click", (e) => {
-    if (!editModeOn) return;
-
-    const cameraIndicator = e.target.closest(".edit-indicator-camera");
-    const imageZone = e.target.closest(".edit-image-zone");
-    const target = cameraIndicator ? cameraIndicator.parentElement : imageZone;
-
-    if (target && !e.target.closest("button")) {
-      e.preventDefault();
-      e.stopPropagation();
-      const type = target.dataset.editImage;
-      const key = type === "player" ? parseInt(target.dataset.editKey, 10) : target.dataset.editKey;
-      pendingImageTarget = { type, key };
-      fileInput.click();
-    }
-  });
-
-  // File input change
-  fileInput.addEventListener("change", () => {
-    if (!pendingImageTarget || !fileInput.files.length) return;
-    const file = fileInput.files[0];
-    handleImageUpload(pendingImageTarget.type, pendingImageTarget.key, file);
-    pendingImageTarget = null;
-    fileInput.value = "";
-  });
-}
-
-function handleImageUpload(type, key, file) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    // Resize with canvas for performance (max 400px width)
-    const img = new Image();
-    img.onload = () => {
-      const maxW = 400;
-      let w = img.width, h = img.height;
-      if (w > maxW) { h = h * (maxW / w); w = maxW; }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-
-      // Save to IndexedDB
-      const storeName = type === "player" ? "playerAvatars"
-        : type === "slide" ? "carouselPhotos" : "galleryPhotos";
-
-      saveImage(storeName, key, dataUrl).then(() => {
-        // Update DOM immediately
-        if (type === "player") {
-          // Update avatar in player card
-          const card = document.querySelector(`.player-avatar[data-edit-key="${key}"]`);
-          if (card) {
-            card.innerHTML = `<img src="${dataUrl}" alt="球员">`;
-            // Restore camera indicator
-            const indicator = document.createElement("span");
-            indicator.className = "edit-indicator edit-indicator-camera";
-            indicator.title = "更换照片";
-            indicator.textContent = "📷";
-            card.appendChild(indicator);
-          }
-          // Update in-memory
-          const p = window.__players.find(p => p.number === key);
-          if (p) p._avatarUrl = dataUrl;
-        } else if (type === "slide") {
-          const slide = document.querySelector(`.carousel-slide[data-edit-key="${key}"]`);
-          if (slide) {
-            const iconSpan = slide.querySelector(".carousel-slide-icon");
-            if (iconSpan) iconSpan.remove();
-            let imgEl = slide.querySelector(".carousel-slide-img");
-            if (!imgEl) {
-              imgEl = document.createElement("img");
-              imgEl.className = "carousel-slide-img";
-              slide.insertBefore(imgEl, slide.firstChild);
-            }
-            imgEl.src = dataUrl;
-          }
-        } else if (type === "album") {
-          const photo = document.querySelector(`.gallery-photo[data-edit-key="${key}"]`);
-          if (photo) {
-            const emojiSpan = photo.querySelector("span:not(.gallery-photo-label):not(.edit-indicator)");
-            if (emojiSpan) emojiSpan.remove();
-            let imgEl = photo.querySelector("img");
-            if (!imgEl) {
-              imgEl = document.createElement("img");
-              imgEl.alt = "";
-              photo.insertBefore(imgEl, photo.firstChild);
-            }
-            imgEl.src = dataUrl;
-          }
-        }
-        showToast();
-      });
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-function showToast() {
-  const toast = document.getElementById("toast");
-  toast.classList.add("show");
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(() => {
-    toast.classList.remove("show");
-  }, 1800);
-}
