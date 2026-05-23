@@ -122,6 +122,14 @@ function getDefaultPlayers() {
 }
 
 function getDefaultSlides() {
+  const photos = window.__galleryData || [];
+  if (photos.length > 0) {
+    return photos.map(p => ({
+      label: p.label,
+      _imageUrl: "images/gallery/" + p.file
+    }));
+  }
+  // 无照片时显示占位
   return [
     { icon: "⚽", label: "首场比赛" },
     { icon: "🏟️", label: "主场作战" },
@@ -134,41 +142,39 @@ function getDefaultSlides() {
 }
 
 function getDefaultAlbums() {
-  return [
-    {
-      title: "今日说法 vs 老男孩FC",
-      date: "2024.12.08 · 溉澜溪体育公园",
-      photos: [
-        { icon: "📸", label: "赛前合影" },
-        { icon: "🏃", label: "赛前热身" },
-        { icon: "⚽", label: "开球" },
-        { icon: "🎯", label: "精彩射门" },
-        { icon: "🔥", label: "庆祝进球" },
-        { icon: "🤝", label: "赛后握手" },
-      ]
-    },
-    {
-      title: "今日说法 vs 雄狮联盟",
-      date: "2024.10.13 · 溉澜溪体育公园",
-      photos: [
-        { icon: "📸", label: "全队合影" },
-        { icon: "🎯", label: "任意球" },
-        { icon: "⚽", label: "进球瞬间" },
-        { icon: "🏆", label: "赛后总结" },
-      ]
-    },
-    {
-      title: "队内训练",
-      date: "2024.11.03 · 溉澜溪体育公园",
-      photos: [
-        { icon: "🏃", label: "体能训练" },
-        { icon: "⚽", label: "分组对抗" },
-        { icon: "🎯", label: "射门练习" },
-        { icon: "🧤", label: "门将特训" },
-        { icon: "📋", label: "战术讲解" },
-      ]
-    },
-  ];
+  const photos = window.__galleryData || [];
+  // 按相册分组真实照片
+  const albumMap = {};
+  photos.forEach(p => {
+    if (!albumMap[p.album]) albumMap[p.album] = [];
+    albumMap[p.album].push({ label: p.label, _imageUrl: "images/gallery/" + p.file });
+  });
+  // 已有的相册日期信息
+  const knownAlbums = {
+    "今日说法 vs 老男孩FC": "2024.12.08 · 溉澜溪体育公园",
+    "今日说法 vs 雄狮联盟": "2024.10.13 · 溉澜溪体育公园",
+    "队内训练": "2024.11.03 · 溉澜溪体育公园",
+  };
+  const result = [];
+  // 先处理有真实照片的相册
+  Object.keys(albumMap).forEach(title => {
+    result.push({ title, date: knownAlbums[title] || "", photos: albumMap[title] });
+  });
+  // 补充只有占位符的已知相册（未上传照片的）
+  Object.keys(knownAlbums).forEach(title => {
+    if (!albumMap[title]) {
+      result.push({ title, date: knownAlbums[title], photos: [] });
+    }
+  });
+  // 如果没有任何相册数据，放入默认占位
+  if (result.length === 0) {
+    result.push(
+      { title: "今日说法 vs 老男孩FC", date: "2024.12.08 · 溉澜溪体育公园", photos: [] },
+      { title: "今日说法 vs 雄狮联盟", date: "2024.10.13 · 溉澜溪体育公园", photos: [] },
+      { title: "队内训练",     date: "2024.11.03 · 溉澜溪体育公园", photos: [] },
+    );
+  }
+  return result;
 }
 
 /* ========================================
@@ -475,7 +481,7 @@ function initLightbox() {
 
 function openLightbox(content) {
   const img = document.getElementById("lightboxImg");
-  if (typeof content === "string" && (content.startsWith("blob:") || content.startsWith("data:image"))) {
+  if (typeof content === "string" && !content.startsWith("<")) {
     img.src = content;
     img.style.maxWidth = "90vw";
     img.style.maxHeight = "85vh";
@@ -916,7 +922,6 @@ function initGalleryOverlay(albumsOverride) {
               ${p._imageUrl
                 ? `<img src="${p._imageUrl}" alt="${p.label}">`
                 : `<svg class="gallery-photo-camera" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 5V3h8v2"/></svg>`}
-              <span class="gallery-photo-label">${p.label}</span>
             </div>
           `).join("")}
         </div>

@@ -936,16 +936,6 @@ img { max-width: 100%; display: block; }
   opacity: 1;
 }
 
-.gallery-photo-label {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  right: 8px;
-  text-align: center;
-  font-size: 0.7rem;
-  color: #888;
-  letter-spacing: 0.04em;
-}
 
 /* === Tactics Board === */
 .tactics-controls {
