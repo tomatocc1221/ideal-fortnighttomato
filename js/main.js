@@ -103,6 +103,7 @@ function getDefaultPlayers() {
     { number: 11, name: "张平",   role: "LM",       avatar: "⚙️", age: 28, joinYear: "2025", strengths: ["左前卫", "经验", "传中"],         bio: "" },
     { number: 13, name: "胡纪轩", role: "CB",       avatar: "🛡️", age: 26, joinYear: "2025", strengths: ["中后卫", "对抗", "卡位"],         bio: "" },
     { number: 14, name: "古培杰", role: "LIB",      avatar: "🛡️", age: 24, joinYear: "2025", strengths: ["自由人", "出球", "阅读比赛"],     bio: "" },
+    { number: 0,  name: "胡鑫",   role: "DM",       avatar: "⚙️", age: 26, joinYear: "2025", strengths: ["防守型中场", "拦截", "跑动"],       bio: "" },
     { number: 15, name: "洪源",   role: "DM",       avatar: "⚙️", age: 25, joinYear: "2025", strengths: ["防守型中场", "扫荡", "体能"],     bio: "" },
     { number: 17, name: "骆浩睿", role: "RW / LW",  avatar: "🎯", age: 23, joinYear: "2025", strengths: ["边锋", "突破", "速度"],           bio: "" },
     { number: 18, name: "唐文",   role: "CM",       avatar: "⚙️", age: 25, joinYear: "2025", strengths: ["中前卫", "组织", "短传"],         bio: "" },
