@@ -382,26 +382,35 @@ function renderRoster(playersOverride) {
 /* === Fixtures === */
 function renderFixtures() {
   const results = [
-    { date: "2024.12.08", home: "今日说法", away: "老男孩FC",   score: "3:1", result: "win",
-      scorers: [{name:"李泽",num:22},{name:"向润杰",num:10},{name:"张浩宇",num:9}],
+    { date: "2025.04.19", home: "今日说法", away: "东吴FC",     score: "3:2", result: "win",
+      scorers: [{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"古培杰",num:14}],
       assisters: [{name:"向润杰",num:10},{name:"刘畅",num:7}] },
-    { date: "2024.11.24", home: "铁狼队",   away: "今日说法", score: "2:2", result: "draw",
-      scorers: [{name:"古培杰",num:14},{name:"唐文",num:18}],
+    { date: "2025.04.12", home: "今日说法", away: "快乐足球",   score: "2:1", result: "win",
+      scorers: [{name:"向润杰",num:10},{name:"刘畅",num:7}],
+      assisters: [{name:"张浩宇",num:9}] },
+    { date: "2025.04.05", home: "铁狼队",   away: "今日说法", score: "0:1", result: "win",
+      scorers: [{name:"向润杰",num:10}],
       assisters: [{name:"李泽",num:22}] },
-    { date: "2024.11.10", home: "今日说法", away: "蓝月亮",     score: "0:1", result: "loss",
-      scorers: [], assisters: [] },
-    { date: "2024.10.27", home: "东风FC",   away: "今日说法", score: "1:4", result: "win",
-      scorers: [{name:"张浩宇",num:9},{name:"向润杰",num:10},{name:"刘畅",num:7},{name:"李泽",num:22}],
-      assisters: [{name:"张浩宇",num:9},{name:"古培杰",num:14}] },
-    { date: "2024.10.13", home: "今日说法", away: "雄狮联盟",   score: "2:0", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"张浩宇",num:9}],
+    { date: "2025.03.29", home: "今日说法", away: "蓝月亮",     score: "3:1", result: "win",
+      scorers: [{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"刘畅",num:7}],
+      assisters: [{name:"李泽",num:22},{name:"张浩宇",num:9}] },
+    { date: "2025.03.22", home: "东风FC",   away: "今日说法", score: "1:1", result: "draw",
+      scorers: [{name:"张浩宇",num:9}],
+      assisters: [{name:"向润杰",num:10}] },
+    { date: "2025.03.15", home: "今日说法", away: "老男孩FC",   score: "4:2", result: "win",
+      scorers: [{name:"向润杰",num:10},{name:"李泽",num:22},{name:"张浩宇",num:9},{name:"唐文",num:18}],
+      assisters: [{name:"刘畅",num:7},{name:"向润杰",num:10}] },
+    { date: "2025.03.08", home: "飓风青年", away: "今日说法", score: "2:0", result: "loss",
+      scorers: [],
       assisters: [] },
+    { date: "2025.03.01", home: "今日说法", away: "雄狮联盟",   score: "5:3", result: "win",
+      scorers: [{name:"向润杰",num:10},{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"刘畅",num:7},{name:"唐文",num:18}],
+      assisters: [{name:"张浩宇",num:9},{name:"李泽",num:22},{name:"向润杰",num:10}] },
   ];
 
   const upcoming = [
-    { date: "2026.05.23", home: "绿茵竞技", away: "今日说法" },
-    { date: "2025.01.05", home: "今日说法", away: "飓风青年" },
-    { date: "2025.01.19", home: "飞鹰FC",   away: "今日说法" },
+    { date: "2026.05.23", time: "14:40", home: "今日说法", away: "重庆龮枥", venue: "奥体驰骋足球场2号场", jersey: "蓝", jerseyColor: "#4a90d9" },
+    { date: "2026.05.24", time: "19:00", home: "飞虎",     away: "今日说法", venue: "华侨城足球公园",     jersey: "粉", jerseyColor: "#f0a0b0" },
   ];
 
   const statusText = { win: "胜", draw: "平", loss: "负" };
@@ -433,13 +442,18 @@ function renderFixtures() {
 
   const upcomingEl = document.getElementById("upcomingList");
   if (upcomingEl) {
-    upcomingEl.innerHTML = upcoming.map(m => `
+    upcomingEl.innerHTML = upcoming.map(m => {
+      const jerseyBadge = m.jersey ? `<span class="fixture-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}色</span>` : "";
+      return `
     <div class="fixture-item">
-      <span class="fixture-date">${m.date}</span>
-      <span class="fixture-teams">${m.home} vs ${m.away}</span>
-      <span class="fixture-upcoming">即将开赛</span>
+      <div class="fixture-item-main">
+        <span class="fixture-date">${m.date}</span>
+        <span class="fixture-teams">${m.home} vs ${m.away} ${jerseyBadge}</span>
+        <span class="fixture-upcoming">即将开赛</span>
+      </div>
+      <div class="fixture-meta">${m.time || ""} · ${m.venue || ""}</div>
     </div>
-  `).join("");
+    `}).join("");
   }
 
   startCountdown();
@@ -1104,14 +1118,28 @@ function startCountdown() {
   const upcoming = window.__upcoming;
   if (!upcoming || !upcoming.length) return;
 
-  const firstMatch = upcoming[0];
-  if (!firstMatch || !firstMatch.date) return;
-  const dateStr = firstMatch.date.replace(/\./g, "-") + "T14:40:00";
+  const m = upcoming[0];
+  if (!m || !m.date) return;
+  const timeStr = m.time || "14:40";
+  const dateStr = m.date.replace(/\./g, "-") + "T" + timeStr + ":00";
   const targetDate = new Date(dateStr);
   if (isNaN(targetDate.getTime())) return;
 
   const timer = document.getElementById("countdownTimer");
+  const matchEl = document.getElementById("countdownMatch");
   if (!timer) return;
+
+  if (matchEl) {
+    const d = new Date(targetDate);
+    const weekdays = ["周日","周一","周二","周三","周四","周五","周六"];
+    const wd = weekdays[d.getDay()];
+    const jerseyHTML = m.jersey ? `<span class="countdown-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}色球衣</span>` : "";
+    matchEl.innerHTML = `
+      <div class="countdown-teams"><span>${m.home}</span><span class="countdown-vs">vs</span><span>${m.away}</span></div>
+      <div class="countdown-meta">${m.date.replace(/\./, "年").replace(/\./, "月")}日 ${wd} · ${timeStr}</div>
+      <div class="countdown-venue">${m.venue || ""} ${jerseyHTML}</div>
+    `;
+  }
 
   function tick() {
     const now = new Date();
@@ -1128,10 +1156,10 @@ function startCountdown() {
     const seconds = Math.floor((diff / 1000) % 60);
 
     timer.innerHTML = `
-      <span><em>${days}</em> 天</span>
-      <span><em>${String(hours).padStart(2, "0")}</em> 时</span>
-      <span><em>${String(minutes).padStart(2, "0")}</em> 分</span>
-      <span><em>${String(seconds).padStart(2, "0")}</em> 秒</span>
+      <span><em>${days}</em><small>天</small></span>
+      <span><em>${String(hours).padStart(2, "0")}</em><small>时</small></span>
+      <span><em>${String(minutes).padStart(2, "0")}</em><small>分</small></span>
+      <span><em>${String(seconds).padStart(2, "0")}</em><small>秒</small></span>
     `;
   }
 
