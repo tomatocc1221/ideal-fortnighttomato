@@ -1013,10 +1013,18 @@ img { max-width: 100%; display: block; }
   .about-stats { grid-template-columns: 1fr 1fr; }
 
   /* Roster */
-  .roster-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .roster-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .roster-group-title { font-size: 1rem; padding: 8px 16px; }
-  .player-card { height: 240px; }
-  .player-back-btn { padding: 10px 24px; font-size: 0.85rem; min-height: 44px; }
+  .player-card { height: 190px; }
+  .player-card-front,
+  .player-card-back { padding: 16px 10px 14px; }
+  .player-avatar { width: 52px; height: 52px; margin-bottom: 8px; font-size: 1.3rem; }
+  .player-number { font-size: 1.35rem; }
+  .player-name { font-size: 0.88rem; margin-top: 3px; }
+  .player-role { font-size: 0.68rem; padding: 2px 10px; margin-top: 3px; }
+  .player-back-name { font-size: 0.95rem; }
+  .player-back-bio { font-size: 0.78rem; }
+  .player-back-btn { padding: 8px 16px; font-size: 0.78rem; min-height: 36px; }
 
   /* Fixtures */
   .fixtures-columns { grid-template-columns: 1fr; gap: 36px; }
@@ -1044,7 +1052,7 @@ img { max-width: 100%; display: block; }
 }
 
 @media (max-width: 400px) {
-  .roster-grid { grid-template-columns: 1fr; }
+  .roster-grid { grid-template-columns: 1fr; gap: 14px; }
   .roster-group-title { font-size: 0.95rem; }
   .carousel-slide-icon { font-size: 2.5rem; }
   .about-stats { grid-template-columns: 1fr; }
@@ -1052,7 +1060,11 @@ img { max-width: 100%; display: block; }
   .gallery-album-grid { grid-template-columns: 1fr 1fr; }
   .gallery-photo { font-size: 1.6rem; }
   .tactics-btn { padding: 6px 14px; font-size: 0.8rem; }
-  .player-card { height: 220px; }
+  .player-card { height: 210px; }
+  .player-avatar { width: 60px; height: 60px; margin-bottom: 10px; font-size: 1.5rem; }
+  .player-number { font-size: 1.5rem; }
+  .player-name { font-size: 0.95rem; }
+  .player-role { font-size: 0.72rem; padding: 2px 12px; }
   .player-back-btn { padding: 10px 20px; font-size: 0.82rem; min-height: 44px; }
 }
 
