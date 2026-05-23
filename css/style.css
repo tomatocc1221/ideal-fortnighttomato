@@ -723,9 +723,7 @@ img { max-width: 100%; display: block; }
 .carousel-slide {
   flex: 0 0 100%;
   aspect-ratio: 16 / 9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   background: var(--bg-card);
   cursor: pointer;
   position: relative;
@@ -733,6 +731,11 @@ img { max-width: 100%; display: block; }
 }
 
 .carousel-slide-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.05rem;
   color: var(--gold);
   letter-spacing: 0.1em;
@@ -899,11 +902,7 @@ img { max-width: 100%; display: block; }
   border: 1px solid var(--border-default);
   border-radius: 6px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 8px;
+  display: block;
   color: var(--border-muted);
   transition: border-color 0.3s, color 0.3s;
   position: relative;
@@ -914,6 +913,10 @@ img { max-width: 100%; display: block; }
   color: var(--gold);
 }
 .gallery-photo-camera {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   transition: color 0.3s;
 }
 .gallery-photo:hover .gallery-photo-camera {
