@@ -722,13 +722,16 @@ img { max-width: 100%; display: block; }
 
 .carousel-slide {
   flex: 0 0 100%;
-  height: 0;
-  padding-bottom: 56.25%; /* 16:9 — 跨浏览器稳定，避免 iOS Safari aspect-ratio + absolute 子元素坍塌 */
   display: block;
   background: var(--bg-card);
   cursor: pointer;
   position: relative;
   user-select: none;
+}
+.carousel-slide::before {
+  content: "";
+  display: block;
+  padding-bottom: 56.25%; /* 16:9 — ::before 伪元素撑开比例，最稳健的跨浏览器方案 */
 }
 
 .carousel-slide-placeholder {
@@ -898,17 +901,20 @@ img { max-width: 100%; display: block; }
 }
 
 .gallery-photo {
-  height: 0;
-  padding-bottom: 75%; /* 4:3 — 跨浏览器稳定，避免 iOS Safari aspect-ratio + absolute 子元素坍塌 */
+  display: block;
   background: var(--bg-card);
   border: 1px solid var(--border-default);
   border-radius: 6px;
   cursor: pointer;
-  display: block;
   color: var(--border-muted);
   transition: border-color 0.3s, color 0.3s;
   position: relative;
   overflow: hidden;
+}
+.gallery-photo::before {
+  content: "";
+  display: block;
+  padding-bottom: 75%; /* 4:3 — ::before 伪元素撑开比例，最稳健的跨浏览器方案 */
 }
 .gallery-photo:hover {
   border-color: var(--gold);

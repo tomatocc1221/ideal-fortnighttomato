@@ -1061,7 +1061,7 @@ function initScrollReveal() {
   );
 
   document.querySelectorAll(
-    ".player-card-front, .stat-item, .fixture-item, .carousel-slide"
+    ".player-card-front, .stat-item, .fixture-item"
   ).forEach((el, i) => {
     el.style.opacity = "0";
     el.style.transform = "translateY(24px)";
