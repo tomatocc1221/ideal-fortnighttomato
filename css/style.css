@@ -722,7 +722,8 @@ img { max-width: 100%; display: block; }
 
 .carousel-slide {
   flex: 0 0 100%;
-  aspect-ratio: 16 / 9;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 — 跨浏览器稳定，避免 iOS Safari aspect-ratio + absolute 子元素坍塌 */
   display: block;
   background: var(--bg-card);
   cursor: pointer;
@@ -897,7 +898,8 @@ img { max-width: 100%; display: block; }
 }
 
 .gallery-photo {
-  aspect-ratio: 4 / 3;
+  height: 0;
+  padding-bottom: 75%; /* 4:3 — 跨浏览器稳定，避免 iOS Safari aspect-ratio + absolute 子元素坍塌 */
   background: var(--bg-card);
   border: 1px solid var(--border-default);
   border-radius: 6px;
@@ -1101,6 +1103,12 @@ img { max-width: 100%; display: block; }
 .footer-bottom p {
   color: var(--text-faint);
   font-size: 0.8rem;
+}
+.footer-version {
+  margin-top: 4px;
+  font-size: 0.65rem !important;
+  color: rgba(255,255,255,0.25) !important;
+  letter-spacing: 0.04em;
 }
 
 /* ========================================
