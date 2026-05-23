@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>今日说法足球俱乐部</title>
+  <meta name="description" content="重庆市今日说法足球俱乐部官方网站 | 2025年3月30日成立于重庆溉澜溪体育公园 | 队员阵容、赛程战果、精彩瞬间 | 以球会友">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta property="og:title" content="今日说法足球俱乐部">
+  <meta property="og:description" content="重庆市今日说法足球俱乐部 | 用脚说话，以球会友 | 重庆业余足球新生力量">
+  <meta property="og:image" content="images/logo.jpg">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="images/logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -12,7 +19,7 @@
 <body>
 
   <!-- 噪点纹理 -->
-  <div class="noise-overlay"></div>
+  <div class="noise-overlay" aria-hidden="true"></div>
 
   <!-- ========== 导航栏 ========== -->
   <nav class="nav" id="nav">
@@ -37,13 +44,13 @@
 
   <!-- ========== 英雄区 ========== -->
   <section class="hero" id="hero">
-    <canvas class="hero-particles" id="heroParticles"></canvas>
+    <canvas class="hero-particles" id="heroParticles" aria-hidden="true"></canvas>
 
     <div class="hero-content">
       <img src="images/logo.jpg" alt="今日说法队徽" class="hero-logo">
       <h1 class="hero-title">今日说法</h1>
       <p class="hero-subtitle">用脚说话，以球会友</p>
-      <a href="#about" class="hero-arrow">
+      <a href="#about" class="hero-arrow" aria-label="了解更多">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M6 9l6 6 6-6"/>
         </svg>
@@ -165,16 +172,16 @@
         <div class="footer-social">
           <h3>关注我们</h3>
           <div class="social-links">
-            <a href="#" class="social-link social-wechat">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.7 14.3c-.4 0-.7-.3-.7-.7s.3-.7.7-.7.7.3.7.7-.3.7-.7.7zm4.3-.7c-.4 0-.7.3-.7.7s.3.7.7.7.7-.3.7-.7-.3-.7-.7-.7z"/><path d="M21.5 12.8c0-4.3-4-7.8-8.8-7.8-4.8 0-8.7 3.5-8.7 7.8 0 3.7 3 6.9 7.1 7.5.7.2.8.3.5.6-.2.3-.5.6-.3.8.2.2.6 0 .9-.2.3-.2 2.2-1.3 3.1-2.2 1.2-1.1 6.2-3.5 6.2-6.5z"/></svg>
+            <a href="#" class="social-link social-wechat" aria-label="微信公众号">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.7 14.3c-.4 0-.7-.3-.7-.7s.3-.7.7-.7.7.3.7.7-.3.7-.7.7zm4.3-.7c-.4 0-.7.3-.7.7s.3.7.7.7.7-.3.7-.7-.3-.7-.7-.7z"/><path d="M21.5 12.8c0-4.3-4-7.8-8.8-7.8-4.8 0-8.7 3.5-8.7 7.8 0 3.7 3 6.9 7.1 7.5.7.2.8.3.5.6-.2.3-.5.6-.3.8.2.2.6 0 .9-.2.3-.2 2.2-1.3 3.1-2.2 1.2-1.1 6.2-3.5 6.2-6.5z"/></svg>
               <span>微信</span>
             </a>
-            <a href="#" class="social-link social-douyin">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.6 6.1c-1.6 0-3-1.1-3.3-2.6h-2.8v12.9c0 1.2-1 2.2-2.2 2.2-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2c.2 0 .4 0 .6.1v-2.9c-.2 0-.4-.1-.6-.1-2.9 0-5.2 2.3-5.2 5.2s2.3 5.2 5.2 5.2 5.2-2.3 5.2-5.2V7.9c1.1.8 2.4 1.2 3.8 1.2V6.4c-.1 0-.3-.3-.7-.3z"/></svg>
+            <a href="#" class="social-link social-douyin" aria-label="抖音账号">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.6 6.1c-1.6 0-3-1.1-3.3-2.6h-2.8v12.9c0 1.2-1 2.2-2.2 2.2-1.2 0-2.2-1-2.2-2.2s1-2.2 2.2-2.2c.2 0 .4 0 .6.1v-2.9c-.2 0-.4-.1-.6-.1-2.9 0-5.2 2.3-5.2 5.2s2.3 5.2 5.2 5.2 5.2-2.3 5.2-5.2V7.9c1.1.8 2.4 1.2 3.8 1.2V6.4c-.1 0-.3-.3-.7-.3z"/></svg>
               <span>抖音</span>
             </a>
-            <a href="#" class="social-link social-weibo">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10.1 14.8c-3.3-.3-6 1.4-6.2 3.8-.2 2.4 2 4.4 5.3 4.7 3.2.3 6-1.4 6.2-3.8.2-2.4-2-4.4-5.3-4.7z"/><path d="M20.2 8.5c-2.7-.6-5.1.6-6.1 2.8-.9 2.2-.1 4.6 2 5.8 2.2 1.2 5 .4 6.4-1.7 1.3-2.1.7-5-1.3-6.4-.3-.2-.7-.3-1-.5z"/><path d="M18 7.2c1.5.4 2.6 1.4 3.1 2.7.2.4.6.6 1 .4.4-.2.6-.6.4-1-.6-1.7-2-3-3.8-3.5-.4-.1-.9.1-1 .5-.1.4.2.8.3.9z"/></svg>
+            <a href="#" class="social-link social-weibo" aria-label="微博主页">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.1 14.8c-3.3-.3-6 1.4-6.2 3.8-.2 2.4 2 4.4 5.3 4.7 3.2.3 6-1.4 6.2-3.8.2-2.4-2-4.4-5.3-4.7z"/><path d="M20.2 8.5c-2.7-.6-5.1.6-6.1 2.8-.9 2.2-.1 4.6 2 5.8 2.2 1.2 5 .4 6.4-1.7 1.3-2.1.7-5-1.3-6.4-.3-.2-.7-.3-1-.5z"/><path d="M18 7.2c1.5.4 2.6 1.4 3.1 2.7.2.4.6.6 1 .4.4-.2.6-.6.4-1-.6-1.7-2-3-3.8-3.5-.4-.1-.9.1-1 .5-.1.4.2.8.3.9z"/></svg>
               <span>微博</span>
             </a>
           </div>
@@ -188,7 +195,7 @@
   </footer>
 
   <!-- ========== 队员详情覆盖层 ========== -->
-  <div class="player-overlay" id="playerOverlay" role="dialog" aria-modal="true">
+  <div class="player-overlay" id="playerOverlay" role="dialog" aria-modal="true" aria-label="球员详情">
     <button class="player-overlay-back" id="playerBack">← 返回</button>
     <div class="player-overlay-inner">
       <div class="player-detail-avatar" id="playerDetailAvatar"></div>
@@ -203,13 +210,13 @@
   </div>
 
   <!-- ========== 灯箱 ========== -->
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="查看大图">
     <button class="lightbox-close" id="lightboxClose">&times;</button>
     <img src="" alt="" class="lightbox-img" id="lightboxImg">
   </div>
 
   <!-- ========== 照片集覆盖层 ========== -->
-  <div class="gallery-overlay" id="galleryOverlay" role="dialog" aria-modal="true">
+  <div class="gallery-overlay" id="galleryOverlay" role="dialog" aria-modal="true" aria-label="精彩瞬间相册">
     <div class="gallery-overlay-top">
       <button class="gallery-overlay-back" id="galleryOverlayBack">← 返回首页</button>
       <h2 class="gallery-overlay-title">精彩瞬间</h2>

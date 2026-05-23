@@ -3,6 +3,17 @@
    ======================================== */
 
 /* ========================================
+   Constants
+   ======================================== */
+const DB_NAME = "jinrishuofa";
+const STORE = { PLAYERS: "playerAvatars", CAROUSEL: "carouselPhotos", GALLERY: "galleryPhotos" };
+const LS_KEY = { PLAYERS: "jrsf_players", SLIDES: "jrsf_slides", ALBUMS: "jrsf_albums" };
+const PATH = { AVATAR: "images/players/", GALLERY: "images/gallery/" };
+const TIMING = { CAROUSEL: 3500, SCROLL_THRESHOLD: 60, ACTIVE_OFFSET: 120, COUNTUP: 1200, SWIPE: 50, REVEAL_STAGGER: 0.07, REVEAL_GROUP: 5 };
+const CSS = { OPEN: "open", ACTIVE: "active", SCROLLED: "scrolled", FLIPPED: "flipped", VISIBLE: "visible" };
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ========================================
    Utilities
    ======================================== */
 function rafThrottle(fn) {
@@ -21,6 +32,14 @@ function closeOnBackdrop(overlayElement, closeFn) {
   });
 }
 
+function svgPlaceholder(title, subtitle, w, h, fy, sy) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <rect fill="#1a1a1a" width="${w}" height="${h}"/>
+    <text fill="#cfae5a" font-size="22" text-anchor="middle" x="${w/2}" y="${fy}" font-weight="600">${title}</text>
+    <text fill="#888" font-size="16" text-anchor="middle" x="${w/2}" y="${sy}">${subtitle}</text>
+  </svg>`;
+}
+
 function closeOnEscape(overlayElement, closeFn) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && overlayElement.classList.contains("open")) {
@@ -33,26 +52,30 @@ function closeOnEscape(overlayElement, closeFn) {
    Storage Layer — IndexedDB + localStorage
    ======================================== */
 function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open("jinrishuofa", 1);
+  if (openDB._promise) return openDB._promise;
+  openDB._promise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains("playerAvatars")) {
-        db.createObjectStore("playerAvatars", { keyPath: "playerNumber" });
-      }
-      if (!db.objectStoreNames.contains("carouselPhotos")) {
-        db.createObjectStore("carouselPhotos", { keyPath: "slideIndex" });
-      }
-      if (!db.objectStoreNames.contains("galleryPhotos")) {
-        db.createObjectStore("galleryPhotos", { keyPath: "key" });
-      }
+      [STORE.PLAYERS, STORE.CAROUSEL, STORE.GALLERY].forEach(name => {
+        if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: name === STORE.GALLERY ? "key" : name === STORE.PLAYERS ? "playerNumber" : "slideIndex" });
+      });
     };
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-    req.onblocked = () => reject(new Error("IndexedDB blocked"));
+    req.onerror = () => { openDB._promise = null; reject(req.error); };
+    req.onblocked = () => { openDB._promise = null; reject(new Error("IndexedDB blocked")); };
   });
+  return openDB._promise;
 }
 
+const _blobURLs = new Set();
+function revokeBlobURL(url) {
+  if (url && url.startsWith("blob:")) { _blobURLs.add(url); }
+}
+function revokeAllBlobURLs() {
+  _blobURLs.forEach(url => URL.revokeObjectURL(url));
+  _blobURLs.clear();
+}
 
 function loadImage(storeName, key) {
   return openDB().then(db => {
@@ -61,17 +84,17 @@ function loadImage(storeName, key) {
       const store = tx.objectStore(storeName);
       const req = store.get(key);
       req.onsuccess = () => {
-        db.close();
         if (req.result && req.result.data) {
           const url = URL.createObjectURL(req.result.data);
+          revokeBlobURL(url);
           resolve(url);
         } else {
           resolve(null);
         }
       };
-      req.onerror = () => { db.close(); resolve(null); };
+      req.onerror = () => resolve(null);
     });
-  }).catch(() => null); // IndexedDB 不可用时静默降级，使用默认文件路径
+  }).catch(() => null);
 }
 
 function checkFileAvatar(number) {
@@ -636,7 +659,7 @@ function initCarousel(slidesOverride) {
 
   function startTimer() {
     stopTimer();
-    timer = setInterval(nextSlide, 3500);
+    if (!REDUCED_MOTION) timer = setInterval(nextSlide, TIMING.CAROUSEL);
   }
   function stopTimer() { clearInterval(timer); }
 
@@ -670,13 +693,7 @@ function initCarousel(slidesOverride) {
     if (s._imageUrl) {
       openLightbox(s._imageUrl);
     } else {
-      openLightbox(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
-          <rect fill="#1a1a1a" width="800" height="500"/>
-          <text fill="#cfae5a" font-size="28" text-anchor="middle" x="400" y="270" font-weight="600">今日说法</text>
-          <text fill="#888" font-size="18" text-anchor="middle" x="400" y="310">${s.label}</text>
-        </svg>`
-      );
+      openLightbox(svgPlaceholder("今日说法", s.label, 800, 500, 270, 310));
     }
   });
 
@@ -748,18 +765,11 @@ function initTacticsBoard() {
     return playerMap;
   }
 
-  function getPlayerName(number) {
+  function getPlayerField(number, field) {
     const map = getPlayerMap();
     if (!map) return "";
     const p = map.get(number);
-    return p ? p.name : "";
-  }
-
-  function getPlayerRole(number) {
-    const map = getPlayerMap();
-    if (!map) return "";
-    const p = map.get(number);
-    return p ? p.role : "";
+    return p ? (p[field] || "") : "";
   }
 
   function draw() {
@@ -886,7 +896,7 @@ function initTacticsBoard() {
       const cy = fieldTop + (p.row / (p.rows - 1)) * fieldHeight;
 
       // Player circle — fill by position group
-      const role = getPlayerRole(p.number);
+      const role = getPlayerField(p.number, "role");
       const g = getPositionGroup(role);
       const posColor = g === "role-fw" ? "#f87171" : g === "role-mf" ? "#4ade80" : g === "role-df" ? "#60a5fa" : g === "role-gk" ? "#fb923c" : gold;
       ctx.fillStyle = posColor + "22";
@@ -905,7 +915,7 @@ function initTacticsBoard() {
       ctx.fillText(p.number, cx, cy);
 
       // Name
-      const playerName = getPlayerName(p.number);
+      const playerName = getPlayerField(p.number, "name");
       if (playerName) {
         ctx.fillStyle = posColor + "99";
         ctx.font = `${Math.max(8, dotR * 0.65)}px -apple-system, "PingFang SC", sans-serif`;
@@ -991,13 +1001,7 @@ function initGalleryOverlay(albumsOverride) {
     if (p._imageUrl) {
       openLightbox(p._imageUrl);
     } else {
-      openLightbox(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
-          <rect fill="#1a1a1a" width="800" height="600"/>
-          <text fill="#cfae5a" font-size="22" text-anchor="middle" x="400" y="280" font-weight="600">${album}</text>
-          <text fill="#888" font-size="16" text-anchor="middle" x="400" y="315">${p.label}</text>
-        </svg>`
-      );
+      openLightbox(svgPlaceholder(album, p.label, 800, 600, 280, 315));
     }
   });
 }
@@ -1074,6 +1078,13 @@ function closePlayerDetail() {
 
 /* === Scroll Reveal === */
 function initScrollReveal() {
+  const targets = document.querySelectorAll(
+    ".player-card-front, .stat-item, .fixture-item"
+  );
+  if (REDUCED_MOTION) {
+    targets.forEach(el => { el.style.opacity = "1"; el.style.transform = "none"; });
+    return;
+  }
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach(entry => {
@@ -1085,14 +1096,11 @@ function initScrollReveal() {
     },
     { threshold: 0.1 }
   );
-
-  document.querySelectorAll(
-    ".player-card-front, .stat-item, .fixture-item"
-  ).forEach((el, i) => {
+  targets.forEach((el, i) => {
     el.style.opacity = "0";
     el.style.transform = "translateY(24px)";
     el.style.transition = "opacity 0.5s ease, transform 0.5s ease";
-    el.style.transitionDelay = (i % 5) * 0.07 + "s";
+    el.style.transitionDelay = (i % TIMING.REVEAL_GROUP) * TIMING.REVEAL_STAGGER + "s";
     observer.observe(el);
   });
 }
@@ -1111,8 +1119,9 @@ function initCountUp() {
       if (!match) { observer.unobserve(el); return; }
       const end = parseInt(match[1], 10);
       const suffix = match[2];
+      if (REDUCED_MOTION) { el.textContent = end + suffix; observer.unobserve(el); return; }
       let start = 0;
-      const duration = 1200;
+      const duration = TIMING.COUNTUP;
       const startTime = performance.now();
 
       function step(now) {
@@ -1197,19 +1206,24 @@ function startCountdown() {
     `;
   }
 
+  // Clear previous timer and observer before creating new ones
+  if (startCountdown._timerId) { clearInterval(startCountdown._timerId); startCountdown._timerId = null; }
+  if (startCountdown._observer) { startCountdown._observer.disconnect(); startCountdown._observer = null; }
+
   tick();
-  let countdownId = setInterval(tick, 1000);
+  startCountdown._timerId = setInterval(tick, 1000);
 
   const bar = document.getElementById("countdownBar");
   if (bar) {
-    new IntersectionObserver((entries) => {
+    startCountdown._observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
-        if (!countdownId) { tick(); countdownId = setInterval(tick, 1000); }
+        if (!startCountdown._timerId) { tick(); startCountdown._timerId = setInterval(tick, 1000); }
       } else {
-        clearInterval(countdownId);
-        countdownId = null;
+        clearInterval(startCountdown._timerId);
+        startCountdown._timerId = null;
       }
-    }, { threshold: 0 }).observe(bar);
+    }, { threshold: 0 });
+    startCountdown._observer.observe(bar);
   }
 }
 
