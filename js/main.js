@@ -591,7 +591,7 @@ async function initRegButtons() {
       return `
     <div class="fixture-item" data-upcoming-idx="${idx}">
       <div class="fixture-item-main">
-        <span class="fixture-date">${m.date}</span>
+        <span class="fixture-date">${(m.date || '').replace(/-/g, '.')}</span>
         <span class="fixture-teams">${m.home_team || '今日说法'} vs ${m.away_team} ${jerseyBadge}</span>
         <span class="reg-entry-btn upcoming" data-reg-idx="${idx}">—</span>
       </div>
@@ -1352,7 +1352,7 @@ function startCountdown() {
     const jerseyHTML = m.jersey ? `<span class="countdown-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}球衣</span>` : "";
     matchEl.innerHTML = `
       <div class="countdown-teams"><span>${m.home}</span><span class="countdown-vs">vs</span><span>${m.away}</span></div>
-      <div class="countdown-meta">${m.date.replace(/\./, "年").replace(/\./, "月")}日 ${wd} · ${timeStr}</div>
+      <div class="countdown-meta">${m.date.replace(/-/g, '.').replace(/\./, "年").replace(/\./, "月")}日 ${wd} · ${timeStr}</div>
       <div class="countdown-venue">${m.venue || ""} ${jerseyHTML}</div>
     `;
   }

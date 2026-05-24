@@ -200,9 +200,9 @@ function calcRegWindow(dateStr, timeStr) {
 }
 
 function fmtDT(d) {
-  if (typeof d === 'string') return d.replace('T', ' ').slice(0, 16);
+  if (typeof d === 'string') return d.replace('T', ' ').slice(0, 16).replace(/-/g, '.');
   const pad = n => String(n).padStart(2, '0');
-  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  return d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
 function renderMatchTable() {
@@ -213,7 +213,7 @@ function renderMatchTable() {
   }
   tbody.innerHTML = allMatches.map(m => `
     <tr>
-      <td>${m.date} ${m.time || ''}</td>
+      <td>${(m.date || '').replace(/-/g, '.')} ${m.time || ''}</td>
       <td>vs ${m.away_team} ${m.jersey ? '(' + m.jersey + ')' : ''}</td>
       <td>${fmtDT(m.reg_open_at)} ~ ${fmtDT(m.reg_close_at)}</td>
       <td>
@@ -331,7 +331,7 @@ async function deleteMatch(id) {
 function updateMatchSelect() {
   const sel = document.getElementById('regMatchSelect');
   sel.innerHTML = '<option value="">— 选择比赛 —</option>' +
-    allMatches.map(m => `<option value="${m.id}">${m.date} vs ${m.away_team}</option>`).join('');
+    allMatches.map(m => `<option value="${m.id}">${(m.date || '').replace(/-/g, '.')} vs ${m.away_team}</option>`).join('');
 }
 
 document.getElementById('regMatchSelect').addEventListener('change', function () {
@@ -396,7 +396,7 @@ async function loadRegistrations(matchId) {
       <td>${r.player_name}</td>
       <td>${r.player_number}</td>
       <td><span class="${statusClass}">${statusLabel}</span>${reason}</td>
-      <td>${new Date(r.registered_at).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td>
+      <td>${fmtDT(r.registered_at)}</td>
       <td>
         <button class="btn btn-sm btn-edit" data-id="${r.id}" data-status="${r.status}">调整</button>
         <button class="btn btn-sm btn-del" data-id="${r.id}">删除</button>
@@ -509,7 +509,7 @@ async function loadResultsTab() {
     sel.innerHTML = '<option value="">-- 选择已结束的比赛 --</option>' +
       _allResultMatches.map((m, i) => {
         const hasResult = m.home_score !== undefined && m.home_score !== null && m.home_score !== '';
-        const label = `${m.date} vs ${m.away_team}${hasResult ? ' (已录入)' : ''}${m._source === 'static' ? ' [待迁移]' : ''}`;
+        const label = `${(m.date || '').replace(/-/g, '.')} vs ${m.away_team}${hasResult ? ' (已录入)' : ''}${m._source === 'static' ? ' [待迁移]' : ''}`;
         return `<option value="${i}">${label}</option>`;
       }).join('');
   }
@@ -647,7 +647,7 @@ document.getElementById('resultSaveBtn').addEventListener('click', async () => {
     assisters: collectRows('assisterRows', 'assists')
   };
 
-  // 静态 fixtures 的比赛需要先创建到 db.json
+  // 静态 fixtures 的比赛需先同步到 Supabase
   if (_selectedResultMatch._source === 'static') {
     const created = await API.addMatch({
       date: _selectedResultMatch.date,

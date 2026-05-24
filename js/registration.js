@@ -39,7 +39,7 @@ async function openRegPanel(match) {
   // 比赛信息
   document.getElementById('regMatch').innerHTML = `
     <div class="reg-match-teams">${match.home_team || '今日说法'} vs ${match.away_team}</div>
-    <div class="reg-match-meta">${match.date} · ${match.time || '14:40'} · ${match.venue || ''} ${match.jersey ? '· ' + match.jersey : ''}</div>
+    <div class="reg-match-meta">${(match.date || '').replace(/-/g, '.')} · ${match.time || '14:40'} · ${match.venue || ''} ${match.jersey ? '· ' + match.jersey : ''}</div>
   `;
 
   // 费用展示
