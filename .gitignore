@@ -8,6 +8,11 @@ desktop.ini
 *.swo
 *~
 
+# 密钥（绝对不能提交）
+.env
+*.env
+.env.*
+
 # 本地文件
 *.xlsx
 *.url
