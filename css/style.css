@@ -77,8 +77,6 @@ img { max-width: 100%; display: block; }
 /* === Section Shared === */
 .section {
   padding: 100px 0;
-  content-visibility: auto;
-  contain-intrinsic-size: 0 500px;
 }
 .section-dark {
   background: var(--bg-secondary);

@@ -11,9 +11,14 @@
   <meta property="og:image" content="images/logo.jpg">
   <meta property="og:type" content="website">
   <link rel="icon" href="images/logo.jpg">
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="dns-prefetch" href="//jdrryazqzrcaspqzelkd.supabase.co">
+  <link rel="preload" href="images/logo.jpg" as="image">
+  <link rel="prefetch" href="fixtures.html">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -25,7 +30,7 @@
   <nav class="nav" id="nav">
     <div class="nav-inner">
       <a href="#hero" class="nav-brand">
-        <img src="images/logo.jpg" alt="今日说法" class="nav-logo">
+        <img src="images/logo.jpg" alt="今日说法" class="nav-logo" width="32" height="34" decoding="async">
         <span class="nav-name">今日说法</span>
       </a>
       <ul class="nav-menu" id="navMenu">
@@ -47,7 +52,7 @@
     <canvas class="hero-particles" id="heroParticles" aria-hidden="true"></canvas>
 
     <div class="hero-content">
-      <img src="images/logo.jpg" alt="今日说法队徽" class="hero-logo">
+      <img src="images/logo.jpg" alt="今日说法队徽" class="hero-logo" width="120" height="128" decoding="async" fetchpriority="high">
       <h1 class="hero-title">今日说法</h1>
       <p class="hero-subtitle">用脚说话，以球会友</p>
       <a href="#about" class="hero-arrow" aria-label="了解更多">
@@ -302,11 +307,11 @@
   </button>
 
 
-  <script src="js/supabase-init.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/registration.js"></script>
-  <script src="data/fixtures.js"></script>
-  <script src="data/gallery.js"></script>
-  <script src="js/main.js"></script>
+  <script defer src="js/supabase-init.js"></script>
+  <script defer src="js/api.js"></script>
+  <script defer src="js/registration.js"></script>
+  <script defer src="data/fixtures.js"></script>
+  <script defer src="data/gallery.js"></script>
+  <script defer src="js/main.js"></script>
 </body>
 </html>
