@@ -128,7 +128,10 @@ function resetPlayerForm() {
   document.getElementById('playerCancelBtn').style.display = 'none';
 }
 
-document.getElementById('playerSaveBtn').addEventListener('click', async () => {
+document.getElementById('playerSaveBtn').addEventListener('click', async function () {
+  const btn = this;
+  if (btn.disabled) return; // 防重复点击
+  btn.disabled = true;
   try {
     const id = document.getElementById('pfId').value;
     const name = document.getElementById('pfName').value.trim();
@@ -140,17 +143,24 @@ document.getElementById('playerSaveBtn').addEventListener('click', async () => {
     const data = { name, number };
     if (pin) data.pin = pin;
 
+    let saved;
     if (id) {
-      await API.updatePlayer(id, data);
+      saved = await API.updatePlayer(id, data);
+      const idx = allPlayers.findIndex(p => p.id === id);
+      if (idx !== -1) allPlayers[idx] = saved;
     } else {
       if (!pin) return alert('请设置个人密码');
-      await API.addPlayer(data);
+      saved = await API.addPlayer(data);
+      allPlayers.push(saved);
+      allPlayers.sort((a, b) => a.number - b.number);
     }
 
     resetPlayerForm();
-    loadPlayers();
+    renderPlayerTable();
   } catch (e) {
     alert('保存失败：' + e.message);
+  } finally {
+    btn.disabled = false;
   }
 });
 
@@ -158,8 +168,13 @@ document.getElementById('playerCancelBtn').addEventListener('click', resetPlayer
 
 async function deletePlayer(id) {
   if (!confirm('确定删除这名队员？')) return;
-  await API.deletePlayer(id);
-  loadPlayers();
+  try {
+    await API.deletePlayer(id);
+    allPlayers = allPlayers.filter(p => p.id !== id);
+    renderPlayerTable();
+  } catch (e) {
+    alert('删除失败：' + e.message);
+  }
 }
 
 // ============================================================
@@ -245,7 +260,10 @@ function resetMatchForm() {
   document.getElementById('matchCancelBtn').style.display = 'none';
 }
 
-document.getElementById('matchSaveBtn').addEventListener('click', async () => {
+document.getElementById('matchSaveBtn').addEventListener('click', async function () {
+  const btn = this;
+  if (btn.disabled) return;
+  btn.disabled = true;
   try {
     const id = document.getElementById('mfId').value;
     const date = document.getElementById('mfDate').value;
@@ -259,7 +277,6 @@ document.getElementById('matchSaveBtn').addEventListener('click', async () => {
     if (!date || !away) return alert('请填写日期和对手');
 
     const { open, close } = calcRegWindow(date, time);
-
     const fee = parseFloat(document.getElementById('mfFee').value) || 0;
 
     const data = {
@@ -273,16 +290,24 @@ document.getElementById('matchSaveBtn').addEventListener('click', async () => {
       reg_close_at: close.toISOString()
     };
 
+    let saved;
     if (id) {
-      await API.updateMatch(id, data);
+      saved = await API.updateMatch(id, data);
+      const idx = allMatches.findIndex(m => m.id === id);
+      if (idx !== -1) allMatches[idx] = saved;
     } else {
-      await API.addMatch(data);
+      saved = await API.addMatch(data);
+      allMatches.push(saved);
+      allMatches.sort((a, b) => new Date(b.date) - new Date(a.date));
     }
 
     resetMatchForm();
-    loadMatches();
+    renderMatchTable();
+    updateMatchSelect();
   } catch (e) {
     alert('保存失败：' + e.message);
+  } finally {
+    btn.disabled = false;
   }
 });
 
@@ -290,8 +315,14 @@ document.getElementById('matchCancelBtn').addEventListener('click', resetMatchFo
 
 async function deleteMatch(id) {
   if (!confirm('确定删除这场比赛？相关报名记录也会删除。')) return;
-  await API.deleteMatch(id);
-  loadMatches();
+  try {
+    await API.deleteMatch(id);
+    allMatches = allMatches.filter(m => m.id !== id);
+    renderMatchTable();
+    updateMatchSelect();
+  } catch (e) {
+    alert('删除失败：' + e.message);
+  }
 }
 
 // ============================================================

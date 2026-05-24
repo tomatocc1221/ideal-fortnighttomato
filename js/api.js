@@ -89,7 +89,7 @@ const API = {
 
   async addMatch(data) {
     try {
-      const row = await sb.from('matches').insert({
+      const payload = {
         date: data.date,
         time: data.time || '14:40',
         home_team: data.home_team || '今日说法',
@@ -107,11 +107,12 @@ const API = {
         result: data.result || '',
         scorers: data.scorers || [],
         assisters: data.assisters || []
-      });
+      };
+      const row = await sb.from('matches').insert(payload);
       if (!row || !row.length) throw new Error('服务器未返回数据');
       return { ...row[0], id: String(row[0].id) };
     } catch (e) {
-      console.error('[API] addMatch:', e);
+      console.error('[API] addMatch 失败:', e);
       throw new Error('创建比赛失败: ' + (e.message || '网络错误'));
     }
   },

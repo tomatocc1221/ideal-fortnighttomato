@@ -65,7 +65,15 @@ const sb = {
         return fetch(base + '?' + query, {
           method: 'DELETE',
           headers: sbHeaders()
-        }).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); });
+        }).then(async r => {
+          if (!r.ok) {
+            let detail = r.statusText;
+            try { const err = await r.json(); detail = err.message || err.msg || JSON.stringify(err); } catch (_) {}
+            throw new Error(r.status + ' ' + detail);
+          }
+          const text = await r.text();
+          return text ? JSON.parse(text) : [];
+        });
       }
     };
   }
