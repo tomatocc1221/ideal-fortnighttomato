@@ -1,0 +1,210 @@
+/* ========================================
+   赛程战果独立页面样式
+   ======================================== */
+
+.fixtures-page {
+  padding-top: 140px;
+  padding-bottom: 80px;
+}
+
+/* ---- 页头（返回 + 标题） ---- */
+.fixtures-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #888;
+  font-size: 0.85rem;
+  text-decoration: none;
+  padding: 6px 14px;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.back-link:hover {
+  color: #c9a961;
+  border-color: #c9a961;
+  background: rgba(201,169,97,0.06);
+}
+
+.back-link svg {
+  flex-shrink: 0;
+}
+
+.fixtures-header .section-title {
+  margin: 0;
+}
+
+/* ---- 统计面板 ---- */
+.fixtures-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #1a1a1a 0%, #1f1f1f 100%);
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 22px 16px;
+  text-align: center;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: #3a3a3a;
+}
+
+.stat-card .stat-num {
+  font-size: 2.2rem;
+  font-weight: 700;
+  font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+  color: #c9a961;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.stat-card.win .stat-num { color: #4caf50; }
+.stat-card.draw .stat-num { color: #aaa; }
+.stat-card.loss .stat-num { color: #f44336; }
+
+.stat-card .stat-label {
+  font-size: 0.78rem;
+  color: #777;
+  margin-top: 6px;
+  letter-spacing: 0.04em;
+}
+
+/* ---- 筛选器 ---- */
+.fixtures-filter {
+  margin-bottom: 28px;
+}
+
+.fixtures-filter select {
+  background: #1a1a1a;
+  color: #ccc;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.fixtures-filter select:hover {
+  border-color: #555;
+}
+
+.fixtures-filter select:focus {
+  border-color: #c9a961;
+}
+
+/* ---- 分页器 ---- */
+.fixtures-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid #222;
+}
+
+.pager-btn {
+  background: #1a1a1a;
+  color: #ccc;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  letter-spacing: 0.03em;
+}
+
+.pager-btn:hover:not(:disabled) {
+  border-color: #c9a961;
+  color: #c9a961;
+  background: rgba(201,169,97,0.06);
+}
+
+.pager-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.pager-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.pager-info {
+  color: #888;
+  font-size: 0.85rem;
+  min-width: 90px;
+  text-align: center;
+}
+
+/* ---- 性能优化：延迟渲染屏幕外内容 ---- */
+.fixture-list .fixture-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 60px;
+}
+
+/* ---- 空状态 ---- */
+.fixtures-empty {
+  text-align: center;
+  color: #555;
+  padding: 80px 20px;
+  font-size: 0.95rem;
+}
+
+/* ---- 移动端 ---- */
+@media (max-width: 768px) {
+  .fixtures-page {
+    padding-top: 120px;
+    padding-bottom: 50px;
+  }
+
+  .fixtures-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .fixtures-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 16px 10px;
+  }
+
+  .stat-card .stat-num {
+    font-size: 1.6rem;
+  }
+
+  .fixtures-pager {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pager-btn {
+    padding: 7px 15px;
+    font-size: 0.8rem;
+  }
+}

@@ -470,58 +470,38 @@ async function renderFixtures() {
   const statusText = { win: "胜", draw: "平", loss: "负" };
   const statusClass = { win: "win", draw: "draw", loss: "loss" };
 
-  // === 近期战果 ===
+  // === 最新战报（3场 + 链接到独立页面） ===
   const resultsEl = document.getElementById("resultsList");
   if (resultsEl) {
-    const MAX_VISIBLE = 5;
-    const visibleResults = results.slice(0, MAX_VISIBLE);
-    const hiddenResults = results.slice(MAX_VISIBLE);
-
-    const renderItem = m => {
-      const hasGoals = m.scorers && m.scorers.length > 0;
-      const hasAssists = m.assisters && m.assisters.length > 0;
-      const detailHTML = (hasGoals || hasAssists) ? `
-        <div class="fixture-detail">
-          ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
-          ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
-        </div>` : "";
-
-      return `
-      <div class="fixture-item">
-        <div class="fixture-item-main">
-          <span class="fixture-date">${m.date}</span>
-          <span class="fixture-teams">${m.home} vs ${m.away}</span>
-          <span class="fixture-score ${statusClass[m.result]}">${m.score} ${statusText[m.result]}</span>
-        </div>
-        ${detailHTML}
-      </div>`;
-    };
-
-    let html = visibleResults.map(renderItem).join("");
-
-    if (hiddenResults.length > 0) {
-      html += `
-      <div class="results-hidden" id="resultsHidden" style="display:none;">
-        ${hiddenResults.map(renderItem).join("")}
-      </div>
-      <button class="results-toggle" id="resultsToggle">
-        查看全部战绩（${results.length} 场）
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-      </button>`;
+    const visible = results.slice(0, 3);
+    if (visible.length) {
+      const renderItem = m => {
+        const hasGoals = m.scorers && m.scorers.length > 0;
+        const hasAssists = m.assisters && m.assisters.length > 0;
+        const detailHTML = (hasGoals || hasAssists) ? `
+          <div class="fixture-detail">
+            ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+            ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+          </div>` : "";
+        return `
+        <div class="fixture-item">
+          <div class="fixture-item-main">
+            <span class="fixture-date">${m.date}</span>
+            <span class="fixture-teams">${m.home} vs ${m.away}</span>
+            <span class="fixture-score ${statusClass[m.result]}">${m.score} ${statusText[m.result]}</span>
+          </div>
+          ${detailHTML}
+        </div>`;
+      };
+      resultsEl.innerHTML = visible.map(renderItem).join("");
+    } else {
+      resultsEl.innerHTML = '<div class="fixture-empty">暂无比赛记录</div>';
     }
 
-    resultsEl.innerHTML = html;
-
-    if (hiddenResults.length > 0) {
-      const toggle = document.getElementById("resultsToggle");
-      const hidden = document.getElementById("resultsHidden");
-      toggle.addEventListener("click", () => {
-        const isOpen = hidden.style.display !== "none";
-        hidden.style.display = isOpen ? "none" : "block";
-        toggle.innerHTML = isOpen
-          ? `查看全部战绩（${results.length} 场） <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>`
-          : `收起战绩 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate(180deg)"><path d="M6 9l6 6 6-6"/></svg>`;
-      });
+    const viewAll = document.getElementById("resultsViewAll");
+    if (viewAll) {
+      viewAll.style.display = "block";
+      viewAll.innerHTML = `<a href="fixtures.html" class="view-all-link">查看全部战绩（${results.length} 场） →</a>`;
     }
   }
 
@@ -541,7 +521,7 @@ async function renderFixtures() {
     if (upcomingFiltered.length === 0) {
       upcomingEl.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
     } else {
-      upcomingEl.innerHTML = upcomingFiltered.map((m, i) => {
+      upcomingEl.innerHTML = upcomingFiltered.slice(0, 3).map((m, i) => {
         const jerseyBadge = m.jersey ? `<span class="fixture-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}</span>` : "";
         return `
     <div class="fixture-item" data-upcoming-idx="${i}">
