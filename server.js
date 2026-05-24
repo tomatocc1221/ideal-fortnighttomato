@@ -16,12 +16,23 @@ const ROOT = __dirname;
 const DB_PATH = path.join(__dirname, 'db.json');
 
 function loadDB() {
-  if (fs.existsSync(DB_PATH)) return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+  if (fs.existsSync(DB_PATH)) {
+    try {
+      return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+    } catch (e) {
+      console.error('数据库文件损坏，使用空数据库:', e.message);
+      return { players: [], matches: [], registrations: [], config: {} };
+    }
+  }
   return { players: [], matches: [], registrations: [], config: {} };
 }
 
 function saveDB(db) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf8');
+  try {
+    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf8');
+  } catch (e) {
+    console.error('数据库保存失败:', e.message);
+  }
 }
 
 function sha256(s) {
@@ -52,6 +63,7 @@ function parseBody(req) {
   return new Promise(resolve => {
     let body = '';
     req.on('data', c => body += c);
+    req.on('error', () => resolve({}));
     req.on('end', () => {
       try { resolve(JSON.parse(body)); }
       catch (e) { resolve({}); }

@@ -2,6 +2,20 @@
    管理后台逻辑 — 今日说法足球俱乐部
    ======================================== */
 
+// ===== 登录 Session 管理 =====
+const ADMIN_SESSION_MAX_AGE = 24 * 60 * 60 * 1000; // 24 小时过期
+
+function isAdminSessionValid() {
+  const token = sessionStorage.getItem('admin_token');
+  const ts = parseInt(sessionStorage.getItem('admin_token_ts') || '0', 10);
+  return token && (Date.now() - ts < ADMIN_SESSION_MAX_AGE);
+}
+
+function clearAdminSession() {
+  sessionStorage.removeItem('admin_token');
+  sessionStorage.removeItem('admin_token_ts');
+}
+
 // ===== 登录 =====
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const pwd = document.getElementById('loginPwd').value;
@@ -10,6 +24,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     document.getElementById('loginError').textContent = result.error;
   } else {
     sessionStorage.setItem('admin_token', result.token);
+    sessionStorage.setItem('admin_token_ts', Date.now());
     document.getElementById('adminLogin').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     initAdmin();
@@ -21,15 +36,17 @@ document.getElementById('loginPwd').addEventListener('keydown', e => {
 });
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('admin_token');
+  clearAdminSession();
   location.reload();
 });
 
-// 自动登录
-if (sessionStorage.getItem('admin_token')) {
+// 自动登录（24h 内有效）
+if (isAdminSessionValid()) {
   document.getElementById('adminLogin').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
   initAdmin();
+} else {
+  clearAdminSession();
 }
 
 // ===== Tab 切换 =====

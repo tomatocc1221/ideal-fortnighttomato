@@ -47,7 +47,6 @@ window.__fixturesData = {
 
   // 即将开赛
   upcoming: [
-    { date: "2026.05.23", time: "14:40", home: "今日说法", away: "重庆龮枥", venue: "奥体驰骋足球场2号场", jersey: "蓝", jerseyColor: "#4a90d9" },
     { date: "2026.05.24", time: "19:00", home: "飞虎",     away: "今日说法", venue: "华侨城足球公园",     jersey: "粉", jerseyColor: "#f0a0b0" },
   ],
 

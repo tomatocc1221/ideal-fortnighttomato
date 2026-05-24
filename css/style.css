@@ -1891,6 +1891,53 @@ img { max-width: 100%; display: block; }
   inset: 0;
 }
 
+/* === Shared Button Styles (main page + admin) === */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--duration-fast);
+}
+
+.btn-gold {
+  background: var(--gold);
+  color: #0d0d0d;
+}
+.btn-gold:hover { background: #dbb96a; }
+
+.btn-cancel {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border-muted);
+}
+.btn-cancel:hover { background: var(--bg-card-alt); }
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 0.82rem;
+}
+
+.btn-edit {
+  background: var(--gold-dim);
+  color: var(--gold);
+  border: 1px solid rgba(207, 174, 90, 0.25);
+}
+.btn-edit:hover { background: rgba(207, 174, 90, 0.2); }
+
+.btn-del {
+  background: rgba(192, 57, 43, 0.12);
+  color: var(--loss);
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  margin-left: 6px;
+}
+.btn-del:hover { background: rgba(192, 57, 43, 0.2); }
+
 /* === Registration Panel Animations === */
 @keyframes regPanelIn {
   from { opacity: 0; transform: translateY(20px) scale(0.97); }
