@@ -27,6 +27,7 @@ const API = {
       if (!row || !row.length) throw new Error('服务器未返回数据');
       return { ...row[0], id: String(row[0].id) };
     } catch (e) {
+      console.error('[API] addPlayer:', e);
       throw new Error('添加队员失败: ' + (e.message || '网络错误'));
     }
   },
@@ -43,6 +44,7 @@ const API = {
       if (!row || !row.length) throw new Error('服务器未返回数据');
       return { ...row[0], id: String(row[0].id) };
     } catch (e) {
+      console.error('[API] updatePlayer:', e);
       throw new Error('更新队员失败: ' + (e.message || '网络错误'));
     }
   },
@@ -109,6 +111,7 @@ const API = {
       if (!row || !row.length) throw new Error('服务器未返回数据');
       return { ...row[0], id: String(row[0].id) };
     } catch (e) {
+      console.error('[API] addMatch:', e);
       throw new Error('创建比赛失败: ' + (e.message || '网络错误'));
     }
   },
@@ -119,6 +122,7 @@ const API = {
       if (!row || !row.length) throw new Error('服务器未返回数据');
       return { ...row[0], id: String(row[0].id) };
     } catch (e) {
+      console.error('[API] updateMatch:', e);
       throw new Error('更新比赛失败: ' + (e.message || '网络错误'));
     }
   },

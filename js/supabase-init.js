@@ -30,7 +30,14 @@ const sb = {
           method: 'POST',
           headers: { ...sbHeaders(), 'Prefer': 'return=representation' },
           body: JSON.stringify(data)
-        }).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); });
+        }).then(async r => {
+          if (!r.ok) {
+            let detail = r.statusText;
+            try { const err = await r.json(); detail = err.message || err.msg || JSON.stringify(err); } catch (_) {}
+            throw new Error(r.status + ' ' + detail);
+          }
+          return r.json();
+        });
       },
       upsert(data, onConflict) {
         const conflict = onConflict || 'id';
@@ -45,7 +52,14 @@ const sb = {
           method: 'PATCH',
           headers: { ...sbHeaders(), 'Prefer': 'return=representation' },
           body: JSON.stringify(data)
-        }).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); });
+        }).then(async r => {
+          if (!r.ok) {
+            let detail = r.statusText;
+            try { const err = await r.json(); detail = err.message || err.msg || JSON.stringify(err); } catch (_) {}
+            throw new Error(r.status + ' ' + detail);
+          }
+          return r.json();
+        });
       },
       delete(query) {
         return fetch(base + '?' + query, {
