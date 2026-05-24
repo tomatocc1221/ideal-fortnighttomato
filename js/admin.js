@@ -458,6 +458,10 @@ let _selectedResultMatch = null;
 let _allResultMatches = []; // 合并后的比赛列表（API + 静态fixtures）
 
 async function loadResultsTab() {
+  // 加载期间禁用下拉菜单，防止操作陈旧数据
+  var sel = document.getElementById('resultMatchSelect');
+  sel.disabled = true;
+
   allMatches = await API.getMatches();
   allPlayers = await API.getPlayers();
   const now = new Date();
@@ -502,7 +506,6 @@ async function loadResultsTab() {
 
   _allResultMatches = [...apiEnded, ...staticEnded];
 
-  const sel = document.getElementById('resultMatchSelect');
   if (_allResultMatches.length === 0) {
     sel.innerHTML = '<option value="">-- 暂无已结束的比赛 --</option>';
   } else {
@@ -513,6 +516,10 @@ async function loadResultsTab() {
         return `<option value="${i}">${label}</option>`;
       }).join('');
   }
+
+  // 重置表单 + 恢复下拉菜单
+  hideResultForm();
+  sel.disabled = false;
 }
 
 document.getElementById('resultMatchSelect').addEventListener('change', function () {
@@ -615,73 +622,101 @@ function renderAssisterRows(assisters) {
 document.getElementById('addScorerBtn').addEventListener('click', () => createPlayerRow('进球', 'scorerRows'));
 document.getElementById('addAssisterBtn').addEventListener('click', () => createPlayerRow('助攻', 'assisterRows'));
 
-document.getElementById('resultSaveBtn').addEventListener('click', async () => {
-  if (!_selectedResultMatch) return;
+document.getElementById('resultSaveBtn').addEventListener('click', async function () {
+  const btn = this;
+  if (btn.disabled) return;
+  if (!_selectedResultMatch) return alert('请先选择一场比赛');
   const h = parseInt(document.getElementById('rfHomeScore').value);
   const a = parseInt(document.getElementById('rfAwayScore').value);
   if (isNaN(h) || isNaN(a)) return alert('请输入比分');
 
-  let result;
-  if (h > a) result = 'win';
-  else if (h === a) result = 'draw';
-  else result = 'loss';
+  btn.disabled = true;
+  try {
+    let result;
+    if (h > a) result = 'win';
+    else if (h === a) result = 'draw';
+    else result = 'loss';
 
-  function collectRows(containerId, field) {
-    const rows = document.getElementById(containerId).querySelectorAll('div');
-    const items = [];
-    rows.forEach(row => {
-      const sel = row.querySelector('select').value;
-      const count = parseInt(row.querySelector('input').value) || 1;
-      if (!sel) return;
-      const [name, num] = sel.split(':');
-      items.push({ name, num: parseInt(num), [field]: count });
-    });
-    return items;
-  }
+    function collectRows(containerId, field) {
+      const rows = document.getElementById(containerId).querySelectorAll('div');
+      const items = [];
+      rows.forEach(row => {
+        const sel = row.querySelector('select').value;
+        const count = parseInt(row.querySelector('input').value) || 1;
+        if (!sel) return;
+        const [name, num] = sel.split(':');
+        items.push({ name, num: parseInt(num), [field]: count });
+      });
+      return items;
+    }
 
-  const data = {
-    home_score: h,
-    away_score: a,
-    result: result,
-    scorers: collectRows('scorerRows', 'goals'),
-    assisters: collectRows('assisterRows', 'assists')
-  };
+    const data = {
+      home_score: h,
+      away_score: a,
+      result: result,
+      scorers: collectRows('scorerRows', 'goals'),
+      assisters: collectRows('assisterRows', 'assists')
+    };
 
-  // 静态 fixtures 的比赛需先同步到 Supabase
-  if (_selectedResultMatch._source === 'static') {
-    const created = await API.addMatch({
-      date: _selectedResultMatch.date,
-      time: _selectedResultMatch.time,
-      home_team: _selectedResultMatch.home_team,
-      away_team: _selectedResultMatch.away_team,
-      venue: _selectedResultMatch.venue,
-      jersey: _selectedResultMatch.jersey,
-      jersey_color: _selectedResultMatch.jersey_color,
-      ...data
-    });
-    alert('赛果已保存！（比赛已从静态数据迁移至数据库）');
+    // 静态 fixtures 的比赛需先同步到 Supabase
+    if (_selectedResultMatch._source === 'static') {
+      // 静态比赛缺少 reg_open_at/reg_close_at，用比赛时间作为默认值（已结束，不影响功能）
+      var matchDate = _selectedResultMatch.date;
+      var matchTime = _selectedResultMatch.time || '14:40';
+      var matchStart = matchDate + 'T' + matchTime + ':00+08:00';
+      await API.addMatch({
+        date: matchDate,
+        time: matchTime,
+        home_team: _selectedResultMatch.home_team,
+        away_team: _selectedResultMatch.away_team,
+        venue: _selectedResultMatch.venue,
+        jersey: _selectedResultMatch.jersey,
+        jersey_color: _selectedResultMatch.jersey_color,
+        reg_open_at: matchStart,
+        reg_close_at: matchStart,
+        ...data
+      });
+      alert('赛果已保存！（比赛已从静态数据迁移至数据库）');
+    } else {
+      await API.updateMatch(_selectedResultMatch.id, data);
+      alert('赛果已保存！');
+    }
+
+    // 通知其他页面刷新战报
+    localStorage.setItem('jrsf_lastResultUpdate', Date.now());
+
     _selectedResultMatch = null;
     loadResultsTab();
     hideResultForm();
-    return;
+  } catch (e) {
+    alert('保存失败：' + (e.message || '网络错误'));
+  } finally {
+    btn.disabled = false;
   }
-
-  await API.updateMatch(_selectedResultMatch.id, data);
-  alert('赛果已保存！');
-  loadResultsTab();
 });
 
-document.getElementById('resultClearBtn').addEventListener('click', async () => {
+document.getElementById('resultClearBtn').addEventListener('click', async function () {
+  const btn = this;
+  if (btn.disabled) return;
   if (!_selectedResultMatch) return;
   if (_selectedResultMatch._source === 'static') {
     alert('静态数据中的比赛尚未迁移，无需清除');
     return;
   }
   if (!confirm('确定清除这场比赛的所有赛果数据？')) return;
-  await API.updateMatch(_selectedResultMatch.id, {
-    home_score: null, away_score: null, result: '', scorers: [], assisters: []
-  });
-  alert('赛果已清除！');
-  loadResultsTab();
-  hideResultForm();
+
+  btn.disabled = true;
+  try {
+    await API.updateMatch(_selectedResultMatch.id, {
+      home_score: null, away_score: null, result: '', scorers: [], assisters: []
+    });
+    alert('赛果已清除！');
+    localStorage.setItem('jrsf_lastResultUpdate', Date.now());
+    loadResultsTab();
+    hideResultForm();
+  } catch (e) {
+    alert('清除失败：' + (e.message || '网络错误'));
+  } finally {
+    btn.disabled = false;
+  }
 });

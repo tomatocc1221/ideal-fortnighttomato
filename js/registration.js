@@ -13,12 +13,15 @@ document.getElementById('regOverlay').addEventListener('click', function (e) {
 });
 
 function closeRegPanel() {
+  var matchId = _regMatch ? _regMatch.id : null;
   document.getElementById('regOverlay').classList.remove('open');
   document.body.style.overflow = '';
   _regMatch = null;
   _regPlayer = null;
   _regList = [];
   resetRegAuth();
+  if (matchId && window.refreshMainRegButton) window.refreshMainRegButton(matchId);
+  if (window.flushScrollReveal) window.flushScrollReveal();
 }
 
 function resetRegAuth() {

@@ -21,6 +21,20 @@ document.addEventListener("DOMContentLoaded", () => {
   bindEvents();
   // 后台拉取 API 数据，静默更新
   enrichFromAPI();
+
+  // 监听其他标签页的数据更新（管理员保存赛果后自动刷新）
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'jrsf_lastResultUpdate' && e.newValue) {
+      enrichFromAPI();
+    }
+  });
+
+  // 用户切回标签页时兜底刷新
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      enrichFromAPI();
+    }
+  });
 });
 
 // ===== 移动端导航菜单 =====

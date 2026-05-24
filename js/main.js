@@ -9,7 +9,7 @@ const DB_NAME = "jinrishuofa";
 const STORE = { PLAYERS: "playerAvatars", CAROUSEL: "carouselPhotos", GALLERY: "galleryPhotos" };
 const LS_KEY = { PLAYERS: "jrsf_players", SLIDES: "jrsf_slides", ALBUMS: "jrsf_albums" };
 const PATH = { AVATAR: "images/players/", GALLERY: "images/gallery/" };
-const TIMING = { CAROUSEL: 3500, SCROLL_THRESHOLD: 60, ACTIVE_OFFSET: 120, COUNTUP: 1200, SWIPE: 50, REVEAL_STAGGER: 0.07, REVEAL_GROUP: 5 };
+const TIMING = { CAROUSEL: 3500, SCROLL_THRESHOLD: 60, ACTIVE_OFFSET: 120, COUNTUP: 1200, SWIPE: 50, REVEAL_STAGGER: 0.04, REVEAL_GROUP: 5 };
 const CSS = { OPEN: "open", ACTIVE: "active", SCROLLED: "scrolled", FLIPPED: "flipped", VISIBLE: "visible" };
 const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -226,6 +226,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   initScrollReveal();
   initTacticsBoard();
   initRegButtons();
+
+  // 监听其他标签页的数据更新（管理员保存赛果后自动刷新战报）
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'jrsf_lastResultUpdate' && e.newValue) {
+      renderFixtures();
+    }
+  });
+
+  // 用户切回标签页时兜底刷新战报
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      renderFixtures();
+    }
+  });
 });
 
 /* ========================================
@@ -403,7 +417,7 @@ function renderRoster(playersOverride) {
           <div class="player-card-front">
             <div class="player-avatar">
               ${p._avatarUrl
-                ? `<img src="${p._avatarUrl}" alt="${p.name}">`
+                ? `<img src="${p._avatarUrl}" alt="${p.name}" decoding="sync">`
                 : `<span class="player-avatar-initial">${p.name[0]}</span>`}
             </div>
             <div class="player-number">${p.number}</div>
@@ -601,6 +615,12 @@ async function initRegButtons() {
     const apiMatch = m._apiMatch || apiMatches.find(am => am.date === m.date && am.away_team === m.away);
     const match = apiMatch || m;
 
+    // 标记 data 属性以便关闭面板时刷新
+    if (match.id) {
+      btn.setAttribute('data-reg-match', match.id);
+      if (warn) warn.setAttribute('data-warn-match', match.id);
+    }
+
     if (!match.reg_open_at || !match.reg_close_at) {
       btn.textContent = '—';
       btn.className = 'reg-entry-btn closed';
@@ -638,6 +658,49 @@ async function initRegButtons() {
     }
   });
 }
+
+/* === Registration count refresh (for real-time update after close) === */
+async function refreshMainRegButton(matchId) {
+  if (!matchId) return;
+  try {
+    const list = await API.getRegistrations(matchId);
+    const n = list.filter(r => r.status === 'confirmed').length;
+
+    const btn = document.querySelector(`[data-reg-match="${matchId}"]`);
+    if (btn) btn.textContent = `报名中 (${n}/14)`;
+
+    const warnEl = document.querySelector(`[data-warn-match="${matchId}"]`);
+    if (warnEl) {
+      if (n < 14) {
+        warnEl.style.display = 'block';
+        warnEl.textContent = `距截止不足2小时，仅${n}人报名`;
+      } else {
+        warnEl.style.display = 'none';
+      }
+    }
+  } catch (e) { /* 静默降级 */ }
+}
+window.refreshMainRegButton = refreshMainRegButton;
+
+/* === Flush scroll-reveal: instantly show in-viewport elements === */
+function flushScrollReveal() {
+  if (REDUCED_MOTION) return;
+  var targets = document.querySelectorAll('.player-card-front, .stat-item, .fixture-item');
+  targets.forEach(function (el) {
+    var rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0 && el.style.opacity === '0') {
+      el.style.transition = 'none';
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          el.style.transition = '';
+        });
+      });
+    }
+  });
+}
+window.flushScrollReveal = flushScrollReveal;
 
 /* === Lightbox (shared) === */
 function initLightbox() {
@@ -1228,7 +1291,7 @@ function initScrollReveal() {
   targets.forEach((el, i) => {
     el.style.opacity = "0";
     el.style.transform = "translateY(24px)";
-    el.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+    el.style.transition = "opacity 0.3s ease, transform 0.3s ease";
     el.style.transitionDelay = (i % TIMING.REVEAL_GROUP) * TIMING.REVEAL_STAGGER + "s";
     observer.observe(el);
   });
