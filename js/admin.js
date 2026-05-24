@@ -129,25 +129,29 @@ function resetPlayerForm() {
 }
 
 document.getElementById('playerSaveBtn').addEventListener('click', async () => {
-  const id = document.getElementById('pfId').value;
-  const name = document.getElementById('pfName').value.trim();
-  const number = parseInt(document.getElementById('pfNumber').value);
-  const pin = document.getElementById('pfPin').value;
+  try {
+    const id = document.getElementById('pfId').value;
+    const name = document.getElementById('pfName').value.trim();
+    const number = parseInt(document.getElementById('pfNumber').value);
+    const pin = document.getElementById('pfPin').value;
 
-  if (!name || !Number.isFinite(number)) return alert('请填写姓名和号码');
+    if (!name || !Number.isFinite(number)) return alert('请填写姓名和号码');
 
-  const data = { name, number };
-  if (pin) data.pin = pin;
+    const data = { name, number };
+    if (pin) data.pin = pin;
 
-  if (id) {
-    await API.updatePlayer(id, data);
-  } else {
-    if (!pin) return alert('请设置个人密码');
-    await API.addPlayer(data);
+    if (id) {
+      await API.updatePlayer(id, data);
+    } else {
+      if (!pin) return alert('请设置个人密码');
+      await API.addPlayer(data);
+    }
+
+    resetPlayerForm();
+    loadPlayers();
+  } catch (e) {
+    alert('保存失败：' + e.message);
   }
-
-  resetPlayerForm();
-  loadPlayers();
 });
 
 document.getElementById('playerCancelBtn').addEventListener('click', resetPlayerForm);
@@ -167,17 +171,6 @@ async function loadMatches() {
   allMatches = await API.getMatches();
   renderMatchTable();
   updateMatchSelect();
-  updateVenueSelect();
-}
-
-function updateVenueSelect() {
-  const venues = [...new Set(allMatches.map(m => m.venue).filter(Boolean))];
-  const sel = document.getElementById('mfVenue');
-  sel.innerHTML = '';
-  venues.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
-  const addNew = document.createElement('option');
-  addNew.value = '__new__'; addNew.textContent = '+ 添加新场地';
-  sel.appendChild(addNew);
 }
 
 function calcRegWindow(dateStr, timeStr) {
@@ -227,21 +220,11 @@ function editMatch(id) {
   const m = allMatches.find(mt => mt.id === id);
   if (!m) return;
 
-  const venueSel = document.getElementById('mfVenue');
-  // 如果当前场地不在选项中，插入到"添加新场地"之前
-  if (m.venue && ![...venueSel.options].some(o => o.value === m.venue)) {
-    const opt = document.createElement('option');
-    opt.value = m.venue; opt.textContent = m.venue;
-    venueSel.insertBefore(opt, venueSel.lastElementChild);
-  }
-
   document.getElementById('mfId').value = m.id;
   document.getElementById('mfDate').value = m.date;
   document.getElementById('mfTime').value = m.time;
   document.getElementById('mfAway').value = m.away_team;
-  venueSel.value = m.venue || '';
-  document.getElementById('mfVenueNew').style.display = 'none';
-  document.getElementById('mfVenueNew').value = '';
+  document.getElementById('mfVenue').value = m.venue || '';
   document.getElementById('mfJersey').value = m.jersey || '蓝色';
   document.getElementById('mfJerseyColor').value = m.jersey_color || '#4a90d9';
   document.getElementById('mfFee').value = m.fee || '';
@@ -255,8 +238,6 @@ function resetMatchForm() {
   document.getElementById('mfTime').value = '14:40';
   document.getElementById('mfAway').value = '';
   document.getElementById('mfVenue').value = '';
-  document.getElementById('mfVenueNew').style.display = 'none';
-  document.getElementById('mfVenueNew').value = '';
   document.getElementById('mfJersey').value = '蓝色';
   document.getElementById('mfJerseyColor').value = '#4a90d9';
   document.getElementById('mfFee').value = '';
@@ -265,58 +246,47 @@ function resetMatchForm() {
 }
 
 document.getElementById('matchSaveBtn').addEventListener('click', async () => {
-  const id = document.getElementById('mfId').value;
-  const date = document.getElementById('mfDate').value;
-  const time = document.getElementById('mfTime').value;
-  const away = document.getElementById('mfAway').value.trim();
-  const venueSel = document.getElementById('mfVenue');
-  let venue = venueSel.value;
-  if (venue === '__new__') {
-    venue = document.getElementById('mfVenueNew').value.trim();
+  try {
+    const id = document.getElementById('mfId').value;
+    const date = document.getElementById('mfDate').value;
+    const time = document.getElementById('mfTime').value;
+    const away = document.getElementById('mfAway').value.trim();
+    const venue = document.getElementById('mfVenue').value.trim();
+    const jersey = document.getElementById('mfJersey').value;
+    const jerseyColor = jersey === '粉色' ? '#e91e63' : '#4a90d9';
+    document.getElementById('mfJerseyColor').value = jerseyColor;
+
+    if (!date || !away) return alert('请填写日期和对手');
+
+    const { open, close } = calcRegWindow(date, time);
+
+    const fee = parseFloat(document.getElementById('mfFee').value) || 0;
+
+    const data = {
+      date, time,
+      away_team: away,
+      venue,
+      jersey,
+      jersey_color: jerseyColor,
+      fee: fee || null,
+      reg_open_at: open.toISOString(),
+      reg_close_at: close.toISOString()
+    };
+
+    if (id) {
+      await API.updateMatch(id, data);
+    } else {
+      await API.addMatch(data);
+    }
+
+    resetMatchForm();
+    loadMatches();
+  } catch (e) {
+    alert('保存失败：' + e.message);
   }
-  const jersey = document.getElementById('mfJersey').value;
-  const jerseyColor = jersey === '粉色' ? '#e91e63' : '#4a90d9';
-  document.getElementById('mfJerseyColor').value = jerseyColor;
-
-  if (!date || !away) return alert('请填写日期和对手');
-
-  const { open, close } = calcRegWindow(date, time);
-
-  const fee = parseFloat(document.getElementById('mfFee').value) || 0;
-
-  const data = {
-    date, time,
-    away_team: away,
-    venue,
-    jersey,
-    jersey_color: jerseyColor,
-    fee: fee || null,
-    reg_open_at: open.toISOString(),
-    reg_close_at: close.toISOString()
-  };
-
-  if (id) {
-    await API.updateMatch(id, data);
-  } else {
-    await API.addMatch(data);
-  }
-
-  resetMatchForm();
-  loadMatches();
 });
 
 document.getElementById('matchCancelBtn').addEventListener('click', resetMatchForm);
-
-document.getElementById('mfVenue').addEventListener('change', function () {
-  const newInput = document.getElementById('mfVenueNew');
-  if (this.value === '__new__') {
-    newInput.style.display = 'inline-block';
-    newInput.focus();
-  } else {
-    newInput.style.display = 'none';
-    newInput.value = '';
-  }
-});
 
 async function deleteMatch(id) {
   if (!confirm('确定删除这场比赛？相关报名记录也会删除。')) return;

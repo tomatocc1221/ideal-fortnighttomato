@@ -16,25 +16,35 @@ const API = {
   },
 
   async addPlayer(data) {
-    const pinHash = await sha256(data.pin || '');
-    const row = await sb.from('players').insert({
-      name: data.name,
-      number: data.number,
-      pin_hash: pinHash,
-      role: data.role || 'player'
-    });
-    return { ...row[0], id: String(row[0].id) };
+    try {
+      const pinHash = await sha256(data.pin || '');
+      const row = await sb.from('players').insert({
+        name: data.name,
+        number: data.number,
+        pin_hash: pinHash,
+        role: data.role || 'player'
+      });
+      if (!row || !row.length) throw new Error('服务器未返回数据');
+      return { ...row[0], id: String(row[0].id) };
+    } catch (e) {
+      throw new Error('添加队员失败: ' + (e.message || '网络错误'));
+    }
   },
 
   async updatePlayer(id, data) {
-    const payload = { ...data };
-    if (payload.pin) {
-      payload.pin_hash = await sha256(payload.pin);
-      delete payload.pin;
+    try {
+      const payload = { ...data };
+      if (payload.pin) {
+        payload.pin_hash = await sha256(payload.pin);
+        delete payload.pin;
+      }
+      delete payload.id;
+      const row = await sb.from('players').update(payload, 'id=eq.' + id);
+      if (!row || !row.length) throw new Error('服务器未返回数据');
+      return { ...row[0], id: String(row[0].id) };
+    } catch (e) {
+      throw new Error('更新队员失败: ' + (e.message || '网络错误'));
     }
-    delete payload.id;
-    const row = await sb.from('players').update(payload, 'id=eq.' + id);
-    return { ...row[0], id: String(row[0].id) };
   },
 
   async deletePlayer(id) {
@@ -76,31 +86,41 @@ const API = {
   },
 
   async addMatch(data) {
-    const row = await sb.from('matches').insert({
-      date: data.date,
-      time: data.time || '14:40',
-      home_team: data.home_team || '今日说法',
-      away_team: data.away_team,
-      venue: data.venue || '',
-      jersey: data.jersey || '',
-      jersey_color: data.jersey_color || '',
-      fee: data.fee || null,
-      max_players: data.max_players || 14,
-      max_substitutes: data.max_substitutes || 4,
-      reg_open_at: data.reg_open_at,
-      reg_close_at: data.reg_close_at,
-      home_score: data.home_score ?? null,
-      away_score: data.away_score ?? null,
-      result: data.result || '',
-      scorers: data.scorers || [],
-      assisters: data.assisters || []
-    });
-    return { ...row[0], id: String(row[0].id) };
+    try {
+      const row = await sb.from('matches').insert({
+        date: data.date,
+        time: data.time || '14:40',
+        home_team: data.home_team || '今日说法',
+        away_team: data.away_team,
+        venue: data.venue || '',
+        jersey: data.jersey || '',
+        jersey_color: data.jersey_color || '',
+        fee: data.fee || null,
+        max_players: data.max_players || 14,
+        max_substitutes: data.max_substitutes || 4,
+        reg_open_at: data.reg_open_at,
+        reg_close_at: data.reg_close_at,
+        home_score: data.home_score ?? null,
+        away_score: data.away_score ?? null,
+        result: data.result || '',
+        scorers: data.scorers || [],
+        assisters: data.assisters || []
+      });
+      if (!row || !row.length) throw new Error('服务器未返回数据');
+      return { ...row[0], id: String(row[0].id) };
+    } catch (e) {
+      throw new Error('创建比赛失败: ' + (e.message || '网络错误'));
+    }
   },
 
   async updateMatch(id, data) {
-    const row = await sb.from('matches').update(data, 'id=eq.' + id);
-    return { ...row[0], id: String(row[0].id) };
+    try {
+      const row = await sb.from('matches').update(data, 'id=eq.' + id);
+      if (!row || !row.length) throw new Error('服务器未返回数据');
+      return { ...row[0], id: String(row[0].id) };
+    } catch (e) {
+      throw new Error('更新比赛失败: ' + (e.message || '网络错误'));
+    }
   },
 
   async deleteMatch(id) {
