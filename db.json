@@ -80,6 +80,24 @@
         }
       ],
       "created_at": "2026-05-23T19:56:41.054Z"
+    },
+    {
+      "id": "1779566911898",
+      "date": "2026-05-23",
+      "time": "14:40",
+      "home_team": "今日说法",
+      "away_team": "重庆龮枥",
+      "venue": "奥体驰骋足球场2号场",
+      "jersey": "蓝",
+      "jersey_color": "#4a90d9",
+      "max_players": 14,
+      "max_substitutes": 4,
+      "home_score": null,
+      "away_score": null,
+      "result": "",
+      "scorers": [],
+      "assisters": [],
+      "created_at": "2026-05-23T20:08:31.898Z"
     }
   ],
   "registrations": [

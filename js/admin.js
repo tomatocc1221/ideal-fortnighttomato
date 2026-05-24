@@ -189,7 +189,7 @@ function renderMatchTable() {
   tbody.innerHTML = allMatches.map(m => `
     <tr>
       <td>${m.date} ${m.time || ''}</td>
-      <td>vs ${m.away_team} ${m.jersey ? '(' + m.jersey + ')' : ''}</td>
+      <td>${m.home_team || '今日说法'} vs ${m.away_team} ${m.jersey ? '(' + m.jersey + ')' : ''}</td>
       <td>${fmtDT(m.reg_open_at)} ~ ${fmtDT(m.reg_close_at)}</td>
       <td>
         <button class="btn btn-sm btn-edit" data-id="${m.id}">编辑</button>
@@ -313,7 +313,7 @@ async function deleteMatch(id) {
 function updateMatchSelect() {
   const sel = document.getElementById('regMatchSelect');
   sel.innerHTML = '<option value="">— 选择比赛 —</option>' +
-    allMatches.map(m => `<option value="${m.id}">${m.date} vs ${m.away_team}</option>`).join('');
+    allMatches.map(m => `<option value="${m.id}">${m.date} ${m.home_team || '今日说法'} vs ${m.away_team}</option>`).join('');
 }
 
 document.getElementById('regMatchSelect').addEventListener('change', function () {
@@ -491,7 +491,7 @@ async function loadResultsTab() {
     sel.innerHTML = '<option value="">-- 选择已结束的比赛 --</option>' +
       _allResultMatches.map((m, i) => {
         const hasResult = m.home_score !== undefined && m.home_score !== null && m.home_score !== '';
-        const label = `${m.date} vs ${m.away_team}${hasResult ? ' (已录入)' : ''}${m._source === 'static' ? ' [待迁移]' : ''}`;
+        const label = `${m.date} ${m.home_team || '今日说法'} vs ${m.away_team}${hasResult ? ' (已录入)' : ''}${m._source === 'static' ? ' [待迁移]' : ''}`;
         return `<option value="${i}">${label}</option>`;
       }).join('');
   }
@@ -527,14 +527,22 @@ function loadResultForm(m) {
   document.getElementById('resultSaveSection').style.display = 'block';
 }
 
+function computeOurResult(match, homeScore, awayScore) {
+  const weAreHome = (match.home_team || match.home) === '今日说法';
+  const ourScore = weAreHome ? homeScore : awayScore;
+  const theirScore = weAreHome ? awayScore : homeScore;
+  if (ourScore > theirScore) return { result: 'win', label: '胜' };
+  if (ourScore === theirScore) return { result: 'draw', label: '平' };
+  return { result: 'loss', label: '负' };
+}
+
 function updateResultPreview() {
   const h = parseInt(document.getElementById('rfHomeScore').value);
   const a = parseInt(document.getElementById('rfAwayScore').value);
   const el = document.getElementById('rfResultPreview');
   if (isNaN(h) || isNaN(a)) { el.textContent = '请输入比分'; return; }
-  if (h > a) el.textContent = '胜';
-  else if (h === a) el.textContent = '平';
-  else el.textContent = '负';
+  if (!_selectedResultMatch) { el.textContent = h > a ? '胜' : h === a ? '平' : '负'; return; }
+  el.textContent = computeOurResult(_selectedResultMatch, h, a).label;
 }
 
 document.getElementById('rfHomeScore').addEventListener('input', updateResultPreview);
@@ -603,10 +611,7 @@ document.getElementById('resultSaveBtn').addEventListener('click', async () => {
   const a = parseInt(document.getElementById('rfAwayScore').value);
   if (isNaN(h) || isNaN(a)) return alert('请输入比分');
 
-  let result;
-  if (h > a) result = 'win';
-  else if (h === a) result = 'draw';
-  else result = 'loss';
+  const { result } = computeOurResult(_selectedResultMatch, h, a);
 
   function collectRows(containerId, field) {
     const rows = document.getElementById(containerId).querySelectorAll('div');
