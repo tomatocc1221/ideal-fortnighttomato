@@ -725,11 +725,13 @@ document.getElementById('resultSaveBtn').addEventListener('click', async functio
       showToast('赛果已保存！', 'success');
     }
 
-    // 开启 24h MVP 投票窗口
-    try {
-      const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      await API.updateMatch(savedMatchId, { vote_deadline: deadline });
-    } catch (e) { console.warn('设置投票截止时间失败:', e.message); }
+    // 首次保存时开启 24h MVP 投票窗口（后续修改不重置计时）
+    if (!_selectedResultMatch.vote_deadline) {
+      try {
+        const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await API.updateMatch(savedMatchId, { vote_deadline: deadline });
+      } catch (e) { console.warn('设置投票截止时间失败:', e.message); }
+    }
 
     // 通知其他页面刷新战报
     localStorage.setItem('jrsf_lastResultUpdate', Date.now());
