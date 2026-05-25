@@ -901,7 +901,7 @@ img { max-width: 100%; display: block; }
 .gallery-album-header {
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
 .gallery-album-title {
@@ -942,7 +942,7 @@ img { max-width: 100%; display: block; }
 .gallery-photo {
   display: block;
   background: var(--bg-card);
-  border: 1px solid var(--border-default);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 6px;
   cursor: pointer;
   color: var(--border-muted);
