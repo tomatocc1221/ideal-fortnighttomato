@@ -235,6 +235,19 @@ img { max-width: 100%; display: block; }
   pointer-events: none;
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
+}
+.page-flags img {
+  position: absolute;
+  width: 42px;
+  height: 31.5px;
+  border-radius: 6px;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.page-flags img.loaded {
+  opacity: 0.45;
 }
 
 /* === Noise Texture Overlay === */

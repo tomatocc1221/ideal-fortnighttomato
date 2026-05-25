@@ -1038,95 +1038,105 @@ function initHeroParticles() {
 /* === Full-Page Flag Drift Background === */
 function initPageFlags() {
   if (REDUCED_MOTION) return;
-  const canvas = document.getElementById("pageFlags");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var container = document.getElementById('pageFlags');
+  if (!container) return;
 
-  const flagCodes = ['br','ar','de','fr','es','it','nl','pt','jp','kr','us','mx','ca','hr','uy','co','sn','ma','gh','ng','be','dk','ch','rs','se','pl','au','sa','ir'];
-  const FLAG_SIZE = 42;
-  const flagImgs = {};
-  const flags = [];
-  let w, h;
+  var FLAG_SIZE = 42;
+  var FLAG_COUNT = 22;
+  var flagCodes = ['br','ar','de','fr','es','it','nl','pt','jp','kr','us','mx','ca','hr','uy','co','sn','ma','gh','ng','be','dk','ch','rs','se','pl','au','sa','ir'];
+  var flagImgs = {};
+  var flags = [];
+  var w = window.innerWidth;
+  var h = window.innerHeight;
 
-  // Load flat SVG cartoon flags from CDN
-  let loadedCount = 0;
+  // Load SVG cartoon flags
+  var loadedCount = 0;
   flagCodes.forEach(function (code) {
     var img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = function () {
       flagImgs[code] = img;
       loadedCount++;
-      if (loadedCount === 1) spawnFlags();
+      if (loadedCount >= 3 && flags.length === 0) spawnFlags();
     };
     img.onerror = function () { loadedCount++; };
     img.src = 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/flags/4x3/' + code + '.svg';
   });
 
-  function resize() {
-    w = window.innerWidth;
-    h = window.innerHeight;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  function createFlagEl(code) {
+    var img = flagImgs[code];
+    var el = document.createElement('img');
+    el.src = img.src;
+    el.crossOrigin = 'anonymous';
+    el.alt = '';
+    el.className = 'loaded';
+    el.width = FLAG_SIZE;
+    el.height = Math.round(FLAG_SIZE * 0.75);
+    container.appendChild(el);
+    return el;
+  }
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
   }
 
   function spawnFlags() {
     var loaded = Object.keys(flagImgs);
-    var target = Math.min(18, loaded.length * 2);
-    while (flags.length < target) {
-      var code = loaded[Math.floor(Math.random() * loaded.length)];
+    var pool = shuffle(loaded.slice());
+    while (flags.length < FLAG_COUNT) {
+      var code = pool[flags.length % pool.length];
+      var el = createFlagEl(code);
       flags.push({
-        code: code,
+        el: el,
         x: Math.random() * w,
         y: Math.random() * h,
         vx: (Math.random() - 0.5) * 0.5,
         vy: (Math.random() - 0.5) * 0.35 - 0.08,
         rot: (Math.random() - 0.5) * 20,
         rotV: (Math.random() - 0.5) * 0.15,
-        alpha: 0.25 + Math.random() * 0.2,
+        alpha: 0.3 + Math.random() * 0.2,
         phase: Math.random() * Math.PI * 2
       });
     }
   }
 
-  function draw() {
-    ctx.clearRect(0, 0, w, h);
-
-    var loaded = Object.keys(flagImgs);
-    if (loaded.length > 0 && flags.length < 10) spawnFlags();
+  function update() {
+    // Lazy spawn as images load
+    if (flags.length < FLAG_COUNT && Object.keys(flagImgs).length >= 3) {
+      spawnFlags();
+    }
 
     flags.forEach(function (f) {
-      var img = flagImgs[f.code];
-      if (!img) return;
-
       f.x += f.vx;
       f.y += f.vy;
       f.rot += f.rotV;
       f.phase += 0.012;
       var alpha = f.alpha + 0.08 * Math.sin(f.phase);
 
-      var margin = FLAG_SIZE + 30;
+      var margin = FLAG_SIZE + 20;
       if (f.x > w + margin) f.x = -margin;
       if (f.x < -margin) f.x = w + margin;
       if (f.y > h + margin) f.y = -margin;
       if (f.y < -margin) f.y = h + margin;
 
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(f.x, f.y);
-      ctx.rotate(f.rot * Math.PI / 180);
-      // SVG flags are 4:3 ratio
-      ctx.drawImage(img, -FLAG_SIZE / 2, -FLAG_SIZE * 0.375, FLAG_SIZE, FLAG_SIZE * 0.75);
-      ctx.restore();
+      f.el.style.transform = 'translate(' + f.x.toFixed(1) + 'px,' + f.y.toFixed(1) + 'px) rotate(' + f.rot.toFixed(1) + 'deg)';
+      f.el.style.opacity = alpha;
     });
 
-    requestAnimationFrame(draw);
+    requestAnimationFrame(update);
   }
 
-  resize();
-  window.addEventListener('resize', rafThrottle(resize));
-  draw();
+  function onResize() {
+    w = window.innerWidth;
+    h = window.innerHeight;
+  }
+  window.addEventListener('resize', rafThrottle(onResize));
+
+  update();
 }
 
 /* === Carousel === */
