@@ -1044,21 +1044,23 @@ function initPageFlags() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   const flagCodes = ['br','ar','de','fr','es','it','nl','pt','jp','kr','us','mx','ca','hr','uy','co','sn','ma','gh','ng','be','dk','ch','rs','se','pl','au','sa','ir'];
+  const FLAG_SIZE = 42;
   const flagImgs = {};
   const flags = [];
   let w, h;
 
-  // Load flag images
+  // Load flat SVG cartoon flags from CDN
   let loadedCount = 0;
   flagCodes.forEach(function (code) {
     var img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = function () {
       flagImgs[code] = img;
       loadedCount++;
       if (loadedCount === 1) spawnFlags();
     };
     img.onerror = function () { loadedCount++; };
-    img.src = 'images/flags/' + code + '.png';
+    img.src = 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/flags/4x3/' + code + '.svg';
   });
 
   function resize() {
@@ -1078,11 +1080,10 @@ function initPageFlags() {
         code: code,
         x: Math.random() * w,
         y: Math.random() * h,
-        size: 32 + Math.random() * 28,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.2 - 0.04,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.35 - 0.08,
         rot: (Math.random() - 0.5) * 20,
-        rotV: (Math.random() - 0.5) * 0.1,
+        rotV: (Math.random() - 0.5) * 0.15,
         alpha: 0.25 + Math.random() * 0.2,
         phase: Math.random() * Math.PI * 2
       });
@@ -1092,7 +1093,6 @@ function initPageFlags() {
   function draw() {
     ctx.clearRect(0, 0, w, h);
 
-    // Ensure we have enough flags (lazy spawn as images load)
     var loaded = Object.keys(flagImgs);
     if (loaded.length > 0 && flags.length < 10) spawnFlags();
 
@@ -1100,15 +1100,13 @@ function initPageFlags() {
       var img = flagImgs[f.code];
       if (!img) return;
 
-      // Update
       f.x += f.vx;
       f.y += f.vy;
       f.rot += f.rotV;
-      f.phase += 0.008;
+      f.phase += 0.012;
       var alpha = f.alpha + 0.08 * Math.sin(f.phase);
 
-      // Wrap around edges
-      var margin = f.size + 20;
+      var margin = FLAG_SIZE + 30;
       if (f.x > w + margin) f.x = -margin;
       if (f.x < -margin) f.x = w + margin;
       if (f.y > h + margin) f.y = -margin;
@@ -1118,7 +1116,8 @@ function initPageFlags() {
       ctx.globalAlpha = alpha;
       ctx.translate(f.x, f.y);
       ctx.rotate(f.rot * Math.PI / 180);
-      ctx.drawImage(img, -f.size / 2, -f.size * 0.35, f.size, f.size * 0.67);
+      // SVG flags are 4:3 ratio
+      ctx.drawImage(img, -FLAG_SIZE / 2, -FLAG_SIZE * 0.375, FLAG_SIZE, FLAG_SIZE * 0.75);
       ctx.restore();
     });
 
