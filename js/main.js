@@ -1281,7 +1281,7 @@ function initTacticsBoard() {
     var marginX = pw * 0.12;
     var fieldTop = py + ph * 0.1;
     var fieldHeight = ph * 0.73;
-    var dotR = Math.max(18, pw * 0.045);
+    var dotR = Math.max(14, pw * 0.035);
 
     FORMATION_331.forEach(function (pos, i) {
       var cx = pos.cols === 1
@@ -1313,10 +1313,6 @@ function initTacticsBoard() {
       ctx.textBaseline = "middle";
       ctx.fillText(pos.label, cx, cy);
 
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
-      ctx.font = Math.max(8, dotR * 0.4) + "px -apple-system, \"PingFang SC\", sans-serif";
-      ctx.textBaseline = "middle";
-      ctx.fillText(i + 1, cx + dotR * 0.55, cy - dotR * 0.55);
     });
   }
 

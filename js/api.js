@@ -4,18 +4,26 @@
    ======================================== */
 
 const API = {
-  // 请求级缓存（30秒TTL，消除同一渲染周期内重复请求）
+  // 请求级缓存（30s TTL，消除同一渲染周期内重复请求）
+  // 缓存 Promise 本身以合并并发请求；失败不缓存，避免污染后续调用
   _cache: {},
   _cached: function(key, fetcher, ttl) {
     ttl = ttl || 30000;
-    var now = Date.now();
     var entry = this._cache[key];
-    if (entry && (now - entry._ts < ttl)) return Promise.resolve(entry.data);
+    // 命中：缓存未过期，直接返回（若请求进行中，共享同一个 Promise）
+    if (entry && (Date.now() - entry._ts < ttl)) return entry.promise;
     var self = this;
-    return fetcher().then(function(data) {
-      self._cache[key] = { data: data, _ts: now };
+    var promise = fetcher().then(function(data) {
+      // 数据到达时才更新时间戳
+      self._cache[key] = { promise: Promise.resolve(data), _ts: Date.now() };
       return data;
+    }).catch(function(err) {
+      // 失败不缓存，下次调用重试
+      delete self._cache[key];
+      throw err;
     });
+    this._cache[key] = { promise: promise, _ts: Date.now() };
+    return promise;
   },
 
   // ===== 队员 =====
