@@ -1043,7 +1043,7 @@ function initPageFlags() {
 
   var FLAG_SIZE = 42;
   var FLAG_COUNT = 22;
-  var flagCodes = ['br','ar','de','fr','es','it','nl','pt','jp','kr','us','mx','ca','hr','uy','co','sn','ma','gh','ng','be','dk','ch','rs','se','pl','au','sa','ir'];
+  var flagCodes = ['cn','br','ar','de','fr','es','it','nl','pt','jp','kr','us','mx','ca','hr','uy','co','sn','ma','gh','ng','be','dk','ch','rs','se','pl','au','sa','ir'];
   var flagImgs = {};
   var flags = [];
   var w = window.innerWidth;
@@ -1110,14 +1110,45 @@ function initPageFlags() {
       spawnFlags();
     }
 
+    // Update positions
     flags.forEach(function (f) {
       f.x += f.vx;
       f.y += f.vy;
       f.rot += f.rotV;
       f.phase += 0.012;
-      var alpha = f.alpha + 0.08 * Math.sin(f.phase);
+    });
 
-      var margin = FLAG_SIZE + 20;
+    // Collision detection
+    var minDist = FLAG_SIZE * 0.9;
+    for (var i = 0; i < flags.length; i++) {
+      for (var j = i + 1; j < flags.length; j++) {
+        var a = flags[i], b = flags[j];
+        var dx = b.x - a.x, dy = b.y - a.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < minDist && dist > 0.01) {
+          var nx = dx / dist, ny = dy / dist;
+          var overlap = minDist - dist;
+          a.x -= nx * overlap * 0.5;
+          a.y -= ny * overlap * 0.5;
+          b.x += nx * overlap * 0.5;
+          b.y += ny * overlap * 0.5;
+          // Swap velocities along collision axis
+          var relVx = a.vx - b.vx, relVy = a.vy - b.vy;
+          var relVn = relVx * nx + relVy * ny;
+          if (relVn > 0) {
+            a.vx -= relVn * nx;
+            a.vy -= relVn * ny;
+            b.vx += relVn * nx;
+            b.vy += relVn * ny;
+          }
+        }
+      }
+    }
+
+    // Apply bounds + render
+    var margin = FLAG_SIZE + 20;
+    flags.forEach(function (f) {
+      var alpha = f.alpha + 0.08 * Math.sin(f.phase);
       if (f.x > w + margin) f.x = -margin;
       if (f.x < -margin) f.x = w + margin;
       if (f.y > h + margin) f.y = -margin;
