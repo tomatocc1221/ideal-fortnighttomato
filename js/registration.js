@@ -45,15 +45,6 @@ async function openRegPanel(match) {
     <div class="reg-match-meta">${(match.date || '').replace(/-/g, '.')} · ${match.time || '14:40'} · ${match.venue || ''} ${match.jersey ? '· ' + match.jersey : ''}</div>
   `;
 
-  // 费用展示
-  const feeEl = document.getElementById('regFee');
-  if (match.fee && match.fee > 0) {
-    feeEl.style.display = 'block';
-    feeEl.innerHTML = `<span>场地费：${match.fee} 元</span><span class="reg-fee-per" id="regFeePer"></span>`;
-  } else {
-    feeEl.style.display = 'none';
-  }
-
   // 加载队员列表
   const players = await API.getPlayers();
   const sel = document.getElementById('regPlayerName');
@@ -103,13 +94,6 @@ async function refreshRegList() {
   document.getElementById('regConfirmedCount').innerHTML = `<strong>${confirmed.length}</strong>/14`;
   document.getElementById('regWaitlistCount').innerHTML = `<strong>${waitlist.length}</strong>/4`;
 
-  // 更新人均费用
-  const feePer = document.getElementById('regFeePer');
-  if (feePer && _regMatch.fee && _regMatch.fee > 0 && confirmed.length > 0) {
-    feePer.textContent = `人均：${(_regMatch.fee / confirmed.length).toFixed(0)} 元`;
-  } else if (feePer) {
-    feePer.textContent = '';
-  }
 
   const renderSlot = (r, idx) => `
     <div class="reg-slot">
@@ -221,7 +205,7 @@ document.getElementById('regCancelBtn').addEventListener('click', async () => {
   let reason = document.getElementById('regCancelReason').value;
   if (reason === '其他') {
     reason = document.getElementById('regCancelOther').value.trim();
-    if (!reason) return alert('请填写请假原因');
+    if (!reason) return showToast('请填写请假原因', 'info');
   }
 
   await API.updateRegistration(myReg.id, {

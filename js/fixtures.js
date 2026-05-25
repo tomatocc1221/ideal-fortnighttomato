@@ -100,6 +100,15 @@ function loadFromStatic() {
 
 // ===== 后台：API 数据静默更新 =====
 async function enrichFromAPI() {
+  var resultsEl = document.getElementById('fixturesResults');
+  if (resultsEl && !resultsEl.innerHTML.trim()) {
+    resultsEl.innerHTML = Array.from({length:5}, function(_,i){
+      return '<div class="jrsf-skeleton-row" style="padding:16px 0;border-bottom:1px solid #1a1a1a">' +
+        '<div class="jrsf-skeleton-cell jrsf-skeleton-sm"></div>' +
+        '<div class="jrsf-skeleton-cell jrsf-skeleton-lg" style="margin:0 16px"></div>' +
+        '<div class="jrsf-skeleton-cell jrsf-skeleton-md"></div></div>';
+    }).join('');
+  }
   const [apiResults, apiMatches] = await Promise.all([
     API.getResults().catch(() => []),
     API.getMatches().catch(() => [])
@@ -156,8 +165,8 @@ function normalizeAPIMatch(m) {
     away: m.away_team,
     score: m.home_score != null ? m.home_score + ":" + m.away_score : "",
     result: m.result || "",
-    scorers: (m.scorers || []).map(s => ({ name: s.name, num: s.number || s.num })),
-    assisters: (m.assisters || []).map(s => ({ name: s.name, num: s.number || s.num })),
+    scorers: (m.scorers || []).map(s => ({ name: s.name, num: s.number || s.num, goals: s.goals || 1 })),
+    assisters: (m.assisters || []).map(s => ({ name: s.name, num: s.number || s.num, assists: s.assists || 1 })),
     time: m.time || "",
     venue: m.venue || "",
     jersey: m.jersey || "",
@@ -250,10 +259,10 @@ function renderResults(results) {
       ? `<span class="fixture-score ${STATUS_CLASS[m.result] || ''}">${m.score} ${STATUS_TEXT[m.result] || ''}</span>`
       : "";
     const scorersHTML = m.scorers && m.scorers.length
-      ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(s => s.name).join("  ")}</span>`
+      ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(s => `${s.name}(${s.num})${s.goals > 1 ? '×' + s.goals : ''}`).join("  ")}</span>`
       : "";
     const assistersHTML = m.assisters && m.assisters.length
-      ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(s => s.name).join("  ")}</span>`
+      ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(s => `${s.name}(${s.num})${s.assists > 1 ? '×' + s.assists : ''}`).join("  ")}</span>`
       : "";
     const detailHTML = (scorersHTML || assistersHTML)
       ? `<div class="fixture-detail">${scorersHTML}${assistersHTML}</div>`

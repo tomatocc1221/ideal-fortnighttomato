@@ -52,11 +52,27 @@ CREATE TABLE IF NOT EXISTS config (
   value TEXT NOT NULL
 );
 
+-- MVP 投票记录（金球奖积分制：第一名3分、第二名2分、第三名1分）
+CREATE TABLE IF NOT EXISTS votes (
+  id SERIAL PRIMARY KEY,
+  match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+  voter_name VARCHAR(50) NOT NULL,
+  voter_number INTEGER NOT NULL,
+  candidate_name VARCHAR(50) NOT NULL,
+  candidate_number INTEGER NOT NULL,
+  rank INTEGER NOT NULL CHECK (rank BETWEEN 1 AND 3),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(match_id, voter_name, rank)
+);
+
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS vote_deadline TIMESTAMPTZ;
+
 -- MVP 阶段关闭 RLS
 ALTER TABLE players DISABLE ROW LEVEL SECURITY;
 ALTER TABLE matches DISABLE ROW LEVEL SECURITY;
 ALTER TABLE registrations DISABLE ROW LEVEL SECURITY;
 ALTER TABLE config DISABLE ROW LEVEL SECURITY;
+ALTER TABLE votes DISABLE ROW LEVEL SECURITY;
 
 -- 插入默认管理员密码
 INSERT INTO config (key, value) VALUES ('admin_password', 'admin123')

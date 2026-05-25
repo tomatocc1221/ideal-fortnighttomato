@@ -97,7 +97,6 @@ const API = {
         venue: data.venue || '',
         jersey: data.jersey || '',
         jersey_color: data.jersey_color || '',
-        fee: data.fee || null,
         max_players: data.max_players || 14,
         max_substitutes: data.max_substitutes || 4,
         reg_open_at: data.reg_open_at,
@@ -195,6 +194,58 @@ const API = {
   async deleteRegistration(id) {
     await sb.from('registrations').delete('id=eq.' + id);
     return { deleted: true };
+  },
+
+  // ===== MVP 投票 =====
+  async getVotes(matchId) {
+    try {
+      const query = matchId
+        ? 'match_id=eq.' + parseInt(matchId) + '&order=created_at.asc'
+        : 'order=created_at.asc';
+      const rows = await sb.from('votes').select('*', query);
+      return rows.map(v => ({ ...v, id: String(v.id), match_id: String(v.match_id) }));
+    } catch (e) { console.warn('[API] getVotes 失败:', e.message); return []; }
+  },
+
+  async castVote(data) {
+    // data.votes: [{candidate_name, candidate_number, rank:1}, {rank:2}, {rank:3}]
+    try {
+      const rows = await sb.from('votes').insert(data.votes.map(function (v) {
+        return {
+          match_id: parseInt(data.match_id),
+          voter_name: data.voter_name,
+          voter_number: data.voter_number,
+          candidate_name: v.candidate_name,
+          candidate_number: v.candidate_number,
+          rank: v.rank
+        };
+      }));
+      if (!rows || !rows.length) throw new Error('服务器未返回数据');
+      return rows.map(function (r) { return { ...r, id: String(r.id), match_id: String(r.match_id) }; });
+    } catch (e) {
+      console.error('[API] castVote:', e);
+      throw new Error('投票失败: ' + (e.message || '网络错误'));
+    }
+  },
+
+  async getPlayerMVPCount(playerName) {
+    try {
+      // 按比赛分组，计算每场积分最高的球员，统计该球员 MVP 次数
+      const allVotes = await sb.from('votes').select('*');
+      var matchPoints = {}; // {matchId: {name: points}}
+      allVotes.forEach(function (v) {
+        var mid = String(v.match_id);
+        if (!matchPoints[mid]) matchPoints[mid] = {};
+        var pts = v.rank === 1 ? 3 : v.rank === 2 ? 2 : 1;
+        matchPoints[mid][v.candidate_name] = (matchPoints[mid][v.candidate_name] || 0) + pts;
+      });
+      var wins = 0;
+      Object.values(matchPoints).forEach(function (pts) {
+        var sorted = Object.entries(pts).sort(function (a, b) { return b[1] - a[1]; });
+        if (sorted.length && sorted[0][0] === playerName) wins++;
+      });
+      return wins;
+    } catch (e) { console.warn('[API] getPlayerMVPCount 失败:', e.message); return 0; }
   },
 
   // ===== 统计 =====

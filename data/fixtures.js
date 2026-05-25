@@ -17,37 +17,10 @@
 
 window.__fixturesData = {
 
-  // 近期战果（新的放在最前面）
-  results: [
-    { date: "2025.04.19", home: "今日说法", away: "东吴FC",     score: "3:2", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"古培杰",num:14}],
-      assisters: [{name:"向润杰",num:10},{name:"刘畅",num:7}] },
-    { date: "2025.04.12", home: "今日说法", away: "快乐足球",   score: "2:1", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"刘畅",num:7}],
-      assisters: [{name:"张浩宇",num:9}] },
-    { date: "2025.04.05", home: "铁狼队",   away: "今日说法", score: "0:1", result: "win",
-      scorers: [{name:"向润杰",num:10}],
-      assisters: [{name:"李泽",num:22}] },
-    { date: "2025.03.29", home: "今日说法", away: "蓝月亮",     score: "3:1", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"刘畅",num:7}],
-      assisters: [{name:"李泽",num:22},{name:"张浩宇",num:9}] },
-    { date: "2025.03.22", home: "东风FC",   away: "今日说法", score: "1:1", result: "draw",
-      scorers: [{name:"张浩宇",num:9}],
-      assisters: [{name:"向润杰",num:10}] },
-    { date: "2025.03.15", home: "今日说法", away: "老男孩FC",   score: "4:2", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"李泽",num:22},{name:"张浩宇",num:9},{name:"唐文",num:18}],
-      assisters: [{name:"刘畅",num:7},{name:"向润杰",num:10}] },
-    { date: "2025.03.08", home: "飓风青年", away: "今日说法", score: "2:0", result: "loss",
-      scorers: [],
-      assisters: [] },
-    { date: "2025.03.01", home: "今日说法", away: "雄狮联盟",   score: "5:3", result: "win",
-      scorers: [{name:"向润杰",num:10},{name:"向润杰",num:10},{name:"张浩宇",num:9},{name:"刘畅",num:7},{name:"唐文",num:18}],
-      assisters: [{name:"张浩宇",num:9},{name:"李泽",num:22},{name:"向润杰",num:10}] },
-  ],
+  // 近期战果（从 API 动态加载）
+  results: [],
 
   // 即将开赛
-  upcoming: [
-    { date: "2026.05.24", time: "19:00", home: "飞虎",     away: "今日说法", venue: "华侨城足球公园",     jersey: "粉", jerseyColor: "#f0a0b0" },
-  ],
+  upcoming: [],
 
 };

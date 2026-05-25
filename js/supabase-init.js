@@ -87,12 +87,14 @@ async function sha256(message) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 连通性测试
-(async () => {
-  try {
-    await sb.from('players').select('count');
-    console.log('[Supabase] 连接成功');
-  } catch (e) {
-    console.warn('[Supabase] 未连接（需先在 Supabase SQL Editor 执行 sql/create_tables.sql）:', e.message);
-  }
-})();
+// 连通性测试（仅主页执行，管理后台跳过）
+if (!window.location.pathname.includes('admin')) {
+  (async () => {
+    try {
+      await sb.from('players').select('count');
+      console.log('[Supabase] 连接成功');
+    } catch (e) {
+      console.warn('[Supabase] 未连接（需先在 Supabase SQL Editor 执行 sql/create_tables.sql）:', e.message);
+    }
+  })();
+}

@@ -35,10 +35,6 @@ document.getElementById('loginPwd').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('loginBtn').click();
 });
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  clearAdminSession();
-  location.reload();
-});
 
 // 自动登录（24h 内有效）
 if (isAdminSessionValid()) {
@@ -75,6 +71,7 @@ async function initAdmin() {
 let allPlayers = [];
 
 async function loadPlayers() {
+  showTableSkeleton(document.getElementById('playerTbody'), 5, 5);
   allPlayers = await API.getPlayers();
   renderPlayerTable();
 }
@@ -130,16 +127,26 @@ function resetPlayerForm() {
 
 document.getElementById('playerSaveBtn').addEventListener('click', async function () {
   const btn = this;
-  if (btn.disabled) return; // 防重复点击
+  if (btn.disabled) return;
+  const form = document.getElementById('tab-players');
+  clearFieldErrors(form);
+  const id = document.getElementById('pfId').value;
+  const nameEl = document.getElementById('pfName');
+  const numEl = document.getElementById('pfNumber');
+  const pinEl = document.getElementById('pfPin');
+  const name = nameEl.value.trim();
+  const number = parseInt(numEl.value);
+  const pin = pinEl.value;
+
+  if (!name || !Number.isFinite(number)) {
+    if (!name) showFieldError(nameEl, '请填写姓名');
+    if (!Number.isFinite(number)) showFieldError(numEl, '请填写号码');
+    return;
+  }
+  if (!id && !pin) { showFieldError(pinEl, '请设置个人密码'); return; }
+
   btn.disabled = true;
   try {
-    const id = document.getElementById('pfId').value;
-    const name = document.getElementById('pfName').value.trim();
-    const number = parseInt(document.getElementById('pfNumber').value);
-    const pin = document.getElementById('pfPin').value;
-
-    if (!name || !Number.isFinite(number)) return alert('请填写姓名和号码');
-
     const data = { name, number };
     if (pin) data.pin = pin;
 
@@ -149,7 +156,6 @@ document.getElementById('playerSaveBtn').addEventListener('click', async functio
       const idx = allPlayers.findIndex(p => p.id === id);
       if (idx !== -1) allPlayers[idx] = saved;
     } else {
-      if (!pin) return alert('请设置个人密码');
       saved = await API.addPlayer(data);
       allPlayers.push(saved);
       allPlayers.sort((a, b) => a.number - b.number);
@@ -158,7 +164,7 @@ document.getElementById('playerSaveBtn').addEventListener('click', async functio
     resetPlayerForm();
     renderPlayerTable();
   } catch (e) {
-    alert('保存失败：' + e.message);
+    showToast('保存失败：' + e.message, 'error');
   } finally {
     btn.disabled = false;
   }
@@ -167,13 +173,13 @@ document.getElementById('playerSaveBtn').addEventListener('click', async functio
 document.getElementById('playerCancelBtn').addEventListener('click', resetPlayerForm);
 
 async function deletePlayer(id) {
-  if (!confirm('确定删除这名队员？')) return;
+  if (!await showConfirm('确定删除这名队员？')) return;
   try {
     await API.deletePlayer(id);
     allPlayers = allPlayers.filter(p => p.id !== id);
     renderPlayerTable();
   } catch (e) {
-    alert('删除失败：' + e.message);
+    showToast('删除失败：' + e.message, 'error');
   }
 }
 
@@ -183,6 +189,7 @@ async function deletePlayer(id) {
 let allMatches = [];
 
 async function loadMatches() {
+  showTableSkeleton(document.getElementById('matchTbody'), 4, 5);
   allMatches = await API.getMatches();
   renderMatchTable();
   updateMatchSelect();
@@ -242,7 +249,6 @@ function editMatch(id) {
   document.getElementById('mfVenue').value = m.venue || '';
   document.getElementById('mfJersey').value = m.jersey || '蓝色';
   document.getElementById('mfJerseyColor').value = m.jersey_color || '#4a90d9';
-  document.getElementById('mfFee').value = m.fee || '';
   document.getElementById('matchFormTitle').textContent = '编辑比赛';
   document.getElementById('matchCancelBtn').style.display = 'inline-block';
 }
@@ -255,7 +261,6 @@ function resetMatchForm() {
   document.getElementById('mfVenue').value = '';
   document.getElementById('mfJersey').value = '蓝色';
   document.getElementById('mfJerseyColor').value = '#4a90d9';
-  document.getElementById('mfFee').value = '';
   document.getElementById('matchFormTitle').textContent = '创建比赛';
   document.getElementById('matchCancelBtn').style.display = 'none';
 }
@@ -263,29 +268,35 @@ function resetMatchForm() {
 document.getElementById('matchSaveBtn').addEventListener('click', async function () {
   const btn = this;
   if (btn.disabled) return;
+  const form = document.getElementById('tab-matches');
+  clearFieldErrors(form);
+  const id = document.getElementById('mfId').value;
+  const dateEl = document.getElementById('mfDate');
+  const awayEl = document.getElementById('mfAway');
+  const date = dateEl.value;
+  const time = document.getElementById('mfTime').value;
+  const away = awayEl.value.trim();
+  const venue = document.getElementById('mfVenue').value.trim();
+  const jersey = document.getElementById('mfJersey').value;
+  const jerseyColor = jersey === '粉色' ? '#e91e63' : '#4a90d9';
+  document.getElementById('mfJerseyColor').value = jerseyColor;
+
+  if (!date || !away) {
+    if (!date) showFieldError(dateEl, '请选择日期');
+    if (!away) showFieldError(awayEl, '请填写对手队名');
+    return;
+  }
+
   btn.disabled = true;
   try {
-    const id = document.getElementById('mfId').value;
-    const date = document.getElementById('mfDate').value;
-    const time = document.getElementById('mfTime').value;
-    const away = document.getElementById('mfAway').value.trim();
-    const venue = document.getElementById('mfVenue').value.trim();
-    const jersey = document.getElementById('mfJersey').value;
-    const jerseyColor = jersey === '粉色' ? '#e91e63' : '#4a90d9';
-    document.getElementById('mfJerseyColor').value = jerseyColor;
-
-    if (!date || !away) return alert('请填写日期和对手');
 
     const { open, close } = calcRegWindow(date, time);
-    const fee = parseFloat(document.getElementById('mfFee').value) || 0;
-
     const data = {
       date, time,
       away_team: away,
       venue,
       jersey,
       jersey_color: jerseyColor,
-      fee: fee || null,
       reg_open_at: open.toISOString(),
       reg_close_at: close.toISOString()
     };
@@ -305,7 +316,7 @@ document.getElementById('matchSaveBtn').addEventListener('click', async function
     renderMatchTable();
     updateMatchSelect();
   } catch (e) {
-    alert('保存失败：' + e.message);
+    showToast('保存失败：' + e.message, 'error');
   } finally {
     btn.disabled = false;
   }
@@ -314,14 +325,14 @@ document.getElementById('matchSaveBtn').addEventListener('click', async function
 document.getElementById('matchCancelBtn').addEventListener('click', resetMatchForm);
 
 async function deleteMatch(id) {
-  if (!confirm('确定删除这场比赛？相关报名记录也会删除。')) return;
+  if (!await showConfirm('确定删除这场比赛？相关报名记录也会删除。')) return;
   try {
     await API.deleteMatch(id);
     allMatches = allMatches.filter(m => m.id !== id);
     renderMatchTable();
     updateMatchSelect();
   } catch (e) {
-    alert('删除失败：' + e.message);
+    showToast('删除失败：' + e.message, 'error');
   }
 }
 
@@ -344,25 +355,42 @@ async function loadRegTab() {
   if (sel.value) loadRegistrations(sel.value);
 }
 
+// 全局报名缓存（避免每次切换比赛都全量拉取）
+var _allRegsCache = null;
+var _allRegsCacheTime = 0;
+var _allMatchesCache = null;
+var _allMatchesCacheTime = 0;
+var CACHE_TTL = 60000; // 60秒内复用缓存
+
 async function loadRegistrations(matchId) {
-  const tbody = document.getElementById('regTbody');
-  const count = document.getElementById('regCount');
+  var tbody = document.getElementById('regTbody');
+  var count = document.getElementById('regCount');
   if (!matchId) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-row">请选择比赛</td></tr>';
     count.textContent = '';
     return;
   }
 
-  const list = await API.getRegistrations(matchId);
-  const confirmed = list.filter(r => r.status === 'confirmed');
-  const waitlist = list.filter(r => r.status === 'waitlist');
-  const cancelled = list.filter(r => r.status === 'cancelled');
+  showTableSkeleton(tbody, 6, 5);
+  var list = await API.getRegistrations(matchId);
+  var confirmed = list.filter(function (r) { return r.status === 'confirmed'; });
+  var waitlist = list.filter(function (r) { return r.status === 'waitlist'; });
+  var cancelled = list.filter(function (r) { return r.status === 'cancelled'; });
 
-  count.textContent = `(正选${confirmed.length}/14 + 候补${waitlist.length}/4)`;
+  count.textContent = '(正选' + confirmed.length + '/14 + 候补' + waitlist.length + '/4)';
 
-  // 检测连续缺席：按队员分组，检查最近连续 cancelled
-  const allRegs = await API.getRegistrations();
-  allMatches = await API.getMatches();
+  // 检测连续缺席：按队员分组，检查最近连续 cancelled（60s 缓存避免频繁全量查询）
+  var now = Date.now();
+  if (!_allRegsCache || now - _allRegsCacheTime > CACHE_TTL) {
+    _allRegsCache = await API.getRegistrations();
+    _allRegsCacheTime = now;
+  }
+  if (!_allMatchesCache || now - _allMatchesCacheTime > CACHE_TTL) {
+    _allMatchesCache = await API.getMatches();
+    _allMatchesCacheTime = now;
+  }
+  var allRegs = _allRegsCache;
+  allMatches = _allMatchesCache;
   const matchDateMap = new Map(allMatches.map(m => [m.id, m.date]));
   const playerHistory = {};
   allRegs.forEach(r => {
@@ -415,14 +443,16 @@ async function loadRegistrations(matchId) {
 async function adjustReg(id, currentStatus) {
   const newStatus = currentStatus === 'confirmed' ? 'waitlist' : currentStatus === 'waitlist' ? 'cancelled' : 'confirmed';
   const action = currentStatus === 'confirmed' ? '移到候补' : currentStatus === 'waitlist' ? '取消报名' : '恢复正选';
-  if (!confirm(`确定${action}？`)) return;
+  if (!await showConfirm('确定' + action + '？')) return;
   await API.updateRegistration(id, { status: newStatus });
+  _allRegsCache = null; // 清除缓存
   loadRegistrations(document.getElementById('regMatchSelect').value);
 }
 
 async function deleteReg(id, matchId) {
-  if (!confirm('确定删除这条报名记录？')) return;
+  if (!await showConfirm('确定删除这条报名记录？')) return;
   await API.deleteRegistration(id);
+  _allRegsCache = null;
   loadRegistrations(matchId);
 }
 
@@ -430,6 +460,7 @@ async function deleteReg(id, matchId) {
 //  出勤统计
 // ============================================================
 async function loadStats() {
+  showTableSkeleton(document.getElementById('statsTbody'), 7, 5);
   const stats = await API.getStats();
   const tbody = document.getElementById('statsTbody');
   if (!stats.length) {
@@ -632,15 +663,19 @@ document.getElementById('addAssisterBtn').addEventListener('click', () => create
 
 document.getElementById('resultSaveBtn').addEventListener('click', async function () {
   const btn = this;
-    const { result } = computeOurResult(_selectedResultMatch, h, a);
-  if (isNaN(h) || isNaN(a)) return alert('请输入比分');
+  if (btn.disabled) return;
+  const form = document.getElementById('tab-results');
+  clearFieldErrors(form);
+  const hEl = document.getElementById('rfHomeScore');
+  const aEl = document.getElementById('rfAwayScore');
+  const h = parseInt(hEl.value);
+  const a = parseInt(aEl.value);
+  if (isNaN(h)) { showFieldError(hEl, '请输入主队进球'); return; }
+  if (isNaN(a)) { showFieldError(aEl, '请输入客队进球'); return; }
 
   btn.disabled = true;
   try {
-    let result;
-    if (h > a) result = 'win';
-    else if (h === a) result = 'draw';
-    else result = 'loss';
+    const { result } = computeOurResult(_selectedResultMatch, h, a);
 
     function collectRows(containerId, field) {
       const rows = document.getElementById(containerId).querySelectorAll('div');
@@ -664,12 +699,13 @@ document.getElementById('resultSaveBtn').addEventListener('click', async functio
     };
 
     // 静态 fixtures 的比赛需先同步到 Supabase
+    let savedMatchId;
     if (_selectedResultMatch._source === 'static') {
       // 静态比赛缺少 reg_open_at/reg_close_at，用比赛时间作为默认值（已结束，不影响功能）
       var matchDate = _selectedResultMatch.date;
       var matchTime = _selectedResultMatch.time || '14:40';
       var matchStart = matchDate + 'T' + matchTime + ':00+08:00';
-      await API.addMatch({
+      const created = await API.addMatch({
         date: matchDate,
         time: matchTime,
         home_team: _selectedResultMatch.home_team,
@@ -681,11 +717,19 @@ document.getElementById('resultSaveBtn').addEventListener('click', async functio
         reg_close_at: matchStart,
         ...data
       });
-      alert('赛果已保存！（比赛已从静态数据迁移至数据库）');
+      savedMatchId = created.id;
+      showToast('赛果已保存！（比赛已从静态数据迁移至数据库）', 'success');
     } else {
-      await API.updateMatch(_selectedResultMatch.id, data);
-      alert('赛果已保存！');
+      savedMatchId = _selectedResultMatch.id;
+      await API.updateMatch(savedMatchId, data);
+      showToast('赛果已保存！', 'success');
     }
+
+    // 开启 24h MVP 投票窗口
+    try {
+      const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      await API.updateMatch(savedMatchId, { vote_deadline: deadline });
+    } catch (e) { console.warn('设置投票截止时间失败:', e.message); }
 
     // 通知其他页面刷新战报
     localStorage.setItem('jrsf_lastResultUpdate', Date.now());
@@ -694,7 +738,7 @@ document.getElementById('resultSaveBtn').addEventListener('click', async functio
     loadResultsTab();
     hideResultForm();
   } catch (e) {
-    alert('保存失败：' + (e.message || '网络错误'));
+    showToast('保存失败：' + (e.message || '网络错误'), 'error');
   } finally {
     btn.disabled = false;
   }
@@ -705,22 +749,21 @@ document.getElementById('resultClearBtn').addEventListener('click', async functi
   if (btn.disabled) return;
   if (!_selectedResultMatch) return;
   if (_selectedResultMatch._source === 'static') {
-    alert('静态数据中的比赛尚未迁移，无需清除');
+    showToast('静态数据中的比赛尚未迁移，无需清除', 'info');
     return;
   }
-  if (!confirm('确定清除这场比赛的所有赛果数据？')) return;
-
+  if (!await showConfirm('确定清除这场比赛的所有赛果数据？')) return;
   btn.disabled = true;
   try {
     await API.updateMatch(_selectedResultMatch.id, {
       home_score: null, away_score: null, result: '', scorers: [], assisters: []
     });
-    alert('赛果已清除！');
+    showToast('赛果已清除！', 'success');
     localStorage.setItem('jrsf_lastResultUpdate', Date.now());
     loadResultsTab();
     hideResultForm();
   } catch (e) {
-    alert('清除失败：' + (e.message || '网络错误'));
+    showToast('清除失败：' + (e.message || '网络错误'), 'error');
   } finally {
     btn.disabled = false;
   }

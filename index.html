@@ -195,7 +195,7 @@
       </div>
       <div class="footer-bottom">
         <p>&copy; 2026 今日说法足球俱乐部</p>
-        <p class="footer-version">v1.0.8 · <a href="admin.html">管理</a></p>
+        <p class="footer-version">v1.0.9 · <a href="admin.html">管理</a></p>
       </div>
     </div>
   </footer>
@@ -239,8 +239,6 @@
       <!-- 比赛信息 -->
       <div class="reg-match" id="regMatch"></div>
 
-      <!-- 费用展示 -->
-        <div class="reg-fee" id="regFee" style="display:none"></div>
 
         <!-- 表单内容区 -->
         <div class="reg-body">
@@ -299,6 +297,30 @@
     </div>
   </div>
 
+  <!-- ========== MVP 投票面板 ========== -->
+  <div class="vote-overlay" id="voteOverlay" role="dialog" aria-modal="true" aria-label="MVP投票">
+    <div class="vote-panel">
+      <button class="vote-close" id="voteClose">&times;</button>
+      <div class="vote-match" id="voteMatch"></div>
+      <div class="vote-body">
+        <div class="vote-auth" id="voteAuth">
+          <select id="votePlayerName" class="vote-input"><option value="">选择你的姓名</option></select>
+          <input type="password" id="votePin" class="vote-input" placeholder="个人密码">
+          <button class="vote-btn" id="voteVerifyBtn">验证身份</button>
+          <p class="vote-error" id="voteError"></p>
+        </div>
+        <div class="vote-candidates" id="voteCandidates" style="display:none">
+          <p class="vote-prompt">请按顺序选出本场最佳球员（金球奖积分制）</p>
+          <div class="vote-rank-list" id="voteRankList"></div>
+          <p class="vote-note">第一名得3分 · 第二名得2分 · 第三名得1分 · 投票后无法修改</p>
+        </div>
+        <div class="vote-result" id="voteResult" style="display:none">
+          <p class="vote-result-text" id="voteResultText"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== 返回顶部 ========== -->
   <button class="back-to-top" id="backToTop" aria-label="返回顶部">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -307,9 +329,11 @@
   </button>
 
 
+  <script src="js/common.js"></script>
   <script defer src="js/supabase-init.js"></script>
   <script defer src="js/api.js"></script>
   <script defer src="js/registration.js"></script>
+  <script defer src="js/voting.js"></script>
   <script defer src="data/fixtures.js"></script>
   <script defer src="data/gallery.js"></script>
   <script defer src="js/main.js"></script>

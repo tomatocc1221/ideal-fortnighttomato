@@ -40,13 +40,22 @@ function svgPlaceholder(title, subtitle, w, h, fy, sy) {
   </svg>`;
 }
 
-function closeOnEscape(overlayElement, closeFn) {
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && overlayElement.classList.contains("open")) {
-      closeFn();
+// 单一全局 Escape 处理器（避免每个 overlay 各注册一个 document keydown 监听）
+(function () {
+  var handlers = [];
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !handlers.length) return;
+    for (var i = handlers.length - 1; i >= 0; i--) {
+      if (handlers[i].el.classList.contains('open')) {
+        handlers[i].fn();
+        break;
+      }
     }
   });
-}
+  window.registerEscape = function (el, fn) {
+    handlers.push({ el: el, fn: fn });
+  };
+})();
 
 /* ========================================
    Storage Layer — IndexedDB + localStorage
@@ -99,10 +108,21 @@ function loadImage(storeName, key) {
 
 function checkFileAvatar(number) {
   return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve("images/players/" + number + ".jpg");
-    img.onerror = () => resolve(null);
-    img.src = "images/players/" + number + ".jpg";
+    var img = new Image();
+    img.onload = function () { resolve(this._src); };
+    img.onerror = function () {
+      if (this._src.endsWith('.webp')) {
+        var fallback = new Image();
+        fallback._src = 'images/players/' + number + '.jpg';
+        fallback.onload = function () { resolve(this._src); };
+        fallback.onerror = function () { resolve(null); };
+        fallback.src = fallback._src;
+      } else {
+        resolve(null);
+      }
+    };
+    img._src = 'images/players/' + number + '.webp';
+    img.src = img._src;
   });
 }
 
@@ -230,14 +250,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 监听其他标签页的数据更新（管理员保存赛果后自动刷新战报）
   window.addEventListener('storage', function (e) {
     if (e.key === 'jrsf_lastResultUpdate' && e.newValue) {
-      renderFixtures();
+      renderFixtures().then(function () { loadMVPs(); });
     }
   });
 
   // 用户切回标签页时兜底刷新战报
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) {
-      renderFixtures();
+      renderFixtures().then(function () { loadMVPs(); });
     }
   });
 });
@@ -312,10 +332,31 @@ async function loadAllOverridesAndMerge() {
   // Render with merged data
   renderRoster(mergedPlayers);
   await renderFixtures();
+  loadMVPs(allVotes);
   initCarousel(mergedSlides);
   initGalleryOverlay(mergedAlbums);
 
   window.__players = mergedPlayers;
+
+  // 预加载 MVP 计数 + 所有投票数据（供 loadMVPs 复用，避免重复请求）
+  var allVotes = [];
+  try { allVotes = await API.getVotes(); } catch (e) { /* 降级 */ }
+  window.__allVotes = allVotes;
+
+  // Ballon d'Or 计分：按场次分组，每场积分最高者当选 MVP
+  var matchPoints = {};
+  allVotes.forEach(function (v) {
+    var mid = String(v.match_id);
+    if (!matchPoints[mid]) matchPoints[mid] = {};
+    var pts = v.rank === 1 ? 3 : v.rank === 2 ? 2 : 1;
+    matchPoints[mid][v.candidate_name] = (matchPoints[mid][v.candidate_name] || 0) + pts;
+  });
+  var mvpCounts = {};
+  Object.values(matchPoints).forEach(function (pts) {
+    var sorted = Object.entries(pts).sort(function (a, b) { return b[1] - a[1]; });
+    if (sorted.length) mvpCounts[sorted[0][0]] = (mvpCounts[sorted[0][0]] || 0) + 1;
+  });
+  window.__mvpCounts = mvpCounts;
 }
 
 /* === Navigation === */
@@ -453,8 +494,8 @@ async function renderFixtures() {
       const apiMap = new Map();
       apiResults.forEach(m => {
         const score = m.home_score + ':' + m.away_score;
-        const scorers = (m.scorers || []).map(s => ({ name: s.name, num: s.number || s.num }));
-        const assisters = (m.assisters || []).map(s => ({ name: s.name, num: s.number || s.num }));
+        const scorers = (m.scorers || []).map(s => ({ name: s.name, num: s.number || s.num, goals: s.goals || 1 }));
+        const assisters = (m.assisters || []).map(s => ({ name: s.name, num: s.number || s.num, assists: s.assists || 1 }));
         const key = m.date + '|' + m.away_team;
         apiMap.set(key, {
           date: m.date.replace(/-/g, '.'),
@@ -463,7 +504,11 @@ async function renderFixtures() {
           score,
           result: m.result,
           scorers,
-          assisters
+          assisters,
+          matchId: m.id,
+          vote_deadline: m.vote_deadline,
+          time: m.time,
+          venue: m.venue
         });
       });
       // API 赛果覆盖或追加
@@ -494,15 +539,24 @@ async function renderFixtures() {
         const hasAssists = m.assisters && m.assisters.length > 0;
         const detailHTML = (hasGoals || hasAssists) ? `
           <div class="fixture-detail">
-            ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
-            ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+            ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})${p.goals > 1 ? '×' + p.goals : ''}`).join("  ")}</span>` : ""}
+            ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})${p.assists > 1 ? '×' + p.assists : ''}`).join("  ")}</span>` : ""}
           </div>` : "";
+        // 投票中 or MVP 徽章
+        const hasVoteOpen = m.vote_deadline && new Date(m.vote_deadline) > new Date();
+        let extraBadge = '';
+        if (hasVoteOpen && m.matchId) {
+          extraBadge = `<span class="vote-open-btn" data-vote-match='${JSON.stringify({id:m.matchId,home_team:m.home,away_team:m.away,date:m.date,venue:m.venue,time:m.time}).replace(/'/g,"&#39;")}'>MVP投票</span>`;
+        } else {
+          extraBadge = `<span class="mvp-area" data-match-id="${m.matchId || ''}" style="display:none"></span>`;
+        }
         return `
         <div class="fixture-item">
           <div class="fixture-item-main">
             <span class="fixture-date">${m.date}</span>
             <span class="fixture-teams">${m.home} vs ${m.away}</span>
             <span class="fixture-score ${statusClass[m.result]}">${m.score} ${statusText[m.result]}</span>
+            ${extraBadge}
           </div>
           ${detailHTML}
         </div>`;
@@ -555,6 +609,50 @@ async function renderFixtures() {
   window.__upcoming = upcomingFiltered;
 
   startCountdown();
+}
+
+/* === MVP 投票入口（委托点击） === */
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest('.vote-open-btn');
+  if (!btn) return;
+  var match;
+  try { match = JSON.parse(btn.getAttribute('data-vote-match')); } catch (_) { return; }
+  if (window.openVotePanel) window.openVotePanel(match);
+});
+
+/* === MVP 结果展示 === */
+async function loadMVPs(prefetchedVotes) {
+  var allVotes = prefetchedVotes || window.__allVotes || [];
+  // 没有预取数据时自己拉取
+  if (!prefetchedVotes && !window.__allVotes) {
+    try { allVotes = await API.getVotes(); } catch (e) { return; }
+  }
+  // 按 match_id 分组
+  var byMatch = {};
+  allVotes.forEach(function (v) {
+    var mid = String(v.match_id);
+    if (!byMatch[mid]) byMatch[mid] = [];
+    byMatch[mid].push(v);
+  });
+
+  var items = document.querySelectorAll('#resultsList .mvp-area');
+  for (var i = 0; i < items.length; i++) {
+    var el = items[i];
+    var matchId = el.getAttribute('data-match-id');
+    if (!matchId) continue;
+    var votes = byMatch[matchId];
+    if (!votes || !votes.length) continue;
+    var points = {};
+    votes.forEach(function (v) {
+      var pts = v.rank === 1 ? 3 : v.rank === 2 ? 2 : 1;
+      points[v.candidate_name] = (points[v.candidate_name] || 0) + pts;
+    });
+    var sorted = Object.entries(points).sort(function (a, b) { return b[1] - a[1]; });
+    if (!sorted.length) continue;
+    var mvpName = sorted[0][0];
+    el.style.display = '';
+    el.outerHTML = '<span class="mvp-badge"><span class="mvp-crown">★</span> MVP: ' + mvpName + '</span>';
+  }
 }
 
 /* === Registration Buttons === */
@@ -708,7 +806,7 @@ function initLightbox() {
   const close = document.getElementById("lightboxClose");
   close.addEventListener("click", () => lb.classList.remove("open"));
   closeOnBackdrop(lb, () => lb.classList.remove("open"));
-  closeOnEscape(lb, () => lb.classList.remove("open"));
+  registerEscape(lb, () => lb.classList.remove("open"));
 }
 
 function openLightbox(content) {
@@ -895,6 +993,16 @@ function initCarousel(slidesOverride) {
   const carousel = document.getElementById("carousel");
   carousel.addEventListener("mouseenter", stopTimer);
   carousel.addEventListener("mouseleave", startTimer);
+
+  // Pause when not visible (节约 CPU)
+  var carouselObserver = new IntersectionObserver(function (entries) {
+    if (entries[0].isIntersecting) {
+      startTimer();
+    } else {
+      stopTimer();
+    }
+  }, { threshold: 0.1 });
+  carouselObserver.observe(carousel);
 }
 
 /* === Tactics Board === */
@@ -1179,7 +1287,7 @@ function initGalleryOverlay(albumsOverride) {
 
   backBtn.addEventListener("click", close);
   closeOnBackdrop(overlay, close);
-  closeOnEscape(overlay, close);
+  registerEscape(overlay, close);
 
   // Photo click → lightbox
   content.addEventListener("click", (e) => {
@@ -1217,7 +1325,7 @@ function initPlayerDetail() {
 
   backBtn.addEventListener("click", closePlayerDetail);
   closeOnBackdrop(overlay, closePlayerDetail);
-  closeOnEscape(overlay, closePlayerDetail);
+  registerEscape(overlay, closePlayerDetail);
 }
 
 function openPlayerDetail(index) {
@@ -1238,6 +1346,7 @@ function openPlayerDetail(index) {
   el.role.className = "player-detail-role " + getPositionGroup(p.role);
   el.bio.textContent = p.bio;
 
+  var mvpCount = (window.__mvpCounts && window.__mvpCounts[p.name]) || 0;
   el.info.innerHTML = `
     <div class="player-info-item">
       <div class="player-info-value">${p.age ?? "—"}</div>
@@ -1250,6 +1359,10 @@ function openPlayerDetail(index) {
     <div class="player-info-item">
       <div class="player-info-value">${p.joinYear}</div>
       <div class="player-info-label">入队</div>
+    </div>
+    <div class="player-info-item">
+      <div class="player-info-value mvp-count">${mvpCount}</div>
+      <div class="player-info-label">MVP</div>
     </div>
   `;
 
