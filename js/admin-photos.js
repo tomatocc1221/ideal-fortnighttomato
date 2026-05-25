@@ -235,6 +235,7 @@ async function uploadPendingPhotos(matchId) {
     } catch (err) {
       p.status = 'error';
       console.error('照片上传失败:', err);
+      showToast('上传失败: ' + (err.message || '未知错误'), 'error');
     }
     renderPhotoPreview();
   }
