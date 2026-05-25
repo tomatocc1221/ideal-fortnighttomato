@@ -1000,7 +1000,7 @@ function initCarousel(slidesOverride) {
   track.innerHTML = slides.map((s, i) => `
     <div class="carousel-slide" data-index="${i}">
       ${s._imageUrl
-        ? `<img class="carousel-slide-img" src="${i === 0 ? s._imageUrl : ''}" data-src="${i === 0 ? '' : s._imageUrl}" alt="${s.label}" decoding="async"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'} onerror="this.parentElement.innerHTML='<span class=\\'carousel-slide-placeholder\\'>'+this.alt+'</span>'">`
+        ? `<img class="carousel-slide-img" src="${i === 0 ? s._imageUrl : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}" data-src="${i === 0 ? '' : s._imageUrl}" alt="${s.label}" decoding="async"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'} onerror="this.parentElement.innerHTML='<span class=\\'carousel-slide-placeholder\\'>'+this.alt+'</span>'">`
         : `<span class="carousel-slide-placeholder">${s.label}</span>`}
     </div>
   `).join("");
