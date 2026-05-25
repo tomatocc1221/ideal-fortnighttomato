@@ -339,7 +339,7 @@ const API = {
       var matchesMap = {};
       if (matchIds.length) {
         try {
-          var allMatches = await sb.from('matches').select('id,date,home_team,away_team');
+          var allMatches = await sb.from('matches').select('id,date,home_team,away_team,venue');
           allMatches.forEach(function (m) { matchesMap[String(m.id)] = m; });
         } catch (e) { console.warn('[API] getAllPhotosGrouped 比赛查询失败:', e.message); }
       }
@@ -350,6 +350,7 @@ const API = {
         if (!grouped[mid]) grouped[mid] = {
           matchId: mid, date: m.date || '',
           home_team: m.home_team || '今日说法', away_team: m.away_team || '',
+	          venue: m.venue || '',
           photos: []
         };
         grouped[mid].photos.push({

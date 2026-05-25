@@ -306,13 +306,16 @@ async function loadAllOverridesAndMerge() {
     var matchAlbums = Object.values(grouped);
     matchAlbums.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
     matchAlbums.forEach(function (album) {
-      var groupLabel = (album.home_team || '今日说法') + ' vs ' + (album.away_team || '') + ' · ' + (album.date || '').replace(/-/g, '.');
+	      var groupTitle = (album.home_team || '今日说法') + ' vs ' + (album.away_team || '') ;
+ 	      var groupMeta = (album.date || '').replace(/-/g, '.');
+	      if (album.venue) groupMeta += ' · ' + album.venue;
       album.photos.forEach(function (p) {
         allMatchPhotos.push({
-          label: groupLabel,
+          label: groupTitle,
           _imageUrl: p.fullUrl,
           _thumbUrl: p.thumbUrl,
-          _groupLabel: groupLabel,
+          _groupLabel: groupTitle,
+	          _groupMeta: groupMeta,
           _matchPhotoId: p.id
         });
       });
@@ -1343,8 +1346,9 @@ function initGalleryOverlay(albumsOverride) {
         var lastGroup = '';
         a.photos.forEach(function (p, i) {
           if (p._groupLabel && p._groupLabel !== lastGroup) {
-            lastGroup = p._groupLabel;
-            photosHTML += '<div class="gallery-subgroup-header">' + lastGroup + '</div>';
+	            lastGroup = p._groupLabel;
+ 	            lastGroupMeta = p._groupMeta || '';
+ 	            photosHTML += '<div class="gallery-subgroup-title">' + lastGroup + '</div>' + (lastGroupMeta ? '<div class="gallery-subgroup-meta">' + lastGroupMeta + '</div>' : '') ;
           }
           photosHTML += '<div class="gallery-photo" data-album="' + a.title + '" data-idx="' + i + '" data-full="' + (p._imageUrl || '') + '">' +
             (p._thumbUrl || p._imageUrl
