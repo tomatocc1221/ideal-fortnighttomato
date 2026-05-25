@@ -241,10 +241,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   initCountUp();
   initBackToTop();
 
+  // 提前渲染战术板空球场，不等数据
+  (function preRenderTacticsCanvas() {
+    var canvas = document.getElementById("tacticsCanvas");
+    if (!canvas) return;
+    var board = canvas.parentElement;
+    var dpr = window.devicePixelRatio || 1;
+    var w = board.clientWidth;
+    var h = w * 0.7;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = "#2a5c2a";
+    ctx.fillRect(0, 0, w, h);
+  })();
+
   // Load overrides from storage and render with merged data
   await loadAllOverridesAndMerge();
   initScrollReveal();
-  initTacticsBoard();
+  initTacticsBoard().catch(function (e) {
+    console.warn("[Tactics] init failed:", e.message);
+  });
   initRegButtons();
 
   // 监听其他标签页的数据更新（管理员保存赛果后自动刷新战报）
@@ -1158,14 +1178,14 @@ async function initTacticsBoard() {
   }
 
   // ===== 位置分配 =====
-  function assignPositions(registrations, gk) {
+  function assignPositions(regs, gk) {
     regs.sort(function (a, b) {
       return (a.registered_at || "").localeCompare(b.registered_at || "");
     });
 
     var dfList = [], mfList = [], fwList = [];
     regs.forEach(function (r) {
-      var p = findPlayerByNumber(r.player_number);
+      var p = findPlayerByNumber(Number(r.player_number));
       if (!p) return;
       var g = getPositionGroup(p.role);
       if (g === "role-gk") return;
@@ -1391,18 +1411,25 @@ async function initTacticsBoard() {
     });
   }
 
-  // ===== 初始化：获取数据后首次渲染 =====
-  var result = await getLatestMatchRegistrations();
-  if (result) {
-    currentMatchInfo = result.match;
-    var gk = getFixedGK();
-    var allocation = assignPositions(result.registrations, gk);
-    assigned = allocation.assigned;
-    currentBench = allocation.bench;
+  // 立即渲染空白球场，避免异步加载时的黑屏
+  draw();
+  window.addEventListener("resize", rafThrottle(draw));
+
+  // ===== 初始化：获取数据后更新渲染 =====
+  try {
+    var result = await getLatestMatchRegistrations();
+    if (result) {
+      currentMatchInfo = result.match;
+      var gk = getFixedGK();
+      var allocation = assignPositions(result.registrations, gk);
+      assigned = allocation.assigned;
+      currentBench = allocation.bench;
+    }
+  } catch (e) {
+    console.warn("[Tactics] 加载数据失败:", e.message);
   }
   renderBench(currentBench, currentMatchInfo);
   draw();
-  window.addEventListener("resize", rafThrottle(draw));
 }
 
 /* === Gallery Overlay === */
