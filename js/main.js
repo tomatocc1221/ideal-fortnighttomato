@@ -291,6 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initNav();
   initLightbox();
   initHeroParticles();
+  initPageFlags();
   initPlayerDetail();
   initCountUp();
   initBackToTop();
@@ -956,7 +957,7 @@ function openLightbox(content) {
   document.getElementById("lightbox").classList.add("open");
 }
 
-/* === Hero Particles === */
+/* === Hero Particles (ambient gold dust) === */
 function initHeroParticles() {
   const canvas = document.getElementById("heroParticles");
   if (!canvas) return;
@@ -1032,6 +1033,101 @@ function initHeroParticles() {
       paused = true;
     }
   });
+}
+
+/* === Full-Page Flag Drift Background === */
+function initPageFlags() {
+  if (REDUCED_MOTION) return;
+  const canvas = document.getElementById("pageFlags");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  const flagCodes = ['br','ar','de','fr','es','it','nl','pt','jp','kr','us','mx','ca','hr','uy','co','sn','ma','gh','ng','be','dk','ch','rs','se','pl','au','sa','ir'];
+  const flagImgs = {};
+  const flags = [];
+  let w, h;
+
+  // Load flag images
+  let loadedCount = 0;
+  flagCodes.forEach(function (code) {
+    var img = new Image();
+    img.onload = function () {
+      flagImgs[code] = img;
+      loadedCount++;
+      if (loadedCount === 1) spawnFlags();
+    };
+    img.onerror = function () { loadedCount++; };
+    img.src = 'images/flags/' + code + '.png';
+  });
+
+  function resize() {
+    w = window.innerWidth;
+    h = window.innerHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function spawnFlags() {
+    var loaded = Object.keys(flagImgs);
+    var target = Math.min(18, loaded.length * 2);
+    while (flags.length < target) {
+      var code = loaded[Math.floor(Math.random() * loaded.length)];
+      flags.push({
+        code: code,
+        x: Math.random() * w,
+        y: Math.random() * h,
+        size: 32 + Math.random() * 28,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.2 - 0.04,
+        rot: (Math.random() - 0.5) * 20,
+        rotV: (Math.random() - 0.5) * 0.1,
+        alpha: 0.25 + Math.random() * 0.2,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+
+    // Ensure we have enough flags (lazy spawn as images load)
+    var loaded = Object.keys(flagImgs);
+    if (loaded.length > 0 && flags.length < 10) spawnFlags();
+
+    flags.forEach(function (f) {
+      var img = flagImgs[f.code];
+      if (!img) return;
+
+      // Update
+      f.x += f.vx;
+      f.y += f.vy;
+      f.rot += f.rotV;
+      f.phase += 0.008;
+      var alpha = f.alpha + 0.08 * Math.sin(f.phase);
+
+      // Wrap around edges
+      var margin = f.size + 20;
+      if (f.x > w + margin) f.x = -margin;
+      if (f.x < -margin) f.x = w + margin;
+      if (f.y > h + margin) f.y = -margin;
+      if (f.y < -margin) f.y = h + margin;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.rot * Math.PI / 180);
+      ctx.drawImage(img, -f.size / 2, -f.size * 0.35, f.size, f.size * 0.67);
+      ctx.restore();
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', rafThrottle(resize));
+  draw();
 }
 
 /* === Carousel === */
