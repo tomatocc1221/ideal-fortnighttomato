@@ -1099,108 +1099,169 @@ function initCarousel(slidesOverride) {
 }
 
 /* === Tactics Board === */
-function initTacticsBoard() {
-  const canvas = document.getElementById("tacticsCanvas");
+async function initTacticsBoard() {
+  var canvas = document.getElementById("tacticsCanvas");
   if (!canvas) return;
-  const board = canvas.parentElement;
-  const dpr = window.devicePixelRatio || 1;
+  var board = canvas.parentElement;
+  var dpr = window.devicePixelRatio || 1;
 
-  const formations = {
-    "322": {
-      name: "3-2-2",
-      positions: [
-        { row: 0, col: 0, rows: 4, cols: 1, number: 1 },
-        { row: 1, col: 0, rows: 4, cols: 3, number: 4 },
-        { row: 1, col: 1, rows: 4, cols: 3, number: 6 },
-        { row: 1, col: 2, rows: 4, cols: 3, number: 14 },
-        { row: 2, col: 0, rows: 4, cols: 2, number: 8 },
-        { row: 2, col: 1, rows: 4, cols: 2, number: 22 },
-        { row: 3, col: 0, rows: 4, cols: 2, number: 7 },
-        { row: 3, col: 1, rows: 4, cols: 2, number: 9 },
-      ]
-    },
-    "232": {
-      name: "2-3-2",
-      positions: [
-        { row: 0, col: 0, rows: 4, cols: 1, number: 1 },
-        { row: 1, col: 0, rows: 4, cols: 2, number: 4 },
-        { row: 1, col: 1, rows: 4, cols: 2, number: 14 },
-        { row: 2, col: 0, rows: 4, cols: 3, number: 6 },
-        { row: 2, col: 1, rows: 4, cols: 3, number: 8 },
-        { row: 2, col: 2, rows: 4, cols: 3, number: 22 },
-        { row: 3, col: 0, rows: 4, cols: 2, number: 7 },
-        { row: 3, col: 1, rows: 4, cols: 2, number: 9 },
-      ]
-    },
-    "331": {
-      name: "3-3-1",
-      positions: [
-        { row: 0, col: 0, rows: 4, cols: 1, number: 1 },
-        { row: 1, col: 0, rows: 4, cols: 3, number: 4 },
-        { row: 1, col: 1, rows: 4, cols: 3, number: 6 },
-        { row: 1, col: 2, rows: 4, cols: 3, number: 14 },
-        { row: 2, col: 0, rows: 4, cols: 3, number: 8 },
-        { row: 2, col: 1, rows: 4, cols: 3, number: 22 },
-        { row: 2, col: 2, rows: 4, cols: 3, number: 10 },
-        { row: 3, col: 0, rows: 4, cols: 1, number: 9 },
-      ]
-    },
-  };
+  var FORMATION_331 = [
+    { row: 0, col: 0, rows: 4, cols: 1, group: "gk" },
+    { row: 1, col: 0, rows: 4, cols: 3, group: "df" },
+    { row: 1, col: 1, rows: 4, cols: 3, group: "df" },
+    { row: 1, col: 2, rows: 4, cols: 3, group: "df" },
+    { row: 2, col: 0, rows: 4, cols: 3, group: "mf" },
+    { row: 2, col: 1, rows: 4, cols: 3, group: "mf" },
+    { row: 2, col: 2, rows: 4, cols: 3, group: "mf" },
+    { row: 3, col: 0, rows: 4, cols: 1, group: "fw" },
+  ];
 
-  let currentFormation = "322";
-
-  let playerMap = null;
+  var playerMap = null;
   function getPlayerMap() {
     if (playerMap) return playerMap;
-    const players = window.__players;
+    var players = window.__players;
     if (!players) return null;
-    playerMap = new Map(players.map(p => [p.number, p]));
+    playerMap = new Map(players.map(function (p) { return [p.number, p]; }));
     return playerMap;
   }
 
-  function getPlayerField(number, field) {
-    const map = getPlayerMap();
-    if (!map) return "";
-    const p = map.get(number);
-    return p ? (p[field] || "") : "";
+  function findPlayerByNumber(number) {
+    var map = getPlayerMap();
+    return map ? (map.get(number) || null) : null;
   }
 
+  function getFixedGK() {
+    var players = window.__players;
+    if (!players) return null;
+    for (var i = 0; i < players.length; i++) {
+      if (getPositionGroup(players[i].role) === "role-gk") return players[i];
+    }
+    return null;
+  }
+
+  // ===== 获取最新场次确认报名 =====
+  async function getLatestMatchRegistrations() {
+    try {
+      var matches = await API.getMatches();
+      for (var i = 0; i < matches.length; i++) {
+        var regs = await API.getRegistrations(matches[i].id);
+        var confirmed = regs.filter(function (r) { return r.status === "confirmed"; });
+        if (confirmed.length > 0) {
+          return { match: matches[i], registrations: confirmed };
+        }
+      }
+      return null;
+    } catch (e) {
+      console.warn("[Tactics] 获取报名失败:", e.message);
+      return null;
+    }
+  }
+
+  // ===== 位置分配 =====
+  function assignPositions(registrations, gk) {
+    regs.sort(function (a, b) {
+      return (a.registered_at || "").localeCompare(b.registered_at || "");
+    });
+
+    var dfList = [], mfList = [], fwList = [];
+    regs.forEach(function (r) {
+      var p = findPlayerByNumber(r.player_number);
+      if (!p) return;
+      var g = getPositionGroup(p.role);
+      if (g === "role-gk") return;
+      if (g === "role-df") dfList.push({ reg: r, player: p });
+      else if (g === "role-mf") mfList.push({ reg: r, player: p });
+      else fwList.push({ reg: r, player: p });
+    });
+
+    var dfAssigned = dfList.splice(0, 3);
+    var mfAssigned = mfList.splice(0, 3);
+    var fwAssigned = fwList.splice(0, 1);
+    var allOverflow = [].concat(dfList, mfList, fwList);
+
+    while (dfAssigned.length < 3 && allOverflow.length) dfAssigned.push(allOverflow.shift());
+    while (mfAssigned.length < 3 && allOverflow.length) mfAssigned.push(allOverflow.shift());
+    while (fwAssigned.length < 1 && allOverflow.length) fwAssigned.push(allOverflow.shift());
+
+    var assigned = [
+      gk ? { number: gk.number, name: gk.name, role: gk.role } : null,
+      dfAssigned[0] ? dfAssigned[0].player : null,
+      dfAssigned[1] ? dfAssigned[1].player : null,
+      dfAssigned[2] ? dfAssigned[2].player : null,
+      mfAssigned[0] ? mfAssigned[0].player : null,
+      mfAssigned[1] ? mfAssigned[1].player : null,
+      mfAssigned[2] ? mfAssigned[2].player : null,
+      fwAssigned[0] ? fwAssigned[0].player : null
+    ];
+
+    return { assigned: assigned, bench: allOverflow };
+  }
+
+  // ===== 替补席渲染 =====
+  function renderBench(players, matchInfo) {
+    var benchEl = document.getElementById("tacticsBench");
+    if (!benchEl) return;
+
+    if (!matchInfo) {
+      benchEl.innerHTML = '<div class="tactics-bench-empty">暂无比赛报名</div>';
+      return;
+    }
+
+    var html = '<div class="tactics-bench-title">' + (matchInfo.home_team || "今日说法") + " vs " + (matchInfo.away_team || "") + " · " + (matchInfo.date || "") + '</div>';
+    html += '<div class="tactics-bench-label">替补席 (' + players.length + '人)</div>';
+    if (players.length) {
+      html += '<div class="tactics-bench-list">';
+      players.forEach(function (p) {
+        html += '<div class="tactics-bench-item">' +
+          '<span class="tactics-bench-num">' + p.player.number + '</span>' +
+          '<span class="tactics-bench-name">' + p.player.name + '</span>' +
+          '<span class="tactics-bench-role">' + (p.player.role || "") + '</span>' +
+        '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="tactics-bench-empty">全员首发</div>';
+    }
+    benchEl.innerHTML = html;
+  }
+
+  // ===== Canvas 绘制 =====
+  var assigned = [null, null, null, null, null, null, null, null];
+  var currentMatchInfo = null;
+  var currentBench = [];
+
   function draw() {
-    const w = board.clientWidth;
-    const h = w * 0.7;
+    var w = board.clientWidth;
+    var h = w * 0.7;
     canvas.style.width = w + "px";
     canvas.style.height = h + "px";
     canvas.width = w * dpr;
     canvas.height = h * dpr;
 
-    const ctx = canvas.getContext("2d");
+    var ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    const lineColor = "rgba(255,255,255,0.25)";
-    const gold = "#cfae5a";
-    const pad = w * 0.03;
-    const px = pad, py = pad;
-    const pw = w - pad * 2, ph = h - pad * 2;
-    const halfX = px + pw / 2;
+    var lineColor = "rgba(255,255,255,0.25)";
+    var gold = "#cfae5a";
+    var pad = w * 0.03;
+    var px = pad, py = pad;
+    var pw = w - pad * 2, ph = h - pad * 2;
+    var halfX = px + pw / 2;
 
     // Pitch background
     ctx.save();
     ctx.beginPath();
     ctx.roundRect(px, py, pw, ph, 6);
     ctx.clip();
-
     ctx.fillStyle = "#2a5c2a";
     ctx.fillRect(px, py, pw, ph);
-
-    // Lawn stripes — horizontal bands simulating mowing pattern
-    const stripes = 16;
-    const stripeH = ph / stripes;
-    for (let i = 0; i < stripes; i++) {
+    var stripes = 16;
+    var stripeH = ph / stripes;
+    for (var i = 0; i < stripes; i++) {
       ctx.fillStyle = i % 2 === 0 ? "#2a5c2a" : "#2f6330";
       ctx.fillRect(px, py + i * stripeH, pw, stripeH + 1);
     }
-
     ctx.restore();
 
     // Pitch border
@@ -1210,15 +1271,15 @@ function initTacticsBoard() {
     ctx.roundRect(px, py, pw, ph, 6);
     ctx.stroke();
 
-    // Halfway line — bottom edge
+    // Halfway line
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(px, py + ph);
     ctx.lineTo(px + pw, py + ph);
     ctx.stroke();
 
-    // Center arc — semicircle from halfway line upward
-    const centerArcR = ph * 0.14;
+    // Center arc
+    var centerArcR = ph * 0.14;
     ctx.beginPath();
     ctx.arc(halfX, py + ph, centerArcR, Math.PI, 0);
     ctx.stroke();
@@ -1229,71 +1290,85 @@ function initTacticsBoard() {
     ctx.arc(halfX, py + ph, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Penalty area (attacking end, top)
-    const paW = pw * 0.4, paH = ph * 0.25;
+    // Penalty area
+    var paW = pw * 0.4, paH = ph * 0.25;
     ctx.strokeRect(halfX - paW / 2, py, paW, paH);
 
     // Goal area
-    const gaW = pw * 0.2, gaH = ph * 0.1;
+    var gaW = pw * 0.2, gaH = ph * 0.1;
     ctx.strokeRect(halfX - gaW / 2, py, gaW, gaH);
 
     // Penalty spot
-    const penY = py + paH - ph * 0.07;
+    var penY = py + paH - ph * 0.07;
     ctx.fillStyle = lineColor;
     ctx.beginPath();
     ctx.arc(halfX, penY, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Penalty arc (D)
-    const arcR = ph * 0.08;
+    // Penalty arc
+    var arcR = ph * 0.08;
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.arc(halfX, py + paH, arcR, Math.PI, 0);
     ctx.stroke();
 
-    // Corner arcs — all curving inside the pitch
-    const cr = pw * 0.025;
+    // Corner arcs
+    var cr = pw * 0.025;
     ctx.lineWidth = 1.5;
-    // top-left
     ctx.beginPath(); ctx.arc(px, py, cr, 0, Math.PI / 2); ctx.stroke();
-    // top-right
     ctx.beginPath(); ctx.arc(px + pw, py, cr, Math.PI / 2, Math.PI); ctx.stroke();
-    // bottom-right
     ctx.beginPath(); ctx.arc(px + pw, py + ph, cr, Math.PI, Math.PI * 1.5); ctx.stroke();
-    // bottom-left
     ctx.beginPath(); ctx.arc(px, py + ph, cr, Math.PI * 1.5, Math.PI * 2); ctx.stroke();
 
     // Goal
-    const goalW = pw * 0.16;
-    const goalH = ph * 0.03;
+    var goalW = pw * 0.16;
+    var goalH = ph * 0.03;
     ctx.strokeStyle = "rgba(255,255,255,0.35)";
     ctx.lineWidth = 3;
     ctx.strokeRect(halfX - goalW / 2, py - 1, goalW, goalH);
-
-    // Goal net hint
     ctx.fillStyle = "rgba(255,255,255,0.04)";
     ctx.fillRect(halfX - goalW / 2, py, goalW, goalH);
 
     // Player positions
-    const formation = formations[currentFormation];
-    const marginX = pw * 0.1;
-    const fieldTop = py + ph * 0.1;
-    const fieldHeight = ph * 0.75;
-    const dotR = Math.max(13, pw * 0.035);
+    var marginX = pw * 0.1;
+    var fieldTop = py + ph * 0.1;
+    var fieldHeight = ph * 0.75;
+    var dotR = Math.max(13, pw * 0.035);
 
-    formation.positions.forEach(p => {
-      const cx = p.cols === 1
+    FORMATION_331.forEach(function (p, i) {
+      var cx = p.cols === 1
         ? halfX
         : px + marginX + (p.col / (p.cols - 1)) * (pw - marginX * 2);
-      const cy = fieldTop + (p.row / (p.rows - 1)) * fieldHeight;
+      var cy = fieldTop + (p.row / (p.rows - 1)) * fieldHeight;
 
-      // Player circle — fill by position group
-      const role = getPlayerField(p.number, "role");
-      const g = getPositionGroup(role);
-      const posColor = g === "role-fw" ? "#f87171" : g === "role-mf" ? "#4ade80" : g === "role-df" ? "#60a5fa" : g === "role-gk" ? "#fb923c" : gold;
+      var player = assigned[i];
+
+      if (!player) {
+        // 空缺位：虚线圆 + 问号
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.setLineDash([3, 3]);
+        ctx.lineWidth = 1.5;
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.beginPath();
+        ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.font = "bold " + Math.max(14, dotR * 1.4) + "px -apple-system, \"PingFang SC\", sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("?", cx, cy);
+        return;
+      }
+
+      var role = player.role || "";
+      var g = getPositionGroup(role);
+      var posColor = g === "role-fw" ? "#f87171" : g === "role-mf" ? "#4ade80" : g === "role-df" ? "#60a5fa" : g === "role-gk" ? "#fb923c" : gold;
       ctx.fillStyle = posColor + "22";
       ctx.strokeStyle = posColor;
+      ctx.setLineDash([]);
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
@@ -1302,31 +1377,30 @@ function initTacticsBoard() {
 
       // Number
       ctx.fillStyle = posColor;
-      ctx.font = `bold ${Math.max(10, dotR * 1.1)}px -apple-system, "PingFang SC", sans-serif`;
+      ctx.font = "bold " + Math.max(10, dotR * 1.1) + "px -apple-system, \"PingFang SC\", sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(p.number, cx, cy);
+      ctx.fillText(player.number, cx, cy);
 
       // Name
-      const playerName = getPlayerField(p.number, "name");
-      if (playerName) {
+      if (player.name) {
         ctx.fillStyle = posColor + "99";
-        ctx.font = `${Math.max(8, dotR * 0.65)}px -apple-system, "PingFang SC", sans-serif`;
-        ctx.fillText(playerName, cx, cy + dotR + 12);
+        ctx.font = Math.max(8, dotR * 0.65) + "px -apple-system, \"PingFang SC\", sans-serif";
+        ctx.fillText(player.name, cx, cy + dotR + 12);
       }
     });
   }
 
-  // Formation switcher
-  document.querySelectorAll(".tactics-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tactics-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      currentFormation = btn.dataset.formation;
-      draw();
-    });
-  });
-
+  // ===== 初始化：获取数据后首次渲染 =====
+  var result = await getLatestMatchRegistrations();
+  if (result) {
+    currentMatchInfo = result.match;
+    var gk = getFixedGK();
+    var allocation = assignPositions(result.registrations, gk);
+    assigned = allocation.assigned;
+    currentBench = allocation.bench;
+  }
+  renderBench(currentBench, currentMatchInfo);
   draw();
   window.addEventListener("resize", rafThrottle(draw));
 }

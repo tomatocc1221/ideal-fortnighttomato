@@ -149,14 +149,12 @@
   <!-- ========== 战术板 ========== -->
   <section class="section" id="tactics">
     <div class="container">
-      <h2 class="section-title">阵型战术板</h2>
-      <div class="tactics-controls">
-        <button class="tactics-btn active" data-formation="322">3-2-2</button>
-        <button class="tactics-btn" data-formation="232">2-3-2</button>
-        <button class="tactics-btn" data-formation="331">3-3-1</button>
-      </div>
-      <div class="tactics-board">
-        <canvas id="tacticsCanvas"></canvas>
+      <h2 class="section-title">阵型战术板 <span style="color:var(--gold);font-size:0.85rem">3-3-1</span></h2>
+      <div class="tactics-layout">
+        <div class="tactics-board">
+          <canvas id="tacticsCanvas"></canvas>
+        </div>
+        <div class="tactics-bench" id="tacticsBench"></div>
       </div>
     </div>
   </section>
