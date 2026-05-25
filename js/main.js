@@ -1000,10 +1000,24 @@ function initCarousel(slidesOverride) {
   track.innerHTML = slides.map((s, i) => `
     <div class="carousel-slide" data-index="${i}">
       ${s._imageUrl
-        ? `<img class="carousel-slide-img" src="${s._imageUrl}" alt="${s.label}" decoding="async"${i === 0 ? ' fetchpriority="high"' : ""}>`
+        ? `<img class="carousel-slide-img" src="${i === 0 ? s._imageUrl : ''}" data-src="${i === 0 ? '' : s._imageUrl}" alt="${s.label}" decoding="async"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'} onerror="this.parentElement.innerHTML='<span class=\\'carousel-slide-placeholder\\'>'+this.alt+'</span>'">`
         : `<span class="carousel-slide-placeholder">${s.label}</span>`}
     </div>
   `).join("");
+
+	// 延迟加载非首张轮播图：首屏只加载第1张，其余在切换时按需加载
+	var lazyLoaded = {};
+	function loadCarouselSlide(idx) {
+		if (lazyLoaded[idx]) return;
+		var img = track.querySelector('.carousel-slide[data-index="' + idx + '"] .carousel-slide-img');
+		if (img && img.dataset.src) {
+			img.src = img.dataset.src;
+			img.removeAttribute('data-src');
+			lazyLoaded[idx] = true;
+		}
+	}
+	// 首屏后立即预加载第2张
+	if (slides.length > 1) setTimeout(function () { loadCarouselSlide(1); }, 100);
 
   dots.innerHTML = slides.map((_, i) =>
     `<button class="carousel-dot${i === 0 ? " active" : ""}" data-index="${i}" aria-label="第${i + 1}张"></button>`
@@ -1015,6 +1029,9 @@ function initCarousel(slidesOverride) {
     dots.querySelectorAll(".carousel-dot").forEach((d, i) => {
       d.classList.toggle("active", i === current);
     });
+    // 按需加载当前及下一张
+    loadCarouselSlide(current);
+    loadCarouselSlide((current + 1) % slides.length);
   }
 
   function nextSlide() { goTo(current + 1); }

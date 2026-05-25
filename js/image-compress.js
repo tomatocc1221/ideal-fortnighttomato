@@ -28,7 +28,7 @@ function compressImage(file, maxDim, quality) {
 
 async function compressMatchPhoto(file) {
   var full = await compressImage(file, 1920, 0.85);
-  var thumb = await compressImage(file, 400, 0.75);
+  var thumb = await compressImage(file, 300, 0.75);
   return {
     full:  { blob: full.blob,  w: full.width,  h: full.height },
     thumb: { blob: thumb.blob, w: thumb.width, h: thumb.height }
