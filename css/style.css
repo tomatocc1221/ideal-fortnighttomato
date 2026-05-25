@@ -2080,6 +2080,7 @@ img { max-width: 100%; display: block; }
   border-radius: 4px; padding: 1px 8px;
   white-space: nowrap; vertical-align: middle;
 }
+.mvp-badge--result { cursor: help; border-style: dashed; }
 .mvp-crown { font-size: 0.75rem; }
 
 .mvp-count { color: var(--gold); font-weight: 700; }

@@ -650,8 +650,13 @@ async function loadMVPs(prefetchedVotes) {
     var sorted = Object.entries(points).sort(function (a, b) { return b[1] - a[1]; });
     if (!sorted.length) continue;
     var mvpName = sorted[0][0];
+    // 构建前三名悬停提示（仅公布前三名票数）
+    var topThree = sorted.slice(0, 3).map(function (entry, idx) {
+      var medal = idx === 0 ? '金' : idx === 1 ? '银' : '铜';
+      return medal + ':' + entry[0] + '(' + entry[1] + '分)';
+    }).join('  ');
     el.style.display = '';
-    el.outerHTML = '<span class="mvp-badge"><span class="mvp-crown">★</span> MVP: ' + mvpName + '</span>';
+    el.outerHTML = '<span class="mvp-badge mvp-badge--result" title="' + topThree.replace(/"/g, '&quot;') + '"><span class="mvp-crown">★</span> MVP: ' + mvpName + '</span>';
   }
 }
 
