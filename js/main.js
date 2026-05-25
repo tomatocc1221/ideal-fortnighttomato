@@ -231,8 +231,62 @@ function getDefaultAlbums() {
 }
 
 /* ========================================
+   Unified IntersectionObserver (合并 5 → 1)
+   ======================================== */
+var _ioCallbacks = [];
+var _io = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    for (var i = 0; i < _ioCallbacks.length; i++) {
+      var cb = _ioCallbacks[i];
+      if (cb.el === entry.target) {
+        cb.fn(entry.isIntersecting, entry);
+        break;
+      }
+    }
+  });
+});
+function registerVisibility(el, fn) {
+  _ioCallbacks.push({ el: el, fn: fn });
+  _io.observe(el);
+  return function() { // 返回取消监听函数
+    _io.unobserve(el);
+    for (var i = _ioCallbacks.length - 1; i >= 0; i--) {
+      if (_ioCallbacks[i].el === el) { _ioCallbacks.splice(i, 1); break; }
+    }
+  };
+}
+
+/* ========================================
    Main Init
    ======================================== */
+function loadScript(src) {
+  return new Promise(function(resolve, reject) {
+    var s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = function() { reject(new Error("Failed to load " + src)); };
+    document.head.appendChild(s);
+  });
+}
+
+function ensureOpenRegPanel(match) {
+  var p = window.openRegPanel
+    ? Promise.resolve()
+    : loadScript("js/registration.js").catch(function() {});
+  p.then(function() {
+    if (window.openRegPanel) window.openRegPanel(match);
+  });
+}
+
+function ensureOpenVotePanel(match) {
+  var p = window.openVotePanel
+    ? Promise.resolve()
+    : loadScript("js/voting.js").catch(function() {});
+  p.then(function() {
+    if (window.openVotePanel) window.openVotePanel(match);
+  });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   initNav();
   initLightbox();
@@ -241,30 +295,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   initCountUp();
   initBackToTop();
 
-  // 提前渲染战术板空球场，不等数据
-  (function preRenderTacticsCanvas() {
-    var canvas = document.getElementById("tacticsCanvas");
-    if (!canvas) return;
-    var board = canvas.parentElement;
-    var dpr = window.devicePixelRatio || 1;
-    var w = board.clientWidth;
-    var h = w * 0.7;
-    canvas.style.width = w + "px";
-    canvas.style.height = h + "px";
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    var ctx = canvas.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = "#2a5c2a";
-    ctx.fillRect(0, 0, w, h);
-  })();
+  initTacticsBoard();
 
   // Load overrides from storage and render with merged data
   await loadAllOverridesAndMerge();
   initScrollReveal();
-  initTacticsBoard().catch(function (e) {
-    console.warn("[Tactics] init failed:", e.message);
-  });
   initRegButtons();
 
   // 监听其他标签页的数据更新（管理员保存赛果后自动刷新战报）
@@ -423,16 +458,18 @@ async function loadAllOverridesAndMerge() {
   // Render with merged data
   renderRoster(mergedPlayers);
   await renderFixtures();
-  loadMVPs(allVotes);
   initCarousel(shuffledSlides);
   initGalleryOverlay(mergedAlbums);
 
   window.__players = mergedPlayers;
 
-  // 预加载 MVP 计数 + 所有投票数据（供 loadMVPs 复用，避免重复请求）
+  // 预加载 MVP 计数 + 所有投票数据
   var allVotes = [];
   try { allVotes = await API.getVotes(); } catch (e) { /* 降级 */ }
   window.__allVotes = allVotes;
+
+  // 在 allVotes 加载完成后调用 loadMVPs
+  loadMVPs(allVotes);
 
   // Ballon d'Or 计分：按场次分组，每场积分最高者当选 MVP
   var matchPoints = {};
@@ -708,7 +745,7 @@ document.addEventListener('click', function (e) {
   if (!btn) return;
   var match;
   try { match = JSON.parse(btn.getAttribute('data-vote-match')); } catch (_) { return; }
-  if (window.openVotePanel) window.openVotePanel(match);
+  ensureOpenVotePanel(match);
 });
 
 /* === MVP 结果展示 === */
@@ -844,7 +881,7 @@ async function initRegButtons() {
         btn.textContent = '报名中';
       }
       btn.addEventListener('click', () => {
-        if (match.id) window.openRegPanel(match);
+        if (match.id) ensureOpenRegPanel(match);
       });
     } else {
       btn.textContent = '已截止';
@@ -928,7 +965,7 @@ function initHeroParticles() {
   const dpr = window.devicePixelRatio || 1;
 
   const particles = [];
-  const count = 45;
+  const count = 22;
 
   function resize() {
     canvas.width = hero.offsetWidth * dpr;
@@ -988,14 +1025,13 @@ function initHeroParticles() {
   window.addEventListener("resize", rafThrottle(resize));
 
   let paused = false;
-  const heroObserver = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
+  registerVisibility(hero, function(isVisible) {
+    if (isVisible) {
       if (paused) { paused = false; draw(); }
     } else {
       paused = true;
     }
-  }, { threshold: 0 });
-  heroObserver.observe(hero);
+  });
 }
 
 /* === Carousel === */
@@ -1108,147 +1144,35 @@ function initCarousel(slidesOverride) {
   carousel.addEventListener("mouseleave", startTimer);
 
   // Pause when not visible (节约 CPU)
-  var carouselObserver = new IntersectionObserver(function (entries) {
-    if (entries[0].isIntersecting) {
-      startTimer();
-    } else {
-      stopTimer();
-    }
-  }, { threshold: 0.1 });
-  carouselObserver.observe(carousel);
+  registerVisibility(carousel, function(isVisible) {
+    if (isVisible) { startTimer(); } else { stopTimer(); }
+  });
 }
 
 /* === Tactics Board === */
-async function initTacticsBoard() {
+function initTacticsBoard() {
   var canvas = document.getElementById("tacticsCanvas");
   if (!canvas) return;
   var board = canvas.parentElement;
   var dpr = window.devicePixelRatio || 1;
 
   var FORMATION_331 = [
-    { row: 0, col: 0, rows: 4, cols: 1, group: "gk" },
-    { row: 1, col: 0, rows: 4, cols: 3, group: "df" },
-    { row: 1, col: 1, rows: 4, cols: 3, group: "df" },
-    { row: 1, col: 2, rows: 4, cols: 3, group: "df" },
-    { row: 2, col: 0, rows: 4, cols: 3, group: "mf" },
-    { row: 2, col: 1, rows: 4, cols: 3, group: "mf" },
-    { row: 2, col: 2, rows: 4, cols: 3, group: "mf" },
-    { row: 3, col: 0, rows: 4, cols: 1, group: "fw" },
+    { row: 0, col: 0, rows: 4, cols: 1, label: "CK" },
+    { row: 1, col: 0, rows: 4, cols: 3, label: "DF" },
+    { row: 1, col: 1, rows: 4, cols: 3, label: "DF" },
+    { row: 1, col: 2, rows: 4, cols: 3, label: "DF" },
+    { row: 2, col: 0, rows: 4, cols: 3, label: "MF" },
+    { row: 2, col: 1, rows: 4, cols: 3, label: "MF" },
+    { row: 2, col: 2, rows: 4, cols: 3, label: "MF" },
+    { row: 3, col: 0, rows: 4, cols: 1, label: "FW" },
   ];
 
-  var playerMap = null;
-  function getPlayerMap() {
-    if (playerMap) return playerMap;
-    var players = window.__players;
-    if (!players) return null;
-    playerMap = new Map(players.map(function (p) { return [p.number, p]; }));
-    return playerMap;
-  }
-
-  function findPlayerByNumber(number) {
-    var map = getPlayerMap();
-    return map ? (map.get(number) || null) : null;
-  }
-
-  function getFixedGK() {
-    var players = window.__players;
-    if (!players) return null;
-    for (var i = 0; i < players.length; i++) {
-      if (getPositionGroup(players[i].role) === "role-gk") return players[i];
-    }
-    return null;
-  }
-
-  // ===== 获取最新场次确认报名 =====
-  async function getLatestMatchRegistrations() {
-    try {
-      var matches = await API.getMatches();
-      for (var i = 0; i < matches.length; i++) {
-        var regs = await API.getRegistrations(matches[i].id);
-        var confirmed = regs.filter(function (r) { return r.status === "confirmed"; });
-        if (confirmed.length > 0) {
-          return { match: matches[i], registrations: confirmed };
-        }
-      }
-      return null;
-    } catch (e) {
-      console.warn("[Tactics] 获取报名失败:", e.message);
-      return null;
-    }
-  }
-
-  // ===== 位置分配 =====
-  function assignPositions(regs, gk) {
-    regs.sort(function (a, b) {
-      return (a.registered_at || "").localeCompare(b.registered_at || "");
-    });
-
-    var dfList = [], mfList = [], fwList = [];
-    regs.forEach(function (r) {
-      var p = findPlayerByNumber(Number(r.player_number));
-      if (!p) return;
-      var g = getPositionGroup(p.role);
-      if (g === "role-gk") return;
-      if (g === "role-df") dfList.push({ reg: r, player: p });
-      else if (g === "role-mf") mfList.push({ reg: r, player: p });
-      else fwList.push({ reg: r, player: p });
-    });
-
-    var dfAssigned = dfList.splice(0, 3);
-    var mfAssigned = mfList.splice(0, 3);
-    var fwAssigned = fwList.splice(0, 1);
-    var allOverflow = [].concat(dfList, mfList, fwList);
-
-    while (dfAssigned.length < 3 && allOverflow.length) dfAssigned.push(allOverflow.shift());
-    while (mfAssigned.length < 3 && allOverflow.length) mfAssigned.push(allOverflow.shift());
-    while (fwAssigned.length < 1 && allOverflow.length) fwAssigned.push(allOverflow.shift());
-
-    var assigned = [
-      gk ? { number: gk.number, name: gk.name, role: gk.role } : null,
-      dfAssigned[0] ? dfAssigned[0].player : null,
-      dfAssigned[1] ? dfAssigned[1].player : null,
-      dfAssigned[2] ? dfAssigned[2].player : null,
-      mfAssigned[0] ? mfAssigned[0].player : null,
-      mfAssigned[1] ? mfAssigned[1].player : null,
-      mfAssigned[2] ? mfAssigned[2].player : null,
-      fwAssigned[0] ? fwAssigned[0].player : null
-    ];
-
-    return { assigned: assigned, bench: allOverflow };
-  }
-
-  // ===== 替补席渲染 =====
-  function renderBench(players, matchInfo) {
-    var benchEl = document.getElementById("tacticsBench");
-    if (!benchEl) return;
-
-    if (!matchInfo) {
-      benchEl.innerHTML = '<div class="tactics-bench-empty">暂无比赛报名</div>';
-      return;
-    }
-
-    var html = '<div class="tactics-bench-title">' + (matchInfo.home_team || "今日说法") + " vs " + (matchInfo.away_team || "") + " · " + (matchInfo.date || "") + '</div>';
-    html += '<div class="tactics-bench-label">替补席 (' + players.length + '人)</div>';
-    if (players.length) {
-      html += '<div class="tactics-bench-list">';
-      players.forEach(function (p) {
-        html += '<div class="tactics-bench-item">' +
-          '<span class="tactics-bench-num">' + p.player.number + '</span>' +
-          '<span class="tactics-bench-name">' + p.player.name + '</span>' +
-          '<span class="tactics-bench-role">' + (p.player.role || "") + '</span>' +
-        '</div>';
-      });
-      html += '</div>';
-    } else {
-      html += '<div class="tactics-bench-empty">全员首发</div>';
-    }
-    benchEl.innerHTML = html;
-  }
-
-  // ===== Canvas 绘制 =====
-  var assigned = [null, null, null, null, null, null, null, null];
-  var currentMatchInfo = null;
-  var currentBench = [];
+  var posColors = {
+    "CK": "#fb923c",
+    "DF": "#60a5fa",
+    "MF": "#4ade80",
+    "FW": "#f87171"
+  };
 
   function draw() {
     var w = board.clientWidth;
@@ -1262,174 +1186,142 @@ async function initTacticsBoard() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    var lineColor = "rgba(255,255,255,0.25)";
-    var gold = "#cfae5a";
-    var pad = w * 0.03;
+    var pad = w * 0.035;
     var px = pad, py = pad;
     var pw = w - pad * 2, ph = h - pad * 2;
     var halfX = px + pw / 2;
+    var gold = "#c9a961";
 
-    // Pitch background
+    var pitchGrad = ctx.createLinearGradient(0, py, 0, py + ph);
+    pitchGrad.addColorStop(0, "#1a5c1a");
+    pitchGrad.addColorStop(0.5, "#226622");
+    pitchGrad.addColorStop(1, "#1a5c1a");
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(px, py, pw, ph, 6);
+    ctx.roundRect(px, py, pw, ph, 8);
     ctx.clip();
-    ctx.fillStyle = "#2a5c2a";
+    ctx.fillStyle = pitchGrad;
     ctx.fillRect(px, py, pw, ph);
-    var stripes = 16;
+
+    var stripes = 18;
     var stripeH = ph / stripes;
     for (var i = 0; i < stripes; i++) {
-      ctx.fillStyle = i % 2 === 0 ? "#2a5c2a" : "#2f6330";
-      ctx.fillRect(px, py + i * stripeH, pw, stripeH + 1);
+      ctx.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.015)" : "rgba(0,0,0,0.02)";
+      ctx.fillRect(px, py + i * stripeH, pw, stripeH);
     }
     ctx.restore();
 
-    // Pitch border
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(201,169,97,0.4)";
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(px, py, pw, ph, 6);
+    ctx.roundRect(px, py, pw, ph, 8);
     ctx.stroke();
 
-    // Halfway line
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(201,169,97,0.12)";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.roundRect(px + 4, py + 4, pw - 8, ph - 8, 6);
+    ctx.stroke();
+
+    var lineColor = "rgba(255,255,255,0.16)";
+
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
     ctx.beginPath();
     ctx.moveTo(px, py + ph);
     ctx.lineTo(px + pw, py + ph);
     ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Center arc
-    var centerArcR = ph * 0.14;
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(halfX, py + ph, centerArcR, Math.PI, 0);
+    ctx.arc(halfX, py + ph, ph * 0.12, Math.PI, 0);
     ctx.stroke();
 
-    // Center spot
-    ctx.fillStyle = lineColor;
+    ctx.fillStyle = gold;
     ctx.beginPath();
     ctx.arc(halfX, py + ph, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Penalty area
-    var paW = pw * 0.4, paH = ph * 0.25;
+    var paW = pw * 0.38, paH = ph * 0.22;
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1;
     ctx.strokeRect(halfX - paW / 2, py, paW, paH);
 
-    // Goal area
-    var gaW = pw * 0.2, gaH = ph * 0.1;
-    ctx.strokeRect(halfX - gaW / 2, py, gaW, gaH);
+    ctx.strokeRect(halfX - pw * 0.09, py, pw * 0.18, ph * 0.09);
 
-    // Penalty spot
-    var penY = py + paH - ph * 0.07;
     ctx.fillStyle = lineColor;
     ctx.beginPath();
-    ctx.arc(halfX, penY, 2, 0, Math.PI * 2);
+    ctx.arc(halfX, py + paH - ph * 0.06, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Penalty arc
-    var arcR = ph * 0.08;
     ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(halfX, py + paH, arcR, Math.PI, 0);
+    ctx.arc(halfX, py + paH, ph * 0.07, Math.PI, 0);
     ctx.stroke();
 
-    // Corner arcs
-    var cr = pw * 0.025;
-    ctx.lineWidth = 1.5;
+    var cr = pw * 0.022;
+    ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(px, py, cr, 0, Math.PI / 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(px + pw, py, cr, Math.PI / 2, Math.PI); ctx.stroke();
     ctx.beginPath(); ctx.arc(px + pw, py + ph, cr, Math.PI, Math.PI * 1.5); ctx.stroke();
     ctx.beginPath(); ctx.arc(px, py + ph, cr, Math.PI * 1.5, Math.PI * 2); ctx.stroke();
 
-    // Goal
-    var goalW = pw * 0.16;
-    var goalH = ph * 0.03;
-    ctx.strokeStyle = "rgba(255,255,255,0.35)";
-    ctx.lineWidth = 3;
+    var goalW = pw * 0.15;
+    var goalH = ph * 0.025;
+    ctx.strokeStyle = "rgba(201,169,97,0.5)";
+    ctx.lineWidth = 2;
     ctx.strokeRect(halfX - goalW / 2, py - 1, goalW, goalH);
-    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.fillStyle = "rgba(201,169,97,0.06)";
     ctx.fillRect(halfX - goalW / 2, py, goalW, goalH);
 
-    // Player positions
-    var marginX = pw * 0.1;
+    var marginX = pw * 0.12;
     var fieldTop = py + ph * 0.1;
-    var fieldHeight = ph * 0.75;
-    var dotR = Math.max(13, pw * 0.035);
+    var fieldHeight = ph * 0.73;
+    var dotR = Math.max(18, pw * 0.045);
 
-    FORMATION_331.forEach(function (p, i) {
-      var cx = p.cols === 1
+    FORMATION_331.forEach(function (pos, i) {
+      var cx = pos.cols === 1
         ? halfX
-        : px + marginX + (p.col / (p.cols - 1)) * (pw - marginX * 2);
-      var cy = fieldTop + (p.row / (p.rows - 1)) * fieldHeight;
+        : px + marginX + (pos.col / (pos.cols - 1)) * (pw - marginX * 2);
+      var cy = fieldTop + (pos.row / (pos.rows - 1)) * fieldHeight;
+      var color = posColors[pos.label] || gold;
 
-      var player = assigned[i];
-
-      if (!player) {
-        // 空缺位：虚线圆 + 问号
-        ctx.strokeStyle = "rgba(255,255,255,0.15)";
-        ctx.setLineDash([3, 3]);
-        ctx.lineWidth = 1.5;
-        ctx.fillStyle = "rgba(255,255,255,0.03)";
-        ctx.beginPath();
-        ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "rgba(255,255,255,0.2)";
-        ctx.font = "bold " + Math.max(14, dotR * 1.4) + "px -apple-system, \"PingFang SC\", sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("?", cx, cy);
-        return;
-      }
-
-      var role = player.role || "";
-      var g = getPositionGroup(role);
-      var posColor = g === "role-fw" ? "#f87171" : g === "role-mf" ? "#4ade80" : g === "role-df" ? "#60a5fa" : g === "role-gk" ? "#fb923c" : gold;
-      ctx.fillStyle = posColor + "22";
-      ctx.strokeStyle = posColor;
-      ctx.setLineDash([]);
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = "rgba(13,13,13,0.85)";
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+      ctx.shadowBlur = 0;
 
-      // Number
-      ctx.fillStyle = posColor;
-      ctx.font = "bold " + Math.max(10, dotR * 1.1) + "px -apple-system, \"PingFang SC\", sans-serif";
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, dotR - 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.font = "bold " + Math.max(12, dotR * 0.85) + "px \"Bebas Neue\", -apple-system, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(player.number, cx, cy);
+      ctx.fillText(pos.label, cx, cy);
 
-      // Name
-      if (player.name) {
-        ctx.fillStyle = posColor + "99";
-        ctx.font = Math.max(8, dotR * 0.65) + "px -apple-system, \"PingFang SC\", sans-serif";
-        ctx.fillText(player.name, cx, cy + dotR + 12);
-      }
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.font = Math.max(8, dotR * 0.4) + "px -apple-system, \"PingFang SC\", sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.fillText(i + 1, cx + dotR * 0.55, cy - dotR * 0.55);
     });
   }
 
-  // 立即渲染空白球场，避免异步加载时的黑屏
   draw();
   window.addEventListener("resize", rafThrottle(draw));
-
-  // ===== 初始化：获取数据后更新渲染 =====
-  try {
-    var result = await getLatestMatchRegistrations();
-    if (result) {
-      currentMatchInfo = result.match;
-      var gk = getFixedGK();
-      var allocation = assignPositions(result.registrations, gk);
-      assigned = allocation.assigned;
-      currentBench = allocation.bench;
-    }
-  } catch (e) {
-    console.warn("[Tactics] 加载数据失败:", e.message);
-  }
-  renderBench(currentBench, currentMatchInfo);
-  draw();
 }
 
 /* === Gallery Overlay === */
@@ -1606,23 +1498,17 @@ function initScrollReveal() {
     targets.forEach(el => { el.style.opacity = "1"; el.style.transform = "none"; });
     return;
   }
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.style.opacity = "1";
-          entry.target.style.transform = "translateY(0)";
-        }
-      });
-    },
-    { threshold: 0.1 }
-  );
   targets.forEach((el, i) => {
     el.style.opacity = "0";
     el.style.transform = "translateY(24px)";
     el.style.transition = "opacity 0.3s ease, transform 0.3s ease";
     el.style.transitionDelay = (i % TIMING.REVEAL_GROUP) * TIMING.REVEAL_STAGGER + "s";
-    observer.observe(el);
+    registerVisibility(el, function(isVisible) {
+      if (isVisible) {
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0)";
+      }
+    });
   });
 }
 
@@ -1631,25 +1517,24 @@ function initCountUp() {
   const targets = document.querySelectorAll(".stat-number");
   if (!targets.length) return;
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const el = entry.target;
-      const raw = el.textContent.trim();
-      const match = raw.match(/^(\d+)(\+?)$/);
-      if (!match) { observer.unobserve(el); return; }
-      const end = parseInt(match[1], 10);
-      const suffix = match[2];
-      if (REDUCED_MOTION) { el.textContent = end + suffix; observer.unobserve(el); return; }
-      let start = 0;
-      const duration = TIMING.COUNTUP;
-      const startTime = performance.now();
+  targets.forEach(function(el) {
+    var unreg = registerVisibility(el, function(isVisible) {
+      if (!isVisible) return;
+      var raw = el.textContent.trim();
+      var match = raw.match(/^(\d+)(\+?)$/);
+      if (!match) { unreg(); return; }
+      var end = parseInt(match[1], 10);
+      var suffix = match[2];
+      if (REDUCED_MOTION) { el.textContent = end + suffix; unreg(); return; }
+      var start = 0;
+      var duration = TIMING.COUNTUP;
+      var startTime = performance.now();
 
       function step(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = Math.floor(start + (end - start) * eased);
+        var elapsed = now - startTime;
+        var progress = Math.min(elapsed / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        var current = Math.floor(start + (end - start) * eased);
         el.textContent = current + suffix;
         if (progress < 1) {
           requestAnimationFrame(step);
@@ -1657,11 +1542,9 @@ function initCountUp() {
       }
 
       requestAnimationFrame(step);
-      observer.unobserve(el);
+      unreg();
     });
-  }, { threshold: 0.5 });
-
-  targets.forEach(el => observer.observe(el));
+  });
 }
 
 /* === Back to Top === */
@@ -1771,22 +1654,21 @@ function startCountdown() {
 
   // Clear previous timer and observer before creating new ones
   if (startCountdown._timerId) { clearInterval(startCountdown._timerId); startCountdown._timerId = null; }
-  if (startCountdown._observer) { startCountdown._observer.disconnect(); startCountdown._observer = null; }
+  if (startCountdown._unregVisibility) { startCountdown._unregVisibility(); startCountdown._unregVisibility = null; }
 
   tick();
   startCountdown._timerId = setInterval(tick, 1000);
 
   const bar = document.getElementById("countdownBar");
   if (bar) {
-    startCountdown._observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
+    startCountdown._unregVisibility = registerVisibility(bar, function(isVisible) {
+      if (isVisible) {
         if (!startCountdown._timerId) { tick(); startCountdown._timerId = setInterval(tick, 1000); }
       } else {
         clearInterval(startCountdown._timerId);
         startCountdown._timerId = null;
       }
-    }, { threshold: 0 });
-    startCountdown._observer.observe(bar);
+    });
   }
 }
 

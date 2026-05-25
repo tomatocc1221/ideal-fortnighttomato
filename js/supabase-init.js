@@ -140,3 +140,4 @@ if (!window.location.pathname.includes('admin')) {
     }
   })();
 }
+window.__fixturesData = { results: [], upcoming: [] };

@@ -4,6 +4,20 @@
    ======================================== */
 
 const API = {
+  // 请求级缓存（30秒TTL，消除同一渲染周期内重复请求）
+  _cache: {},
+  _cached: function(key, fetcher, ttl) {
+    ttl = ttl || 30000;
+    var now = Date.now();
+    var entry = this._cache[key];
+    if (entry && (now - entry._ts < ttl)) return Promise.resolve(entry.data);
+    var self = this;
+    return fetcher().then(function(data) {
+      self._cache[key] = { data: data, _ts: now };
+      return data;
+    });
+  },
+
   // ===== 队员 =====
   async getPlayers() {
     try {
@@ -68,23 +82,27 @@ const API = {
 
   // ===== 比赛 =====
   async getMatches() {
-    try {
-      const rows = await sb.from('matches').select('*', 'order=date.desc,time.desc');
-      return rows.map(m => ({ ...m, id: String(m.id) }));
-    } catch (e) {
-      console.warn('[API] getMatches 失败:', e.message);
-      return [];
-    }
+    var self = this;
+    return self._cached("matches", function() {
+      return sb.from('matches').select('*', 'order=date.desc,time.desc').then(function(rows) {
+        return rows.map(function(m) { return { ...m, id: String(m.id) }; });
+      }).catch(function(e) {
+        console.warn('[API] getMatches 失败:', e.message);
+        return [];
+      });
+    });
   },
 
   async getResults() {
-    try {
-      const rows = await sb.from('matches').select('*', 'home_score=not.is.null&order=date.desc');
-      return rows.map(m => ({ ...m, id: String(m.id) }));
-    } catch (e) {
-      console.warn('[API] getResults 失败:', e.message);
-      return [];
-    }
+    var self = this;
+    return self._cached("results", function() {
+      return sb.from('matches').select('*', 'home_score=not.is.null&order=date.desc').then(function(rows) {
+        return rows.map(function(m) { return { ...m, id: String(m.id) }; });
+      }).catch(function(e) {
+        console.warn('[API] getResults 失败:', e.message);
+        return [];
+      });
+    });
   },
 
   async addMatch(data) {
@@ -198,13 +216,16 @@ const API = {
 
   // ===== MVP 投票 =====
   async getVotes(matchId) {
-    try {
-      const query = matchId
+    var self = this;
+    var key = matchId ? "votes_" + matchId : "votes_all";
+    return self._cached(key, function() {
+      var query = matchId
         ? 'match_id=eq.' + parseInt(matchId) + '&order=created_at.asc'
         : 'order=created_at.asc';
-      const rows = await sb.from('votes').select('*', query);
-      return rows.map(v => ({ ...v, id: String(v.id), match_id: String(v.match_id) }));
-    } catch (e) { console.warn('[API] getVotes 失败:', e.message); return []; }
+      return sb.from('votes').select('*', query).then(function(rows) {
+        return rows.map(function(v) { return { ...v, id: String(v.id), match_id: String(v.match_id) }; });
+      }).catch(function(e) { console.warn('[API] getVotes 失败:', e.message); return []; });
+    });
   },
 
   async castVote(data) {
