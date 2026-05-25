@@ -314,5 +314,83 @@ const API = {
       await sb.from('config').insert({ key, value: String(value) });
     }
     return data;
+  },
+
+  // ===== 比赛照片 =====
+
+  async getMatchPhotos(matchId) {
+    try {
+      var rows = await sb.from('match_photos').select('*',
+        'match_id=eq.' + matchId + '&order=sort_order.asc');
+      return rows.map(function (r) {
+        return {
+          ...r, id: String(r.id), match_id: String(r.match_id),
+          fullUrl: sb.storage.publicUrl('match-photos', r.storage_path),
+          thumbUrl: sb.storage.publicUrl('match-photos', r.thumb_path)
+        };
+      });
+    } catch (e) { console.warn('[API] getMatchPhotos:', e.message); return []; }
+  },
+
+  async getAllPhotosGrouped() {
+    try {
+      var rows = await sb.from('match_photos').select('*', 'order=sort_order.asc');
+      var matchIds = [...new Set(rows.map(function (r) { return r.match_id; }))];
+      var matchesMap = {};
+      if (matchIds.length) {
+        try {
+          var allMatches = await sb.from('matches').select('id,date,home_team,away_team');
+          allMatches.forEach(function (m) { matchesMap[String(m.id)] = m; });
+        } catch (e) { console.warn('[API] getAllPhotosGrouped 比赛查询失败:', e.message); }
+      }
+      var grouped = {};
+      rows.forEach(function (r) {
+        var mid = String(r.match_id);
+        var m = matchesMap[mid] || {};
+        if (!grouped[mid]) grouped[mid] = {
+          matchId: mid, date: m.date || '',
+          home_team: m.home_team || '今日说法', away_team: m.away_team || '',
+          photos: []
+        };
+        grouped[mid].photos.push({
+          ...r, id: String(r.id), match_id: mid,
+          fullUrl: sb.storage.publicUrl('match-photos', r.storage_path),
+          thumbUrl: sb.storage.publicUrl('match-photos', r.thumb_path)
+        });
+      });
+      return grouped;
+    } catch (e) { console.warn('[API] getAllPhotosGrouped:', e.message); return {}; }
+  },
+
+  async addMatchPhoto(data) {
+    try {
+      var row = await sb.from('match_photos').insert({
+        match_id: parseInt(data.match_id), storage_path: data.storage_path,
+        thumb_path: data.thumb_path, label: data.label || '',
+        sort_order: data.sort_order || 0, width: data.width || null,
+        height: data.height || null, file_size: data.file_size || null
+      });
+      if (!row || !row.length) throw new Error('服务器未返回数据');
+      return { ...row[0], id: String(row[0].id), match_id: String(row[0].match_id) };
+    } catch (e) {
+      console.error('[API] addMatchPhoto:', e);
+      throw new Error('保存照片失败: ' + (e.message || '网络错误'));
+    }
+  },
+
+  async updateMatchPhoto(id, data) {
+    try {
+      var row = await sb.from('match_photos').update(data, 'id=eq.' + id);
+      if (!row || !row.length) throw new Error('服务器未返回数据');
+      return { ...row[0], id: String(row[0].id), match_id: String(row[0].match_id) };
+    } catch (e) {
+      console.error('[API] updateMatchPhoto:', e);
+      throw new Error('更新照片失败: ' + (e.message || '网络错误'));
+    }
+  },
+
+  async deleteMatchPhoto(id) {
+    await sb.from('match_photos').delete('id=eq.' + id);
+    return { deleted: true };
   }
 };

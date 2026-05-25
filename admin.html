@@ -155,6 +155,19 @@
         <button class="btn btn-gold" id="resultSaveBtn">保存赛果</button>
         <button class="btn btn-cancel" id="resultClearBtn" style="margin-left:8px">清除赛果</button>
       </div>
+      <!-- === 比赛照片 === -->
+      <div class="admin-section" id="resultPhotosSection" style="display:none">
+        <h3>比赛照片 <span id="resultPhotoCount" style="color:var(--text-dim);font-size:0.85rem"></span></h3>
+        <label class="photo-upload-area" id="photoUploadArea">
+          <input type="file" id="photoFileInput" accept="image/*" multiple style="display:none">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span>点击或拖拽上传照片</span>
+          <small>支持 JPG/PNG/WebP，自动压缩，建议 5-15 张</small>
+        </label>
+        <div class="photo-progress-bar" id="photoProgressBar" style="display:none"><div class="photo-progress-fill" id="photoProgressFill"></div></div>
+        <div class="photo-progress-text" id="photoProgressText"></div>
+        <div class="photo-preview-grid" id="photoPreviewGrid"></div>
+      </div>
     </div>
   </div>
 
@@ -163,5 +176,7 @@
   <script src="js/api.js"></script>
   <script src="data/fixtures.js"></script>
   <script src="js/admin.js"></script>
+  <script defer src="js/image-compress.js"></script>
+  <script defer src="js/admin-photos.js"></script>
 </body>
 </html>

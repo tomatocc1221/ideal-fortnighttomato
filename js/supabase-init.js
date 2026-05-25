@@ -79,6 +79,46 @@ const sb = {
   }
 };
 
+/* Storage API 扩展 */
+sb.storage = {
+  _base: SB_URL + '/storage/v1',
+
+  async upload(bucket, path, file) {
+    var url = this._base + '/object/' + bucket + '/' + path;
+    var form = new FormData();
+    form.append('', file);
+    var res = await fetch(url, {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
+      body: form
+    });
+    if (!res.ok) {
+      var detail = res.statusText;
+      try { var e = await res.json(); detail = e.message || JSON.stringify(e); } catch (_) {}
+      throw new Error('Upload failed: ' + res.status + ' ' + detail);
+    }
+    return res.json();
+  },
+
+  async remove(bucket, path) {
+    var url = this._base + '/object/' + bucket + '/' + path;
+    var res = await fetch(url, {
+      method: 'DELETE',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!res.ok) {
+      var detail = res.statusText;
+      try { var e = await res.json(); detail = e.message || JSON.stringify(e); } catch (_) {}
+      throw new Error('Delete failed: ' + res.status + ' ' + detail);
+    }
+    return true;
+  },
+
+  publicUrl: function (bucket, path) {
+    return this._base + '/object/public/' + bucket + '/' + path;
+  }
+};
+
 // SHA256 哈希（Web Crypto API，所有现代浏览器支持）
 async function sha256(message) {
   const msgBuffer = new TextEncoder().encode(message);

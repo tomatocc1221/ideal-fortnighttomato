@@ -267,6 +267,9 @@ function renderResults(results) {
     const detailHTML = (scorersHTML || assistersHTML)
       ? `<div class="fixture-detail">${scorersHTML}${assistersHTML}</div>`
       : "";
+    const photoBtnHTML = (m._apiMatch && m._apiMatch.id)
+      ? '<button class="fixture-photos-btn" data-match-id="' + m._apiMatch.id + '">相册</button>'
+      : '';
 
     return `
       <div class="fixture-item">
@@ -274,6 +277,7 @@ function renderResults(results) {
           <span class="fixture-date">${m.date}</span>
           <span class="fixture-teams">${m.home} vs ${m.away}</span>
           ${scoreHTML}
+          ${photoBtnHTML}
         </div>
         ${detailHTML}
       </div>`;
@@ -342,4 +346,93 @@ function bindEvents() {
     const filtered = filterBySeason(_allResults, _currentSeason);
     renderStats(filtered);
   });
+
+  // 比赛照片按钮点击委托
+  document.getElementById("fixturesResults").addEventListener("click", function (e) {
+    var btn = e.target.closest(".fixture-photos-btn");
+    if (!btn) return;
+    e.stopPropagation();
+    var matchId = btn.dataset.matchId;
+    toggleMatchPhotos(matchId, btn);
+  });
+
+  // 照片面板关闭按钮
+  var closeBtn = document.getElementById("matchPhotosClose");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", function () {
+      var panel = document.getElementById("matchPhotosPanel");
+      panel.style.display = "none";
+      panel.dataset.currentMatch = "";
+    });
+  }
+}
+
+// ===== 比赛照片 =====
+var _matchPhotoCache = {};
+
+async function toggleMatchPhotos(matchId, btn) {
+  var panel = document.getElementById("matchPhotosPanel");
+  var grid = document.getElementById("matchPhotosGrid");
+  var title = document.getElementById("matchPhotosTitle");
+
+  if (panel.dataset.currentMatch === matchId && panel.style.display !== "none") {
+    panel.style.display = "none";
+    panel.dataset.currentMatch = "";
+    if (btn) btn.textContent = "相册";
+    return;
+  }
+
+  panel.style.display = "block";
+  panel.dataset.currentMatch = matchId;
+  if (btn) btn.textContent = "收起";
+
+  // Skeleton loading
+  grid.innerHTML = Array.from({ length: 4 }, function (_, i) {
+    return '<div class="jrsf-skeleton-cell jrsf-skeleton-photo"></div>';
+  }).join("");
+
+  if (!_matchPhotoCache[matchId]) {
+    try {
+      _matchPhotoCache[matchId] = await API.getMatchPhotos(matchId);
+    } catch (e) {
+      _matchPhotoCache[matchId] = [];
+    }
+  }
+
+  var photos = _matchPhotoCache[matchId];
+  title.textContent = "比赛相册（" + photos.length + " 张）";
+
+  if (!photos.length) {
+    grid.innerHTML = '<div class="fixtures-empty" style="padding:40px">暂无比赛照片</div>';
+    return;
+  }
+
+  grid.innerHTML = photos.map(function (p) {
+    return '<div class="match-photo-card" data-full="' + p.fullUrl + '">' +
+      '<img src="' + p.thumbUrl + '" alt="" loading="lazy" decoding="async">' +
+    '</div>';
+  }).join("");
+
+  // Click to lightbox
+  grid.addEventListener("click", function (e) {
+    var card = e.target.closest(".match-photo-card");
+    if (!card) return;
+    var fullSrc = card.dataset.full;
+    if (fullSrc) openPhotoLightbox(fullSrc);
+  });
+
+  panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function openPhotoLightbox(src) {
+  var existing = document.querySelector(".photo-lightbox");
+  if (existing) existing.remove();
+
+  var lb = document.createElement("div");
+  lb.className = "photo-lightbox";
+  lb.innerHTML = '<button class="photo-lightbox-close">&times;</button>' +
+    '<img src="' + src + '" style="max-width:90vw;max-height:85vh;object-fit:contain">';
+  lb.querySelector("button").addEventListener("click", function () { lb.remove(); });
+  lb.addEventListener("click", function (e) { if (e.target === lb) lb.remove(); });
+  document.body.appendChild(lb);
 }

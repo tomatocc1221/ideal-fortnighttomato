@@ -568,6 +568,8 @@ function hideResultForm() {
   document.getElementById('resultScorersSection').style.display = 'none';
   document.getElementById('resultAssistersSection').style.display = 'none';
   document.getElementById('resultSaveSection').style.display = 'none';
+  var photoSection = document.getElementById('resultPhotosSection');
+  if (photoSection) photoSection.style.display = 'none';
   _selectedResultMatch = null;
 }
 
@@ -581,6 +583,16 @@ function loadResultForm(m) {
   document.getElementById('resultScorersSection').style.display = 'block';
   document.getElementById('resultAssistersSection').style.display = 'block';
   document.getElementById('resultSaveSection').style.display = 'block';
+  // 显示照片区域（仅当比赛已存入数据库时）
+  var photoSection = document.getElementById('resultPhotosSection');
+  if (photoSection) {
+    if (m.id) {
+      photoSection.style.display = 'block';
+      if (typeof loadMatchPhotos === 'function') loadMatchPhotos(m.id);
+    } else {
+      photoSection.style.display = 'none';
+    }
+  }
 }
 
 function computeOurResult(match, homeScore, awayScore) {
@@ -735,6 +747,11 @@ document.getElementById('resultSaveBtn').addEventListener('click', async functio
 
     // 通知其他页面刷新战报
     localStorage.setItem('jrsf_lastResultUpdate', Date.now());
+
+    // 上传待处理的比赛照片
+    if (savedMatchId && typeof uploadPendingPhotos === 'function') {
+      await uploadPendingPhotos(savedMatchId);
+    }
 
     _selectedResultMatch = null;
     loadResultsTab();

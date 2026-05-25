@@ -299,6 +299,50 @@ async function loadAllOverridesAndMerge() {
     return { ...a, photos: mergedPhotos };
   });
 
+  // === 拉取 Supabase 比赛照片并合并到相册/轮播 ===
+  var matchPhotosCache = {};
+  try {
+    var grouped = await API.getAllPhotosGrouped();
+    var matchAlbums = Object.values(grouped);
+    matchAlbums.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+    matchAlbums.forEach(function (album) {
+      var title = album.home_team + ' vs ' + album.away_team;
+      var date = (album.date || '').replace(/-/g, '.');
+      var photos = album.photos.map(function (p) {
+        return {
+          label: title,
+          _imageUrl: p.fullUrl,
+          _thumbUrl: p.thumbUrl,
+          _matchPhotoId: p.id
+        };
+      });
+      if (photos.length) {
+        mergedAlbums.unshift({ title: title, date: date, photos: photos, _isMatchAlbum: true });
+        photos.forEach(function (p) {
+          mergedSlides.unshift({ label: title, _imageUrl: p._imageUrl });
+        });
+      }
+      // 缓存缩略图到 IndexedDB
+      photos.forEach(function (p) {
+        var cacheKey = 'match_' + p._matchPhotoId + '_thumb';
+        matchPhotosCache[cacheKey] = p._thumbUrl;
+        loadImage(STORE.GALLERY, cacheKey).then(function (cachedUrl) {
+          if (!cachedUrl && p._thumbUrl) {
+            fetch(p._thumbUrl).then(function (r) { return r.blob(); }).then(function (blob) {
+              return openDB().then(function (db) {
+                return new Promise(function (resolve) {
+                  var tx = db.transaction(STORE.GALLERY, 'readwrite');
+                  tx.objectStore(STORE.GALLERY).put({ key: cacheKey, data: blob });
+                  tx.oncomplete = resolve;
+                });
+              });
+            }).catch(function () {});
+          }
+        }).catch(function () {});
+      });
+    });
+  } catch (e) { console.warn('[Gallery] 比赛照片获取失败:', e.message); }
+
   // Load images: file-based avatars first, then IndexedDB fallback
   const playerImagePromises = mergedPlayers.map(p =>
     checkFileAvatar(p.number).then(fileUrl => {
@@ -1259,9 +1303,9 @@ function initGalleryOverlay(albumsOverride) {
         </div>
         <div class="gallery-album-grid">
           ${a.photos.map((p, i) => `
-            <div class="gallery-photo" data-album="${a.title}" data-idx="${i}">
-              ${p._imageUrl
-                ? `<img src="${p._imageUrl}" alt="${p.label}" loading="lazy" decoding="async">`
+            <div class="gallery-photo" data-album="${a.title}" data-idx="${i}" data-full="${p._imageUrl || ''}">
+              ${p._thumbUrl || p._imageUrl
+                ? `<img src="${p._thumbUrl || p._imageUrl}" alt="${p.label}" loading="lazy" decoding="async">`
                 : `<svg class="gallery-photo-camera" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 5V3h8v2"/></svg>`}
             </div>
           `).join("")}
@@ -1298,6 +1342,11 @@ function initGalleryOverlay(albumsOverride) {
   content.addEventListener("click", (e) => {
     const photo = e.target.closest(".gallery-photo");
     if (!photo) return;
+    var fullSrc = photo.dataset.full;
+    if (fullSrc) {
+      openLightbox(fullSrc);
+      return;
+    }
     const album = photo.dataset.album;
     const idx = parseInt(photo.dataset.idx, 10);
     const albumData = albums.find(a => a.title === album);
