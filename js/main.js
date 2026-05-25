@@ -35,7 +35,7 @@ function closeOnBackdrop(overlayElement, closeFn) {
 function svgPlaceholder(title, subtitle, w, h, fy, sy) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
     <rect fill="#1a1a1a" width="${w}" height="${h}"/>
-    <text fill="#cfae5a" font-size="22" text-anchor="middle" x="${w/2}" y="${fy}" font-weight="600">${title}</text>
+    <text fill="#d4a843" font-size="22" text-anchor="middle" x="${w/2}" y="${fy}" font-weight="600">${title}</text>
     <text fill="#888" font-size="16" text-anchor="middle" x="${w/2}" y="${sy}">${subtitle}</text>
   </svg>`;
 }
@@ -1190,7 +1190,7 @@ function initTacticsBoard() {
     var px = pad, py = pad;
     var pw = w - pad * 2, ph = h - pad * 2;
     var halfX = px + pw / 2;
-    var gold = "#c9a961";
+    var gold = "#d4a843";
 
     var pitchGrad = ctx.createLinearGradient(0, py, 0, py + ph);
     pitchGrad.addColorStop(0, "#1a5c1a");
@@ -1211,13 +1211,13 @@ function initTacticsBoard() {
     }
     ctx.restore();
 
-    ctx.strokeStyle = "rgba(201,169,97,0.4)";
+    ctx.strokeStyle = "rgba(212,168,67,0.4)";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.roundRect(px, py, pw, ph, 8);
     ctx.stroke();
 
-    ctx.strokeStyle = "rgba(201,169,97,0.12)";
+    ctx.strokeStyle = "rgba(212,168,67,0.12)";
     ctx.lineWidth = 0.5;
     ctx.beginPath();
     ctx.roundRect(px + 4, py + 4, pw - 8, ph - 8, 6);
@@ -1272,10 +1272,10 @@ function initTacticsBoard() {
 
     var goalW = pw * 0.15;
     var goalH = ph * 0.025;
-    ctx.strokeStyle = "rgba(201,169,97,0.5)";
+    ctx.strokeStyle = "rgba(212,168,67,0.5)";
     ctx.lineWidth = 2;
     ctx.strokeRect(halfX - goalW / 2, py - 1, goalW, goalH);
-    ctx.fillStyle = "rgba(201,169,97,0.06)";
+    ctx.fillStyle = "rgba(212,168,67,0.06)";
     ctx.fillRect(halfX - goalW / 2, py, goalW, goalH);
 
     var marginX = pw * 0.12;

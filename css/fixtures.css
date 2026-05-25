@@ -33,7 +33,7 @@
 .back-link:hover {
   color: var(--gold);
   border-color: var(--gold);
-  background: rgba(201,169,97,0.06);
+  background: rgba(212, 168, 67, 0.08);
 }
 
 .back-link svg {
@@ -58,12 +58,27 @@
   border-radius: 10px;
   padding: 22px 16px;
   text-align: center;
-  transition: transform 0.2s, border-color 0.2s;
+  transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), border-color 0.3s;
+  position: relative;
+  overflow: hidden;
 }
-
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
 .stat-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-muted);
+  transform: translateY(-3px);
+  border-color: rgba(212, 168, 67, 0.2);
+}
+.stat-card:hover::before {
+  opacity: 1;
 }
 
 .stat-card .stat-num {
@@ -139,7 +154,7 @@
 .pager-btn:hover:not(:disabled) {
   border-color: var(--gold);
   color: var(--gold);
-  background: rgba(201,169,97,0.06);
+  background: rgba(212, 168, 67, 0.08);
 }
 
 .pager-btn:active:not(:disabled) {
