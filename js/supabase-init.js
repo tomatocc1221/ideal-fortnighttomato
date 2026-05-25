@@ -85,12 +85,14 @@ sb.storage = {
 
   async upload(bucket, path, file) {
     var url = this._base + '/object/' + bucket + '/' + path;
-    var form = new FormData();
-    form.append('', file);
     var res = await fetch(url, {
       method: 'POST',
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
-      body: form
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': file.type || 'image/webp'
+      },
+      body: file
     });
     if (!res.ok) {
       var detail = res.statusText;
