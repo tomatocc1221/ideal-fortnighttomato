@@ -924,6 +924,21 @@ img { max-width: 100%; display: block; }
   gap: 12px;
 }
 
+.gallery-subgroup-header {
+  grid-column: 1 / -1;
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 12px 0 4px;
+  margin-top: 8px;
+  border-bottom: 1px solid var(--border-default);
+  letter-spacing: 0.04em;
+}
+.gallery-subgroup-header:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
 .gallery-photo {
   display: block;
   background: var(--bg-card);

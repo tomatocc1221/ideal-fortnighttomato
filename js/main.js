@@ -299,49 +299,73 @@ async function loadAllOverridesAndMerge() {
     return { ...a, photos: mergedPhotos };
   });
 
-  // === 拉取 Supabase 比赛照片并合并到相册/轮播 ===
-  var matchPhotosCache = {};
+  // === 拉取 Supabase 比赛照片，融入统一「比赛瞬间」相册 ===
+  var allMatchPhotos = []; // { _imageUrl, _thumbUrl, _matchPhotoId, groupLabel }
   try {
     var grouped = await API.getAllPhotosGrouped();
     var matchAlbums = Object.values(grouped);
     matchAlbums.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
     matchAlbums.forEach(function (album) {
-      var title = album.home_team + ' vs ' + album.away_team;
-      var date = (album.date || '').replace(/-/g, '.');
-      var photos = album.photos.map(function (p) {
-        return {
-          label: title,
+      var groupLabel = (album.home_team || '今日说法') + ' vs ' + (album.away_team || '') + ' · ' + (album.date || '').replace(/-/g, '.');
+      album.photos.forEach(function (p) {
+        allMatchPhotos.push({
+          label: groupLabel,
           _imageUrl: p.fullUrl,
           _thumbUrl: p.thumbUrl,
+          _groupLabel: groupLabel,
           _matchPhotoId: p.id
-        };
-      });
-      if (photos.length) {
-        mergedAlbums.unshift({ title: title, date: date, photos: photos, _isMatchAlbum: true });
-        photos.forEach(function (p) {
-          mergedSlides.unshift({ label: title, _imageUrl: p._imageUrl });
         });
-      }
-      // 缓存缩略图到 IndexedDB
-      photos.forEach(function (p) {
-        var cacheKey = 'match_' + p._matchPhotoId + '_thumb';
-        matchPhotosCache[cacheKey] = p._thumbUrl;
-        loadImage(STORE.GALLERY, cacheKey).then(function (cachedUrl) {
-          if (!cachedUrl && p._thumbUrl) {
-            fetch(p._thumbUrl).then(function (r) { return r.blob(); }).then(function (blob) {
-              return openDB().then(function (db) {
-                return new Promise(function (resolve) {
-                  var tx = db.transaction(STORE.GALLERY, 'readwrite');
-                  tx.objectStore(STORE.GALLERY).put({ key: cacheKey, data: blob });
-                  tx.oncomplete = resolve;
-                });
-              });
-            }).catch(function () {});
-          }
-        }).catch(function () {});
       });
     });
   } catch (e) { console.warn('[Gallery] 比赛照片获取失败:', e.message); }
+
+  if (allMatchPhotos.length) {
+    // 找到或创建「比赛瞬间」相册
+    var matchAlbum = mergedAlbums.find(function (a) { return a.title === '比赛瞬间'; });
+    if (!matchAlbum) {
+      matchAlbum = { title: '比赛瞬间', date: '', photos: [], _hasGroups: true };
+      mergedAlbums.unshift(matchAlbum);
+    }
+    matchAlbum._hasGroups = true;
+    // 把比赛照片追加到该相册
+    allMatchPhotos.forEach(function (p) { matchAlbum.photos.push(p); });
+
+    // IndexedDB 缓存缩略图
+    allMatchPhotos.forEach(function (p) {
+      var cacheKey = 'match_' + p._matchPhotoId + '_thumb';
+      loadImage(STORE.GALLERY, cacheKey).then(function (cachedUrl) {
+        if (!cachedUrl && p._thumbUrl) {
+          fetch(p._thumbUrl).then(function (r) { return r.blob(); }).then(function (blob) {
+            return openDB().then(function (db) {
+              return new Promise(function (resolve) {
+                var tx = db.transaction(STORE.GALLERY, 'readwrite');
+                tx.objectStore(STORE.GALLERY).put({ key: cacheKey, data: blob });
+                tx.oncomplete = resolve;
+              });
+            });
+          }).catch(function () {});
+        }
+      }).catch(function () {});
+    });
+  }
+
+  // === 轮播：从全部照片中随机抽取 5 张 ===
+  var carouselPool = [];
+  // 静态照片
+  mergedSlides.forEach(function (s) { if (s._imageUrl) carouselPool.push(s); });
+  // 比赛照片
+  allMatchPhotos.forEach(function (p) { carouselPool.push({ label: p.label, _imageUrl: p._imageUrl }); });
+
+  var shuffledSlides = [];
+  if (carouselPool.length) {
+    // Fisher-Yates 打乱后取前 5
+    var pool = carouselPool.slice();
+    for (var ci = pool.length - 1; ci > 0; ci--) {
+      var cj = Math.floor(Math.random() * (ci + 1));
+      var ct = pool[ci]; pool[ci] = pool[cj]; pool[cj] = ct;
+    }
+    shuffledSlides = pool.slice(0, 5);
+  }
 
   // Load images: file-based avatars first, then IndexedDB fallback
   const playerImagePromises = mergedPlayers.map(p =>
@@ -350,7 +374,7 @@ async function loadAllOverridesAndMerge() {
       return loadImage("playerAvatars", p.number).then(url => { if (url) p._avatarUrl = url; });
     })
   );
-  const slideImagePromises = mergedSlides.map((s, i) =>
+  const slideImagePromises = shuffledSlides.map((s, i) =>
     loadImage("carouselPhotos", i).then(url => { if (url) s._imageUrl = url; })
   );
   const albumImagePromises = [];
@@ -377,7 +401,7 @@ async function loadAllOverridesAndMerge() {
   renderRoster(mergedPlayers);
   await renderFixtures();
   loadMVPs(allVotes);
-  initCarousel(mergedSlides);
+  initCarousel(shuffledSlides);
   initGalleryOverlay(mergedAlbums);
 
   window.__players = mergedPlayers;
@@ -1295,23 +1319,39 @@ function initGalleryOverlay(albumsOverride) {
   const backBtn = document.getElementById("galleryOverlayBack");
 
   function render() {
-    content.innerHTML = albums.map(a => `
-      <div class="gallery-album">
-        <div class="gallery-album-header">
-          <div class="gallery-album-title">${a.title}</div>
-          <div class="gallery-album-date">${a.date}</div>
-        </div>
-        <div class="gallery-album-grid">
-          ${a.photos.map((p, i) => `
-            <div class="gallery-photo" data-album="${a.title}" data-idx="${i}" data-full="${p._imageUrl || ''}">
-              ${p._thumbUrl || p._imageUrl
-                ? `<img src="${p._thumbUrl || p._imageUrl}" alt="${p.label}" loading="lazy" decoding="async">`
-                : `<svg class="gallery-photo-camera" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 5V3h8v2"/></svg>`}
-            </div>
-          `).join("")}
-        </div>
-      </div>
-    `).join("");
+    content.innerHTML = albums.map(a => {
+      var photosHTML = '';
+      if (a._hasGroups) {
+        // 按 _groupLabel 分组渲染，组间插入标题行
+        var lastGroup = '';
+        a.photos.forEach(function (p, i) {
+          if (p._groupLabel && p._groupLabel !== lastGroup) {
+            lastGroup = p._groupLabel;
+            photosHTML += '<div class="gallery-subgroup-header">' + lastGroup + '</div>';
+          }
+          photosHTML += '<div class="gallery-photo" data-album="' + a.title + '" data-idx="' + i + '" data-full="' + (p._imageUrl || '') + '">' +
+            (p._thumbUrl || p._imageUrl
+              ? '<img src="' + (p._thumbUrl || p._imageUrl) + '" alt="' + p.label + '" loading="lazy" decoding="async">'
+              : '<svg class="gallery-photo-camera" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 5V3h8v2"/></svg>') +
+            '</div>';
+        });
+      } else {
+        photosHTML = a.photos.map((p, i) => `
+          <div class="gallery-photo" data-album="${a.title}" data-idx="${i}" data-full="${p._imageUrl || ''}">
+            ${p._thumbUrl || p._imageUrl
+              ? `<img src="${p._thumbUrl || p._imageUrl}" alt="${p.label}" loading="lazy" decoding="async">`
+              : `<svg class="gallery-photo-camera" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="15" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M8 5V3h8v2"/></svg>`}
+          </div>
+        `).join("");
+      }
+      return '<div class="gallery-album">' +
+        '<div class="gallery-album-header">' +
+          '<div class="gallery-album-title">' + a.title + '</div>' +
+          (a.date ? '<div class="gallery-album-date">' + a.date + '</div>' : '') +
+        '</div>' +
+        '<div class="gallery-album-grid">' + photosHTML + '</div>' +
+      '</div>';
+    }).join("");
   }
 
   function open() {
