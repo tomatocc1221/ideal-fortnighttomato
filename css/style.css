@@ -1248,7 +1248,7 @@ img { max-width: 100%; display: block; }
 
   /* Roster */
   .roster-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .roster-group-title { font-size: 1rem; padding: 8px 16px; }
+  .roster-group-title { font-size: 1rem; padding: 8px 16px; margin-bottom: 0; }
   .player-card { height: 190px; }
   .player-card-front,
   .player-card-back { padding: 16px 10px 14px; }
@@ -1314,18 +1314,23 @@ img { max-width: 100%; display: block; }
 }
 
 @media (max-width: 400px) {
-  .roster-grid { grid-template-columns: 1fr; gap: 14px; }
-  .roster-group-title { font-size: 0.95rem; }
+  .roster-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .roster-group-title { font-size: 0.85rem; padding: 6px 10px; margin-bottom: 2px; }
   .carousel-slide-placeholder { font-size: 0.8rem; padding: 8px 16px; }
   .about-stats { grid-template-columns: 1fr; }
 	  .tactics-layout { flex-direction: column; max-width: 100%; }
 	  .tactics-layout .tactics-board { max-width: 100%; }
 	  .tactics-bench { width: 100%; }
-  .player-card { height: 210px; }
-  .player-number { font-size: 1.5rem; }
-  .player-name { font-size: 0.95rem; }
-  .player-role { font-size: 0.72rem; padding: 2px 12px; }
-  .player-back-btn { padding: 10px 20px; font-size: 0.82rem; min-height: 44px; }
+  .player-card { height: 170px; }
+  .player-card-front,
+  .player-card-back { padding: 12px 6px 10px; }
+  .player-avatar { width: 44px; height: 44px; margin-bottom: 6px; font-size: 1.1rem; }
+  .player-number { font-size: 1.2rem; }
+  .player-name { font-size: 0.78rem; margin-top: 2px; }
+  .player-role { font-size: 0.65rem; padding: 1px 8px; margin-top: 2px; }
+  .player-back-name { font-size: 0.85rem; }
+  .player-back-bio { font-size: 0.7rem; }
+  .player-back-btn { padding: 6px 12px; font-size: 0.72rem; min-height: 36px; }
 }
 
 /* ========================================
