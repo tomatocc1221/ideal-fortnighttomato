@@ -2,6 +2,20 @@
    管理后台逻辑 — 今日说法足球俱乐部
    ======================================== */
 
+// ===== 登录 Session 管理 =====
+const ADMIN_SESSION_MAX_AGE = 24 * 60 * 60 * 1000; // 24 小时过期
+
+function isAdminSessionValid() {
+  const token = sessionStorage.getItem('admin_token');
+  const ts = parseInt(sessionStorage.getItem('admin_token_ts') || '0', 10);
+  return token && (Date.now() - ts < ADMIN_SESSION_MAX_AGE);
+}
+
+function clearAdminSession() {
+  sessionStorage.removeItem('admin_token');
+  sessionStorage.removeItem('admin_token_ts');
+}
+
 // ===== 登录 =====
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const pwd = document.getElementById('loginPwd').value;
@@ -10,6 +24,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     document.getElementById('loginError').textContent = result.error;
   } else {
     sessionStorage.setItem('admin_token', result.token);
+    sessionStorage.setItem('admin_token_ts', Date.now());
     document.getElementById('adminLogin').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     initAdmin();
@@ -21,15 +36,17 @@ document.getElementById('loginPwd').addEventListener('keydown', e => {
 });
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('admin_token');
+  clearAdminSession();
   location.reload();
 });
 
-// 自动登录
-if (sessionStorage.getItem('admin_token')) {
+// 自动登录（24h 内有效）
+if (isAdminSessionValid()) {
   document.getElementById('adminLogin').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
   initAdmin();
+} else {
+  clearAdminSession();
 }
 
 // ===== Tab 切换 =====
@@ -111,34 +128,53 @@ function resetPlayerForm() {
   document.getElementById('playerCancelBtn').style.display = 'none';
 }
 
-document.getElementById('playerSaveBtn').addEventListener('click', async () => {
-  const id = document.getElementById('pfId').value;
-  const name = document.getElementById('pfName').value.trim();
-  const number = parseInt(document.getElementById('pfNumber').value);
-  const pin = document.getElementById('pfPin').value;
+document.getElementById('playerSaveBtn').addEventListener('click', async function () {
+  const btn = this;
+  if (btn.disabled) return; // 防重复点击
+  btn.disabled = true;
+  try {
+    const id = document.getElementById('pfId').value;
+    const name = document.getElementById('pfName').value.trim();
+    const number = parseInt(document.getElementById('pfNumber').value);
+    const pin = document.getElementById('pfPin').value;
 
-  if (!name || !Number.isFinite(number)) return alert('请填写姓名和号码');
+    if (!name || !Number.isFinite(number)) return alert('请填写姓名和号码');
 
-  const data = { name, number };
-  if (pin) data.pin = pin;
+    const data = { name, number };
+    if (pin) data.pin = pin;
 
-  if (id) {
-    await API.updatePlayer(id, data);
-  } else {
-    if (!pin) return alert('请设置个人密码');
-    await API.addPlayer(data);
+    let saved;
+    if (id) {
+      saved = await API.updatePlayer(id, data);
+      const idx = allPlayers.findIndex(p => p.id === id);
+      if (idx !== -1) allPlayers[idx] = saved;
+    } else {
+      if (!pin) return alert('请设置个人密码');
+      saved = await API.addPlayer(data);
+      allPlayers.push(saved);
+      allPlayers.sort((a, b) => a.number - b.number);
+    }
+
+    resetPlayerForm();
+    renderPlayerTable();
+  } catch (e) {
+    alert('保存失败：' + e.message);
+  } finally {
+    btn.disabled = false;
   }
-
-  resetPlayerForm();
-  loadPlayers();
 });
 
 document.getElementById('playerCancelBtn').addEventListener('click', resetPlayerForm);
 
 async function deletePlayer(id) {
   if (!confirm('确定删除这名队员？')) return;
-  await API.deletePlayer(id);
-  loadPlayers();
+  try {
+    await API.deletePlayer(id);
+    allPlayers = allPlayers.filter(p => p.id !== id);
+    renderPlayerTable();
+  } catch (e) {
+    alert('删除失败：' + e.message);
+  }
 }
 
 // ============================================================
@@ -150,17 +186,6 @@ async function loadMatches() {
   allMatches = await API.getMatches();
   renderMatchTable();
   updateMatchSelect();
-  updateVenueSelect();
-}
-
-function updateVenueSelect() {
-  const venues = [...new Set(allMatches.map(m => m.venue).filter(Boolean))];
-  const sel = document.getElementById('mfVenue');
-  sel.innerHTML = '';
-  venues.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
-  const addNew = document.createElement('option');
-  addNew.value = '__new__'; addNew.textContent = '+ 添加新场地';
-  sel.appendChild(addNew);
 }
 
 function calcRegWindow(dateStr, timeStr) {
@@ -175,9 +200,9 @@ function calcRegWindow(dateStr, timeStr) {
 }
 
 function fmtDT(d) {
-  if (typeof d === 'string') return d.replace('T', ' ').slice(0, 16);
+  if (typeof d === 'string') return d.replace('T', ' ').slice(0, 16).replace(/-/g, '.');
   const pad = n => String(n).padStart(2, '0');
-  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  return d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
 function renderMatchTable() {
@@ -188,7 +213,7 @@ function renderMatchTable() {
   }
   tbody.innerHTML = allMatches.map(m => `
     <tr>
-      <td>${m.date} ${m.time || ''}</td>
+      <td>${(m.date || '').replace(/-/g, '.')} ${m.time || ''}</td>
       <td>${m.home_team || '今日说法'} vs ${m.away_team} ${m.jersey ? '(' + m.jersey + ')' : ''}</td>
       <td>${fmtDT(m.reg_open_at)} ~ ${fmtDT(m.reg_close_at)}</td>
       <td>
@@ -210,21 +235,11 @@ function editMatch(id) {
   const m = allMatches.find(mt => mt.id === id);
   if (!m) return;
 
-  const venueSel = document.getElementById('mfVenue');
-  // 如果当前场地不在选项中，插入到"添加新场地"之前
-  if (m.venue && ![...venueSel.options].some(o => o.value === m.venue)) {
-    const opt = document.createElement('option');
-    opt.value = m.venue; opt.textContent = m.venue;
-    venueSel.insertBefore(opt, venueSel.lastElementChild);
-  }
-
   document.getElementById('mfId').value = m.id;
   document.getElementById('mfDate').value = m.date;
   document.getElementById('mfTime').value = m.time;
   document.getElementById('mfAway').value = m.away_team;
-  venueSel.value = m.venue || '';
-  document.getElementById('mfVenueNew').style.display = 'none';
-  document.getElementById('mfVenueNew').value = '';
+  document.getElementById('mfVenue').value = m.venue || '';
   document.getElementById('mfJersey').value = m.jersey || '蓝色';
   document.getElementById('mfJerseyColor').value = m.jersey_color || '#4a90d9';
   document.getElementById('mfFee').value = m.fee || '';
@@ -238,8 +253,6 @@ function resetMatchForm() {
   document.getElementById('mfTime').value = '14:40';
   document.getElementById('mfAway').value = '';
   document.getElementById('mfVenue').value = '';
-  document.getElementById('mfVenueNew').style.display = 'none';
-  document.getElementById('mfVenueNew').value = '';
   document.getElementById('mfJersey').value = '蓝色';
   document.getElementById('mfJerseyColor').value = '#4a90d9';
   document.getElementById('mfFee').value = '';
@@ -247,64 +260,69 @@ function resetMatchForm() {
   document.getElementById('matchCancelBtn').style.display = 'none';
 }
 
-document.getElementById('matchSaveBtn').addEventListener('click', async () => {
-  const id = document.getElementById('mfId').value;
-  const date = document.getElementById('mfDate').value;
-  const time = document.getElementById('mfTime').value;
-  const away = document.getElementById('mfAway').value.trim();
-  const venueSel = document.getElementById('mfVenue');
-  let venue = venueSel.value;
-  if (venue === '__new__') {
-    venue = document.getElementById('mfVenueNew').value.trim();
+document.getElementById('matchSaveBtn').addEventListener('click', async function () {
+  const btn = this;
+  if (btn.disabled) return;
+  btn.disabled = true;
+  try {
+    const id = document.getElementById('mfId').value;
+    const date = document.getElementById('mfDate').value;
+    const time = document.getElementById('mfTime').value;
+    const away = document.getElementById('mfAway').value.trim();
+    const venue = document.getElementById('mfVenue').value.trim();
+    const jersey = document.getElementById('mfJersey').value;
+    const jerseyColor = jersey === '粉色' ? '#e91e63' : '#4a90d9';
+    document.getElementById('mfJerseyColor').value = jerseyColor;
+
+    if (!date || !away) return alert('请填写日期和对手');
+
+    const { open, close } = calcRegWindow(date, time);
+    const fee = parseFloat(document.getElementById('mfFee').value) || 0;
+
+    const data = {
+      date, time,
+      away_team: away,
+      venue,
+      jersey,
+      jersey_color: jerseyColor,
+      fee: fee || null,
+      reg_open_at: open.toISOString(),
+      reg_close_at: close.toISOString()
+    };
+
+    let saved;
+    if (id) {
+      saved = await API.updateMatch(id, data);
+      const idx = allMatches.findIndex(m => m.id === id);
+      if (idx !== -1) allMatches[idx] = saved;
+    } else {
+      saved = await API.addMatch(data);
+      allMatches.push(saved);
+      allMatches.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+
+    resetMatchForm();
+    renderMatchTable();
+    updateMatchSelect();
+  } catch (e) {
+    alert('保存失败：' + e.message);
+  } finally {
+    btn.disabled = false;
   }
-  const jersey = document.getElementById('mfJersey').value;
-  const jerseyColor = jersey === '粉色' ? '#e91e63' : '#4a90d9';
-  document.getElementById('mfJerseyColor').value = jerseyColor;
-
-  if (!date || !away) return alert('请填写日期和对手');
-
-  const { open, close } = calcRegWindow(date, time);
-
-  const fee = parseFloat(document.getElementById('mfFee').value) || 0;
-
-  const data = {
-    date, time,
-    away_team: away,
-    venue,
-    jersey,
-    jersey_color: jerseyColor,
-    fee: fee || null,
-    reg_open_at: open.toISOString(),
-    reg_close_at: close.toISOString()
-  };
-
-  if (id) {
-    await API.updateMatch(id, data);
-  } else {
-    await API.addMatch(data);
-  }
-
-  resetMatchForm();
-  loadMatches();
 });
 
 document.getElementById('matchCancelBtn').addEventListener('click', resetMatchForm);
 
-document.getElementById('mfVenue').addEventListener('change', function () {
-  const newInput = document.getElementById('mfVenueNew');
-  if (this.value === '__new__') {
-    newInput.style.display = 'inline-block';
-    newInput.focus();
-  } else {
-    newInput.style.display = 'none';
-    newInput.value = '';
-  }
-});
-
 async function deleteMatch(id) {
   if (!confirm('确定删除这场比赛？相关报名记录也会删除。')) return;
-  await API.deleteMatch(id);
-  loadMatches();
+  try {
+    await API.deleteMatch(id);
+    allMatches = allMatches.filter(m => m.id !== id);
+    renderMatchTable();
+    updateMatchSelect();
+  } catch (e) {
+    alert('删除失败：' + e.message);
+  }
 }
 
 // ============================================================
@@ -313,7 +331,7 @@ async function deleteMatch(id) {
 function updateMatchSelect() {
   const sel = document.getElementById('regMatchSelect');
   sel.innerHTML = '<option value="">— 选择比赛 —</option>' +
-    allMatches.map(m => `<option value="${m.id}">${m.date} ${m.home_team || '今日说法'} vs ${m.away_team}</option>`).join('');
+    allMatches.map(m => `<option value="${m.id}">${(m.date || '').replace(/-/g, '.')} ${m.home_team || '今日说法'} vs ${m.away_team}</option>`).join('');
 }
 
 document.getElementById('regMatchSelect').addEventListener('change', function () {
@@ -378,7 +396,7 @@ async function loadRegistrations(matchId) {
       <td>${r.player_name}</td>
       <td>${r.player_number}</td>
       <td><span class="${statusClass}">${statusLabel}</span>${reason}</td>
-      <td>${new Date(r.registered_at).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td>
+      <td>${fmtDT(r.registered_at)}</td>
       <td>
         <button class="btn btn-sm btn-edit" data-id="${r.id}" data-status="${r.status}">调整</button>
         <button class="btn btn-sm btn-del" data-id="${r.id}">删除</button>
@@ -440,6 +458,10 @@ let _selectedResultMatch = null;
 let _allResultMatches = []; // 合并后的比赛列表（API + 静态fixtures）
 
 async function loadResultsTab() {
+  // 加载期间禁用下拉菜单，防止操作陈旧数据
+  var sel = document.getElementById('resultMatchSelect');
+  sel.disabled = true;
+
   allMatches = await API.getMatches();
   allPlayers = await API.getPlayers();
   const now = new Date();
@@ -484,17 +506,20 @@ async function loadResultsTab() {
 
   _allResultMatches = [...apiEnded, ...staticEnded];
 
-  const sel = document.getElementById('resultMatchSelect');
   if (_allResultMatches.length === 0) {
     sel.innerHTML = '<option value="">-- 暂无已结束的比赛 --</option>';
   } else {
     sel.innerHTML = '<option value="">-- 选择已结束的比赛 --</option>' +
       _allResultMatches.map((m, i) => {
         const hasResult = m.home_score !== undefined && m.home_score !== null && m.home_score !== '';
-        const label = `${m.date} ${m.home_team || '今日说法'} vs ${m.away_team}${hasResult ? ' (已录入)' : ''}${m._source === 'static' ? ' [待迁移]' : ''}`;
+        const label = `${(m.date || '').replace(/-/g, '.')} ${m.home_team || '今日说法'} vs ${m.away_team}${hasResult ? ' (已录入)' : ''}${m._source === 'static' ? ' [待迁移]' : ''}`;
         return `<option value="${i}">${label}</option>`;
       }).join('');
   }
+
+  // 重置表单 + 恢复下拉菜单
+  hideResultForm();
+  sel.disabled = false;
 }
 
 document.getElementById('resultMatchSelect').addEventListener('change', function () {
@@ -528,20 +553,20 @@ function loadResultForm(m) {
 }
 
 function computeOurResult(match, homeScore, awayScore) {
-  const weAreHome = (match.home_team || match.home) === '今日说法';
+  const weAreHome = (match.home_team || match.home) === "今日说法";
   const ourScore = weAreHome ? homeScore : awayScore;
   const theirScore = weAreHome ? awayScore : homeScore;
-  if (ourScore > theirScore) return { result: 'win', label: '胜' };
-  if (ourScore === theirScore) return { result: 'draw', label: '平' };
-  return { result: 'loss', label: '负' };
+  if (ourScore > theirScore) return { result: "win", label: "胜" };
+  if (ourScore === theirScore) return { result: "draw", label: "平" };
+  return { result: "loss", label: "负" };
 }
 
 function updateResultPreview() {
-  const h = parseInt(document.getElementById('rfHomeScore').value);
-  const a = parseInt(document.getElementById('rfAwayScore').value);
-  const el = document.getElementById('rfResultPreview');
-  if (isNaN(h) || isNaN(a)) { el.textContent = '请输入比分'; return; }
-  if (!_selectedResultMatch) { el.textContent = h > a ? '胜' : h === a ? '平' : '负'; return; }
+  const h = parseInt(document.getElementById("rfHomeScore").value);
+  const a = parseInt(document.getElementById("rfAwayScore").value);
+  const el = document.getElementById("rfResultPreview");
+  if (isNaN(h) || isNaN(a)) { el.textContent = "请输入比分"; return; }
+  if (!_selectedResultMatch) { el.textContent = h > a ? "胜" : h === a ? "平" : "负"; return; }
   el.textContent = computeOurResult(_selectedResultMatch, h, a).label;
 }
 
@@ -605,70 +630,98 @@ function renderAssisterRows(assisters) {
 document.getElementById('addScorerBtn').addEventListener('click', () => createPlayerRow('进球', 'scorerRows'));
 document.getElementById('addAssisterBtn').addEventListener('click', () => createPlayerRow('助攻', 'assisterRows'));
 
-document.getElementById('resultSaveBtn').addEventListener('click', async () => {
-  if (!_selectedResultMatch) return;
-  const h = parseInt(document.getElementById('rfHomeScore').value);
-  const a = parseInt(document.getElementById('rfAwayScore').value);
+document.getElementById('resultSaveBtn').addEventListener('click', async function () {
+  const btn = this;
+    const { result } = computeOurResult(_selectedResultMatch, h, a);
   if (isNaN(h) || isNaN(a)) return alert('请输入比分');
 
-  const { result } = computeOurResult(_selectedResultMatch, h, a);
+  btn.disabled = true;
+  try {
+    let result;
+    if (h > a) result = 'win';
+    else if (h === a) result = 'draw';
+    else result = 'loss';
 
-  function collectRows(containerId, field) {
-    const rows = document.getElementById(containerId).querySelectorAll('div');
-    const items = [];
-    rows.forEach(row => {
-      const sel = row.querySelector('select').value;
-      const count = parseInt(row.querySelector('input').value) || 1;
-      if (!sel) return;
-      const [name, num] = sel.split(':');
-      items.push({ name, num: parseInt(num), [field]: count });
-    });
-    return items;
-  }
+    function collectRows(containerId, field) {
+      const rows = document.getElementById(containerId).querySelectorAll('div');
+      const items = [];
+      rows.forEach(row => {
+        const sel = row.querySelector('select').value;
+        const count = parseInt(row.querySelector('input').value) || 1;
+        if (!sel) return;
+        const [name, num] = sel.split(':');
+        items.push({ name, num: parseInt(num), [field]: count });
+      });
+      return items;
+    }
 
-  const data = {
-    home_score: h,
-    away_score: a,
-    result: result,
-    scorers: collectRows('scorerRows', 'goals'),
-    assisters: collectRows('assisterRows', 'assists')
-  };
+    const data = {
+      home_score: h,
+      away_score: a,
+      result: result,
+      scorers: collectRows('scorerRows', 'goals'),
+      assisters: collectRows('assisterRows', 'assists')
+    };
 
-  // 静态 fixtures 的比赛需要先创建到 db.json
-  if (_selectedResultMatch._source === 'static') {
-    const created = await API.addMatch({
-      date: _selectedResultMatch.date,
-      time: _selectedResultMatch.time,
-      home_team: _selectedResultMatch.home_team,
-      away_team: _selectedResultMatch.away_team,
-      venue: _selectedResultMatch.venue,
-      jersey: _selectedResultMatch.jersey,
-      jersey_color: _selectedResultMatch.jersey_color,
-      ...data
-    });
-    alert('赛果已保存！（比赛已从静态数据迁移至数据库）');
+    // 静态 fixtures 的比赛需先同步到 Supabase
+    if (_selectedResultMatch._source === 'static') {
+      // 静态比赛缺少 reg_open_at/reg_close_at，用比赛时间作为默认值（已结束，不影响功能）
+      var matchDate = _selectedResultMatch.date;
+      var matchTime = _selectedResultMatch.time || '14:40';
+      var matchStart = matchDate + 'T' + matchTime + ':00+08:00';
+      await API.addMatch({
+        date: matchDate,
+        time: matchTime,
+        home_team: _selectedResultMatch.home_team,
+        away_team: _selectedResultMatch.away_team,
+        venue: _selectedResultMatch.venue,
+        jersey: _selectedResultMatch.jersey,
+        jersey_color: _selectedResultMatch.jersey_color,
+        reg_open_at: matchStart,
+        reg_close_at: matchStart,
+        ...data
+      });
+      alert('赛果已保存！（比赛已从静态数据迁移至数据库）');
+    } else {
+      await API.updateMatch(_selectedResultMatch.id, data);
+      alert('赛果已保存！');
+    }
+
+    // 通知其他页面刷新战报
+    localStorage.setItem('jrsf_lastResultUpdate', Date.now());
+
     _selectedResultMatch = null;
     loadResultsTab();
     hideResultForm();
-    return;
+  } catch (e) {
+    alert('保存失败：' + (e.message || '网络错误'));
+  } finally {
+    btn.disabled = false;
   }
-
-  await API.updateMatch(_selectedResultMatch.id, data);
-  alert('赛果已保存！');
-  loadResultsTab();
 });
 
-document.getElementById('resultClearBtn').addEventListener('click', async () => {
+document.getElementById('resultClearBtn').addEventListener('click', async function () {
+  const btn = this;
+  if (btn.disabled) return;
   if (!_selectedResultMatch) return;
   if (_selectedResultMatch._source === 'static') {
     alert('静态数据中的比赛尚未迁移，无需清除');
     return;
   }
   if (!confirm('确定清除这场比赛的所有赛果数据？')) return;
-  await API.updateMatch(_selectedResultMatch.id, {
-    home_score: null, away_score: null, result: '', scorers: [], assisters: []
-  });
-  alert('赛果已清除！');
-  loadResultsTab();
-  hideResultForm();
+
+  btn.disabled = true;
+  try {
+    await API.updateMatch(_selectedResultMatch.id, {
+      home_score: null, away_score: null, result: '', scorers: [], assisters: []
+    });
+    alert('赛果已清除！');
+    localStorage.setItem('jrsf_lastResultUpdate', Date.now());
+    loadResultsTab();
+    hideResultForm();
+  } catch (e) {
+    alert('清除失败：' + (e.message || '网络错误'));
+  } finally {
+    btn.disabled = false;
+  }
 });

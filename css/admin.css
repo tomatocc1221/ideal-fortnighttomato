@@ -265,6 +265,12 @@ select.input {
 
   .admin-tabs {
     flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .admin-tab {
+    padding: 6px 12px;
+    font-size: 0.85rem;
   }
 
   .admin-form {
@@ -273,4 +279,111 @@ select.input {
   }
 
   .input-sm { width: 100%; }
+
+  select.input {
+    min-width: 100%;
+  }
+
+  .btn {
+    padding: 8px 18px;
+    font-size: 0.9rem;
+  }
+
+  .btn-sm {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-panel {
+    padding: 0 12px 40px;
+  }
+
+  .admin-header {
+    padding: 16px 0;
+    margin-bottom: 20px;
+  }
+
+  .admin-header h2 {
+    font-size: 1.3rem;
+  }
+
+  /* Tabs — compact 5-in-a-row */
+  .admin-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    gap: 3px;
+  }
+
+  .admin-tab {
+    padding: 7px 4px;
+    font-size: 0.73rem;
+    text-align: center;
+    border-radius: 6px;
+  }
+
+  /* Form */
+  .admin-form {
+    gap: 6px;
+  }
+
+  .admin-form-grid .input {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .input {
+    padding: 8px 12px;
+    font-size: 0.88rem;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    width: 100%;
+  }
+
+  .btn-sm {
+    width: auto;
+  }
+
+  /* Table — compact */
+  .admin-table {
+    font-size: 0.78rem;
+  }
+
+  .admin-table th, .admin-table td {
+    padding: 8px 6px;
+  }
+
+  .admin-table th {
+    font-size: 0.7rem;
+  }
+
+  /* Login card */
+  .admin-login-card {
+    padding: 40px 24px;
+  }
+
+  .admin-login-card h1 {
+    font-size: 1.8rem;
+  }
+
+  /* Section */
+  .admin-section {
+    margin-bottom: 24px;
+  }
+
+  .admin-section h3 {
+    font-size: 0.95rem;
+  }
+
+  /* Table buttons row */
+  .admin-table .btn-sm {
+    padding: 3px 8px;
+    font-size: 0.72rem;
+    margin-left: 2px;
+  }
 }

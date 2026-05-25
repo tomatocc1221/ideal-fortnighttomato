@@ -9,7 +9,7 @@ const DB_NAME = "jinrishuofa";
 const STORE = { PLAYERS: "playerAvatars", CAROUSEL: "carouselPhotos", GALLERY: "galleryPhotos" };
 const LS_KEY = { PLAYERS: "jrsf_players", SLIDES: "jrsf_slides", ALBUMS: "jrsf_albums" };
 const PATH = { AVATAR: "images/players/", GALLERY: "images/gallery/" };
-const TIMING = { CAROUSEL: 3500, SCROLL_THRESHOLD: 60, ACTIVE_OFFSET: 120, COUNTUP: 1200, SWIPE: 50, REVEAL_STAGGER: 0.07, REVEAL_GROUP: 5 };
+const TIMING = { CAROUSEL: 3500, SCROLL_THRESHOLD: 60, ACTIVE_OFFSET: 120, COUNTUP: 1200, SWIPE: 50, REVEAL_STAGGER: 0.04, REVEAL_GROUP: 5 };
 const CSS = { OPEN: "open", ACTIVE: "active", SCROLLED: "scrolled", FLIPPED: "flipped", VISIBLE: "visible" };
 const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -226,6 +226,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   initScrollReveal();
   initTacticsBoard();
   initRegButtons();
+
+  // 监听其他标签页的数据更新（管理员保存赛果后自动刷新战报）
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'jrsf_lastResultUpdate' && e.newValue) {
+      renderFixtures();
+    }
+  });
+
+  // 用户切回标签页时兜底刷新战报
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      renderFixtures();
+    }
+  });
 });
 
 /* ========================================
@@ -403,7 +417,7 @@ function renderRoster(playersOverride) {
           <div class="player-card-front">
             <div class="player-avatar">
               ${p._avatarUrl
-                ? `<img src="${p._avatarUrl}" alt="${p.name}">`
+                ? `<img src="${p._avatarUrl}" alt="${p.name}" decoding="sync">`
                 : `<span class="player-avatar-initial">${p.name[0]}</span>`}
             </div>
             <div class="player-number">${p.number}</div>
@@ -470,58 +484,38 @@ async function renderFixtures() {
   const statusText = { win: "胜", draw: "平", loss: "负" };
   const statusClass = { win: "win", draw: "draw", loss: "loss" };
 
-  // === 近期战果 ===
+  // === 最新战报（3场 + 链接到独立页面） ===
   const resultsEl = document.getElementById("resultsList");
   if (resultsEl) {
-    const MAX_VISIBLE = 5;
-    const visibleResults = results.slice(0, MAX_VISIBLE);
-    const hiddenResults = results.slice(MAX_VISIBLE);
-
-    const renderItem = m => {
-      const hasGoals = m.scorers && m.scorers.length > 0;
-      const hasAssists = m.assisters && m.assisters.length > 0;
-      const detailHTML = (hasGoals || hasAssists) ? `
-        <div class="fixture-detail">
-          ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
-          ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
-        </div>` : "";
-
-      return `
-      <div class="fixture-item">
-        <div class="fixture-item-main">
-          <span class="fixture-date">${m.date}</span>
-          <span class="fixture-teams">${m.home} vs ${m.away}</span>
-          <span class="fixture-score ${statusClass[m.result]}">${m.score} ${statusText[m.result]}</span>
-        </div>
-        ${detailHTML}
-      </div>`;
-    };
-
-    let html = visibleResults.map(renderItem).join("");
-
-    if (hiddenResults.length > 0) {
-      html += `
-      <div class="results-hidden" id="resultsHidden" style="display:none;">
-        ${hiddenResults.map(renderItem).join("")}
-      </div>
-      <button class="results-toggle" id="resultsToggle">
-        查看全部战绩（${results.length} 场）
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-      </button>`;
+    const visible = results.slice(0, 3);
+    if (visible.length) {
+      const renderItem = m => {
+        const hasGoals = m.scorers && m.scorers.length > 0;
+        const hasAssists = m.assisters && m.assisters.length > 0;
+        const detailHTML = (hasGoals || hasAssists) ? `
+          <div class="fixture-detail">
+            ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+            ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})`).join("  ")}</span>` : ""}
+          </div>` : "";
+        return `
+        <div class="fixture-item">
+          <div class="fixture-item-main">
+            <span class="fixture-date">${m.date}</span>
+            <span class="fixture-teams">${m.home} vs ${m.away}</span>
+            <span class="fixture-score ${statusClass[m.result]}">${m.score} ${statusText[m.result]}</span>
+          </div>
+          ${detailHTML}
+        </div>`;
+      };
+      resultsEl.innerHTML = visible.map(renderItem).join("");
+    } else {
+      resultsEl.innerHTML = '<div class="fixture-empty">暂无比赛记录</div>';
     }
 
-    resultsEl.innerHTML = html;
-
-    if (hiddenResults.length > 0) {
-      const toggle = document.getElementById("resultsToggle");
-      const hidden = document.getElementById("resultsHidden");
-      toggle.addEventListener("click", () => {
-        const isOpen = hidden.style.display !== "none";
-        hidden.style.display = isOpen ? "none" : "block";
-        toggle.innerHTML = isOpen
-          ? `查看全部战绩（${results.length} 场） <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>`
-          : `收起战绩 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate(180deg)"><path d="M6 9l6 6 6-6"/></svg>`;
-      });
+    const viewAll = document.getElementById("resultsViewAll");
+    if (viewAll) {
+      viewAll.style.display = "block";
+      viewAll.innerHTML = `<a href="fixtures.html" class="view-all-link">查看全部战绩（${results.length} 场） →</a>`;
     }
   }
 
@@ -541,7 +535,7 @@ async function renderFixtures() {
     if (upcomingFiltered.length === 0) {
       upcomingEl.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
     } else {
-      upcomingEl.innerHTML = upcomingFiltered.map((m, i) => {
+      upcomingEl.innerHTML = upcomingFiltered.slice(0, 3).map((m, i) => {
         const jerseyBadge = m.jersey ? `<span class="fixture-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}</span>` : "";
         return `
     <div class="fixture-item" data-upcoming-idx="${i}">
@@ -591,7 +585,7 @@ async function initRegButtons() {
       return `
     <div class="fixture-item" data-upcoming-idx="${idx}">
       <div class="fixture-item-main">
-        <span class="fixture-date">${m.date}</span>
+        <span class="fixture-date">${(m.date || '').replace(/-/g, '.')}</span>
         <span class="fixture-teams">${m.home_team || '今日说法'} vs ${m.away_team} ${jerseyBadge}</span>
         <span class="reg-entry-btn upcoming" data-reg-idx="${idx}">—</span>
       </div>
@@ -620,6 +614,12 @@ async function initRegButtons() {
     // 使用已有的 API 匹配或静态数据中的 API 匹配
     const apiMatch = m._apiMatch || apiMatches.find(am => am.date === m.date && am.away_team === m.away);
     const match = apiMatch || m;
+
+    // 标记 data 属性以便关闭面板时刷新
+    if (match.id) {
+      btn.setAttribute('data-reg-match', match.id);
+      if (warn) warn.setAttribute('data-warn-match', match.id);
+    }
 
     if (!match.reg_open_at || !match.reg_close_at) {
       btn.textContent = '—';
@@ -658,6 +658,49 @@ async function initRegButtons() {
     }
   });
 }
+
+/* === Registration count refresh (for real-time update after close) === */
+async function refreshMainRegButton(matchId) {
+  if (!matchId) return;
+  try {
+    const list = await API.getRegistrations(matchId);
+    const n = list.filter(r => r.status === 'confirmed').length;
+
+    const btn = document.querySelector(`[data-reg-match="${matchId}"]`);
+    if (btn) btn.textContent = `报名中 (${n}/14)`;
+
+    const warnEl = document.querySelector(`[data-warn-match="${matchId}"]`);
+    if (warnEl) {
+      if (n < 14) {
+        warnEl.style.display = 'block';
+        warnEl.textContent = `距截止不足2小时，仅${n}人报名`;
+      } else {
+        warnEl.style.display = 'none';
+      }
+    }
+  } catch (e) { /* 静默降级 */ }
+}
+window.refreshMainRegButton = refreshMainRegButton;
+
+/* === Flush scroll-reveal: instantly show in-viewport elements === */
+function flushScrollReveal() {
+  if (REDUCED_MOTION) return;
+  var targets = document.querySelectorAll('.player-card-front, .stat-item, .fixture-item');
+  targets.forEach(function (el) {
+    var rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0 && el.style.opacity === '0') {
+      el.style.transition = 'none';
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          el.style.transition = '';
+        });
+      });
+    }
+  });
+}
+window.flushScrollReveal = flushScrollReveal;
 
 /* === Lightbox (shared) === */
 function initLightbox() {
@@ -1248,7 +1291,7 @@ function initScrollReveal() {
   targets.forEach((el, i) => {
     el.style.opacity = "0";
     el.style.transform = "translateY(24px)";
-    el.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+    el.style.transition = "opacity 0.3s ease, transform 0.3s ease";
     el.style.transitionDelay = (i % TIMING.REVEAL_GROUP) * TIMING.REVEAL_STAGGER + "s";
     observer.observe(el);
   });
@@ -1352,7 +1395,7 @@ function startCountdown() {
     const jerseyHTML = m.jersey ? `<span class="countdown-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}球衣</span>` : "";
     matchEl.innerHTML = `
       <div class="countdown-teams"><span>${m.home}</span><span class="countdown-vs">vs</span><span>${m.away}</span></div>
-      <div class="countdown-meta">${m.date.replace(/\./, "年").replace(/\./, "月")}日 ${wd} · ${timeStr}</div>
+      <div class="countdown-meta">${m.date.replace(/-/g, '.').replace(/\./, "年").replace(/\./, "月")}日 ${wd} · ${timeStr}</div>
       <div class="countdown-venue">${m.venue || ""} ${jerseyHTML}</div>
     `;
   }

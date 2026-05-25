@@ -13,12 +13,15 @@ document.getElementById('regOverlay').addEventListener('click', function (e) {
 });
 
 function closeRegPanel() {
+  var matchId = _regMatch ? _regMatch.id : null;
   document.getElementById('regOverlay').classList.remove('open');
   document.body.style.overflow = '';
   _regMatch = null;
   _regPlayer = null;
   _regList = [];
   resetRegAuth();
+  if (matchId && window.refreshMainRegButton) window.refreshMainRegButton(matchId);
+  if (window.flushScrollReveal) window.flushScrollReveal();
 }
 
 function resetRegAuth() {
@@ -39,7 +42,7 @@ async function openRegPanel(match) {
   // 比赛信息
   document.getElementById('regMatch').innerHTML = `
     <div class="reg-match-teams">${match.home_team || '今日说法'} vs ${match.away_team}</div>
-    <div class="reg-match-meta">${match.date} · ${match.time || '14:40'} · ${match.venue || ''} ${match.jersey ? '· ' + match.jersey : ''}</div>
+    <div class="reg-match-meta">${(match.date || '').replace(/-/g, '.')} · ${match.time || '14:40'} · ${match.venue || ''} ${match.jersey ? '· ' + match.jersey : ''}</div>
   `;
 
   // 费用展示
