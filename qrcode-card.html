@@ -10,13 +10,13 @@
     background: #0a0a0a;
     display: flex; flex-direction: column;
     justify-content: center; align-items: center;
-    min-height: 100vh; gap: 14px; padding: 20px;
+    min-height: 100vh; gap: 12px; padding: 20px;
     font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   }
-  .loading { color: #c9a961; font-size: 0.95rem; letter-spacing: 0.1em; animation: pulse 1.5s ease-in-out infinite; }
+  .loading { color: #c9a961; font-size: 0.95rem; letter-spacing: 0.08em; animation: pulse 1.5s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  #output { display: none; max-width: 420px; width: 100%; box-shadow: 0 0 60px rgba(201,169,97,0.1), 0 20px 50px rgba(0,0,0,0.5); }
-  .tip { color: #666; font-size: 0.75rem; letter-spacing: 0.05em; display: none; }
+  #output { display: none; max-width: 420px; width: 100%; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+  .tip { color: #666; font-size: 0.72rem; letter-spacing: 0.05em; display: none; }
 </style>
 </head>
 <body>
@@ -25,16 +25,16 @@
 <div class="tip" id="tip">长按保存图片 · 发到群里扫码访问</div>
 
 <script>
-var URL = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
+var SITE = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
 
 var qr = new Image(); qr.crossOrigin = 'anonymous';
 qr.onload = draw; qr.onerror = function(){ document.getElementById('loading').textContent='加载失败，请刷新'; };
-qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=350x350&color=0d0d0d&bgcolor=ffffff&margin=15&data=' + encodeURIComponent(URL);
+qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=0d0d0d&bgcolor=ffffff&margin=16&data=' + encodeURIComponent(SITE);
 
 var logo = new Image(); logo.crossOrigin = 'anonymous'; logo.src = 'images/logo.jpg';
 var L = false; logo.onload = function(){ L = true; };
 
-function roundRect(x, cx, cy, w, h, r) {
+function rr(x, cx, cy, w, h, r) {
   x.beginPath(); x.moveTo(cx + r, cy); x.lineTo(cx + w - r, cy);
   x.arcTo(cx + w, cy, cx + w, cy + r, r); x.lineTo(cx + w, cy + h - r);
   x.arcTo(cx + w, cy + h, cx + w - r, cy + h, r); x.lineTo(cx + r, cy + h);
@@ -43,98 +43,126 @@ function roundRect(x, cx, cy, w, h, r) {
 }
 
 function draw() {
-  var S = 3, W = 420 * S, H = 600 * S;
+  var S = 3, W = 420 * S, H = 620 * S;
   var c = document.createElement('canvas');
   c.width = W; c.height = H;
   var x = c.getContext('2d');
 
-  // BG
-  x.fillStyle = '#0a0a0a'; x.fillRect(0, 0, W, H);
+  // ── GRASS BACKGROUND ──
+  // Deep green base
+  x.fillStyle = '#0e2a0e'; x.fillRect(0, 0, W, H);
 
-  // Card area
-  var cx = 16 * S, cy = 12 * S, cw = W - cx * 2, ch = H - cy * 2;
+  // Grass blade strokes
+  for (var i = 0; i < 3000; i++) {
+    var gx = Math.random() * W, gy = Math.random() * H;
+    var ga = (Math.random() - 0.5) * 0.3;
+    var gl = 4 + Math.random() * 18 * S;
+    var gc = Math.floor(10 + Math.random() * 35);
+    x.strokeStyle = 'rgb(' + gc + ',' + (60 + Math.random() * 80) + ',' + gc + ')';
+    x.lineWidth = 0.6 + Math.random() * 1.2;
+    x.beginPath(); x.moveTo(gx, gy);
+    x.lineTo(gx + Math.sin(ga) * gl, gy - gl); x.stroke();
+  }
 
-  // Card shadow
-  x.shadowColor = 'rgba(0,0,0,0.6)'; x.shadowBlur = 30 * S; x.shadowOffsetX = 0; x.shadowOffsetY = 12 * S;
-  x.fillStyle = '#111';
-  roundRect(x, cx, cy, cw, ch, 18 * S); x.fill();
-  x.shadowColor = 'transparent'; x.shadowBlur = 0; x.shadowOffsetY = 0;
+  // ── Pitch stripe pattern ──
+  for (var si = 0; si < 12; si++) {
+    var sx = (si / 12) * W;
+    x.fillStyle = 'rgba(16,48,16,' + (0.12 + Math.abs(Math.sin(si * 2.1)) * 0.1) + ')';
+    x.fillRect(sx, 0, W / 24, H);
+  }
+
+  // ── Center circle arc ──
+  x.strokeStyle = 'rgba(255,255,255,0.04)'; x.lineWidth = 2 * S;
+  x.beginPath(); x.arc(W / 2, H / 2, 180 * S, 0, Math.PI * 2); x.stroke();
+
+  // ── Overlay fade (darker edges) ──
+  var vignette = x.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.75);
+  vignette.addColorStop(0, 'transparent'); vignette.addColorStop(1, 'rgba(0,0,0,0.65)');
+  x.fillStyle = vignette; x.fillRect(0, 0, W, H);
+
+  // ── CARD ──
+  var cx = 18 * S, cy = 14 * S, cw = W - cx * 2, ch = H - cy * 2;
+  x.fillStyle = 'rgba(8,8,8,0.92)';
+  rr(x, cx, cy, cw, ch, 16 * S); x.fill();
 
   // Gold border
   x.strokeStyle = '#c9a961'; x.lineWidth = 2 * S;
-  roundRect(x, cx, cy, cw, ch, 18 * S); x.stroke();
+  rr(x, cx, cy, cw, ch, 16 * S); x.stroke();
 
-  // Inner thin border
-  x.strokeStyle = 'rgba(201,169,97,0.25)'; x.lineWidth = 1 * S;
-  roundRect(x, cx + 8 * S, cy + 8 * S, cw - 16 * S, ch - 16 * S, 14 * S); x.stroke();
+  // Inner accent line
+  x.strokeStyle = 'rgba(201,169,97,0.2)'; x.lineWidth = 1 * S;
+  rr(x, cx + 8 * S, cy + 8 * S, cw - 16 * S, ch - 16 * S, 12 * S); x.stroke();
 
-  // ── Header ──
-  var hy = cy + 40 * S;
-  if (L) {
-    var lr = 26 * S, lx = cx + 34 * S, ly = hy - lr;
-    x.save(); x.beginPath(); x.arc(lx + lr, ly + lr, lr + 2, 0, Math.PI * 2); x.clip();
-    x.drawImage(logo, lx - 2, ly - 2, (lr + 2) * 2, (lr + 2) * 2); x.restore();
-    x.strokeStyle = '#c9a961'; x.lineWidth = 2 * S;
-    x.beginPath(); x.arc(lx + lr, ly + lr, lr + 3, 0, Math.PI * 2); x.stroke();
-  }
+  // ── Top: football icon + team name ──
+  var hy = cy + 38 * S;
+  // Soccer ball ASCII-style circle
+  x.strokeStyle = '#c9a961'; x.fillStyle = 'rgba(201,169,97,0.08)'; x.lineWidth = 1.5 * S;
+  var br = 16 * S, bx = cx + 36 * S, by = hy - br + 6 * S;
+  x.beginPath(); x.arc(bx + br, by + br, br, 0, Math.PI * 2); x.fill(); x.stroke();
+  // Pentagon center
+  x.fillStyle = '#c9a961'; x.font = 'bold ' + (14 * S) + 'px sans-serif'; x.textAlign = 'center';
+  x.fillText('⚽', bx + br, by + br + 5 * S);
 
-  x.fillStyle = '#c9a961'; x.textAlign = 'center';
-  x.font = '800 ' + (20 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('今日说法足球俱乐部', W / 2, hy + 10 * S);
+  x.fillStyle = '#c9a961'; x.textAlign = 'left';
+  x.font = '800 ' + (21 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('今日说法足球俱乐部', bx + br * 2 + 14 * S, hy + 4 * S);
 
-  x.fillStyle = '#888';
+  x.fillStyle = '#999';
   x.font = (9 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('JIN RI SHUO FA F.C.  ·  以球会友', W / 2, hy + 28 * S);
+  x.fillText('JIN RI SHUO FA F.C.  ·  2025.03.30 成立', bx + br * 2 + 14 * S, hy + 20 * S);
 
   // ── Divider ──
-  var dy = hy + 48 * S;
-  x.strokeStyle = 'rgba(201,169,97,0.2)'; x.lineWidth = 1 * S;
-  x.beginPath(); x.moveTo(cx + 40 * S, dy); x.lineTo(cx + cw - 40 * S, dy); x.stroke();
+  var dy = hy + 44 * S;
+  x.strokeStyle = 'rgba(201,169,97,0.25)'; x.lineWidth = 1 * S;
+  x.beginPath(); x.moveTo(cx + 30 * S, dy); x.lineTo(cx + cw - 30 * S, dy); x.stroke();
 
-  // ── QR Code ──
-  var qs = 300 * S, qx = cx + (cw - qs) / 2, qy = dy + 24 * S;
+  // ── QR CODE ──
+  var qs = 280 * S, qx = cx + (cw - qs) / 2, qy = dy + 20 * S;
 
-  // QR shadow panel
-  x.fillStyle = '#1a1a1a';
-  roundRect(x, qx - 16 * S, qy - 16 * S, qs + 32 * S, qs + 32 * S, 14 * S); x.fill();
+  x.fillStyle = '#151515';
+  rr(x, qx - 14 * S, qy - 14 * S, qs + 28 * S, qs + 28 * S, 12 * S); x.fill();
 
-  // White area
   x.fillStyle = '#fff';
-  roundRect(x, qx - 12 * S, qy - 12 * S, qs + 24 * S, qs + 24 * S, 10 * S); x.fill();
+  rr(x, qx - 10 * S, qy - 10 * S, qs + 20 * S, qs + 20 * S, 8 * S); x.fill();
 
-  // Gold glow ring
-  x.strokeStyle = '#c9a961'; x.lineWidth = 3 * S;
-  x.shadowColor = 'rgba(201,169,97,0.45)'; x.shadowBlur = 16 * S;
-  roundRect(x, qx - 12 * S - 2, qy - 12 * S - 2, qs + 24 * S + 4, qs + 24 * S + 4, 12 * S); x.stroke();
+  x.strokeStyle = '#c9a961'; x.lineWidth = 2.5 * S;
+  x.shadowColor = 'rgba(201,169,97,0.4)'; x.shadowBlur = 12 * S;
+  rr(x, qx - 10 * S - 2, qy - 10 * S - 2, qs + 20 * S + 4, qs + 20 * S + 4, 10 * S); x.stroke();
   x.shadowColor = 'transparent'; x.shadowBlur = 0;
 
   x.drawImage(qr, qx, qy, qs, qs);
 
   // ── Center logo on QR ──
   if (L) {
-    var clr = 24 * S, clx = qx + qs / 2 - clr, cly = qy + qs / 2 - clr;
+    var lr = 24 * S, lx = qx + qs / 2 - lr, ly = qy + qs / 2 - lr;
     x.fillStyle = '#fff';
-    roundRect(x, clx - 4 * S, cly - 4 * S, clr * 2 + 8 * S, clr * 2 + 8 * S, 6 * S); x.fill();
-    x.save(); x.beginPath(); x.arc(qx + qs / 2, qy + qs / 2, clr, 0, Math.PI * 2); x.clip();
-    x.drawImage(logo, clx, cly, clr * 2, clr * 2); x.restore();
+    rr(x, lx - 3 * S, ly - 3 * S, lr * 2 + 6 * S, lr * 2 + 6 * S, 4 * S); x.fill();
+    x.save(); x.beginPath(); x.arc(qx + qs / 2, qy + qs / 2, lr, 0, Math.PI * 2); x.clip();
+    x.drawImage(logo, lx, ly, lr * 2, lr * 2); x.restore();
     x.strokeStyle = '#c9a961'; x.lineWidth = 1.5 * S;
-    x.beginPath(); x.arc(qx + qs / 2, qy + qs / 2, clr + 1, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.arc(qx + qs / 2, qy + qs / 2, lr + 1, 0, Math.PI * 2); x.stroke();
   }
 
-  // ── Scan text ──
+  // ── Scan hint ──
   x.fillStyle = '#c9a961'; x.textAlign = 'center';
   x.font = '600 ' + (10 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('微信扫码  ·  访问球队官网', W / 2, qy + qs + 36 * S);
+  x.fillText('微信扫码  ·  访问球队官网', W / 2, qy + qs + 32 * S);
 
-  // ── Bottom info ──
-  var by = qy + qs + 68 * S;
+  // ── Bottom ──
+  var by = qy + qs + 62 * S;
   x.strokeStyle = 'rgba(201,169,97,0.15)'; x.lineWidth = 1 * S;
   x.beginPath(); x.moveTo(cx + 50 * S, by); x.lineTo(cx + cw - 50 * S, by); x.stroke();
 
-  x.fillStyle = '#777';
+  x.fillStyle = '#888';
   x.font = (8.5 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('2025年3月30日成立于重庆溉澜溪体育公园', W / 2, by + 18 * S);
-  x.fillText('每周六下午  ·  欢迎热爱足球的朋友加入', W / 2, by + 32 * S);
+  x.fillText('重庆溉澜溪体育公园 · 每周六下午', W / 2, by + 16 * S);
+  x.fillText('用脚说话，以球会友', W / 2, by + 30 * S);
+
+  // ── Small football decorations ──
+  x.fillStyle = 'rgba(255,255,255,0.04)';
+  x.font = (40 * S) + 'px sans-serif'; x.textAlign = 'center';
+  x.fillText('⚽', cx + 30 * S, cy + ch - 16 * S);
+  x.fillText('⚽', cx + cw - 30 * S, cy + ch - 16 * S);
 
   // Show
   var url = c.toDataURL('image/jpeg', 0.93);
