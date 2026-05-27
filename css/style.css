@@ -1930,12 +1930,15 @@ img { max-width: 100%; display: block; }
 
 /* ——— 移动端 ——— */
 @media (max-width: 768px) {
-  .reg-panel { max-height: 92vh; border-radius: 10px; }
-  .reg-match { padding: 28px 20px 0; }
-  .reg-match-teams { font-size: 1.15rem; }
-  .reg-body { padding: 20px 20px 24px; }
-  .reg-slot { font-size: 0.84rem; }
+  .reg-overlay { padding: 8px; align-items: flex-start; }
+  .reg-panel { max-height: calc(100vh - 16px); border-radius: 10px; overflow-y: auto; }
+  .reg-match { padding: 20px 16px 0; }
+  .reg-match-teams { font-size: 1.1rem; }
+  .reg-body { padding: 16px 16px 20px; }
+  .reg-close { top: 8px; right: 10px; }
+  .reg-slot { font-size: 0.82rem; padding: 7px 0; }
   .reg-input { font-size: 0.88rem; padding: 10px 12px !important; }
+  .reg-lists { gap: 16px; }
 }
 
 /* ========================================
