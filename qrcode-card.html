@@ -27,12 +27,28 @@
 <script>
 var SITE = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
 
-var qr = new Image(); qr.crossOrigin = 'anonymous';
-qr.onload = draw; qr.onerror = function(){ document.getElementById('loading').textContent='加载失败，请刷新'; };
+var qr = new Image();
+qr.onload = tryDraw; qr.onerror = function(){ document.getElementById('loading').textContent='加载失败，请刷新'; };
 qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=0d0d0d&bgcolor=ffffff&margin=16&data=' + encodeURIComponent(SITE);
 
-var logo = new Image(); logo.crossOrigin = 'anonymous'; logo.src = 'images/logo.jpg';
-var hasLogo = false; logo.onload = function(){ hasLogo = true; };
+var logo = new Image();
+logo.onload = function(){ logoReady = true; tryDraw(); };
+logo.src = 'images/logo.jpg';
+var logoReady = false;
+var qrReady = false;
+
+function tryDraw() {
+  qrReady = true;
+  if (!logoReady) {
+    // Wait up to 2s for logo to load
+    setTimeout(function() {
+      if (!logoReady) logoReady = true;
+      if (qrReady) draw();
+    }, 2000);
+    return;
+  }
+  if (qrReady && logoReady) draw();
+}
 
 function rr(x, cx, cy, w, h, r) {
   x.beginPath(); x.moveTo(cx + r, cy); x.lineTo(cx + w - r, cy);
@@ -59,7 +75,7 @@ function draw() {
 
   // Logo
   var hy = cy + 36 * S;
-  if (hasLogo) {
+  if (logoReady) {
     var lr = 24 * S, lx = cx + 30 * S, ly = hy - lr;
     x.save(); x.beginPath(); x.arc(lx + lr, ly + lr, lr + 2, 0, Math.PI * 2); x.clip();
     x.drawImage(logo, lx - 2, ly - 2, (lr + 2) * 2, (lr + 2) * 2); x.restore();
@@ -70,10 +86,10 @@ function draw() {
   // Title
   x.fillStyle = '#c9a961'; x.textAlign = 'center';
   x.font = '800 ' + (20 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('今日说法足球俱乐部', W / 2 + (hasLogo ? 16 : 0) * S, hy + 8 * S);
+  x.fillText('今日说法足球俱乐部', W / 2 + (logoReady ? 16 : 0) * S, hy + 8 * S);
   x.fillStyle = '#888';
   x.font = (9 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('JIN RI SHUO FA F.C.  ·  以球会友', W / 2 + (hasLogo ? 16 : 0) * S, hy + 24 * S);
+  x.fillText('JIN RI SHUO FA F.C.  ·  以球会友', W / 2 + (logoReady ? 16 : 0) * S, hy + 24 * S);
 
   // Divider
   var dy = hy + 44 * S;
@@ -96,7 +112,7 @@ function draw() {
   x.drawImage(qr, qx, qy, qs, qs);
 
   // Center logo in QR
-  if (hasLogo) {
+  if (logoReady) {
     var clr = 22 * S, clx = qx + qs / 2 - clr, cly = qy + qs / 2 - clr;
     x.fillStyle = '#fff';
     rr(x, clx - 3 * S, cly - 3 * S, clr * 2 + 6 * S, clr * 2 + 6 * S, 4 * S); x.fill();
