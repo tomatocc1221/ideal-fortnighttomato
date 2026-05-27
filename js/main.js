@@ -86,7 +86,6 @@ function loadImage(storeName, key) {
       req.onsuccess = () => {
         if (req.result && req.result.data) {
           const url = URL.createObjectURL(req.result.data);
-          revokeBlobURL(url);
           resolve(url);
         } else {
           resolve(null);
