@@ -479,12 +479,7 @@ async function loadAllOverridesAndMerge() {
       p._ovr = Math.min(99, Math.max(45, Math.round(40 + p._mvpWins * 8 + p._goals * 3 + p._assists * 2 + attendance * 5 * 10)));
       // 身价
       p._value = Math.max(1000, Math.min(20000, 5000 + p._mvpWins * 3000 + p._goals * 800 + p._assists * 400 - p._leaves * 1500));
-      // 出勤率
       p._attendance = attendance;
-      if (attendance >= 0.9) p._cardClass = 'card-gold';
-      else if (attendance >= 0.7) p._cardClass = 'card-normal';
-      else if (attendance >= 0.5) p._cardClass = 'card-worn';
-      else p._cardClass = 'card-broken';
     });
     renderRoster(window.__players);
   }
@@ -583,7 +578,6 @@ function renderRoster(playersOverride) {
       lastGroup = g;
     }
     var origIndex = players.indexOf(p);
-    var cardClass = p._cardClass || '';
     var goals = p._goals || 0, asts = p._assists || 0, apps = p._apps || 0, lv = p._leaves || 0;
     var mvp = (window.__mvpCounts && window.__mvpCounts[p.name]) || 0;
     var attrs = p._attrs || { speed: 5, power: 5, shoot: 5, vision: 5, stamina: 5 };
@@ -596,7 +590,7 @@ function renderRoster(playersOverride) {
     ];
 
     html +=
-      '<div class="player-card ' + cardClass + (p.captain ? ' captain' : '') + '" data-player-index="' + origIndex + '" data-player-number="' + p.number + '">' +
+      '<div class="player-card' + (p.captain ? ' captain' : '') + '" data-player-index="' + origIndex + '" data-player-number="' + p.number + '">' +
         '<div class="player-card-top">' +
           '<div class="player-card-avatar">' +
             (p._avatarUrl

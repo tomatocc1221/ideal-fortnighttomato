@@ -554,19 +554,6 @@ img { max-width: 100%; display: block; }
   box-shadow: 0 0 10px rgba(201,169,97,0.25);
 }
 
-/* ——— 出勤率卡片特效 ——— */
-.player-card.card-gold {
-  border-color: rgba(201,169,97,0.45) !important;
-  box-shadow: 0 0 16px rgba(201,169,97,0.1), inset 0 1px 0 rgba(201,169,97,0.04);
-}
-.player-card.card-worn {
-  filter: saturate(0.5) brightness(0.88);
-}
-.player-card.card-broken {
-  filter: saturate(0.2) brightness(0.65);
-  border-color: rgba(192,57,43,0.25) !important;
-}
-
 /* ——— 球员详情：生涯摘要 ——— */
 .player-stats-row {
   display: flex; justify-content: center; gap: 20px;
