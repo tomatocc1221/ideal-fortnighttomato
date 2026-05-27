@@ -462,12 +462,8 @@ async function loadAllOverridesAndMerge() {
   if (shuffledSlides.length) initCarousel(shuffledSlides);
   if (mergedAlbums) initGalleryOverlay(mergedAlbums);
 
-  // Fetch API fixtures and votes in parallel
-  var fixturesPromise = renderFixtures();
-  var votesPromise = API.getVotes().catch(function () { return []; });
-
-  await fixturesPromise;
-  var allVotes = await votesPromise;
+  // Fetch votes (fixtures already handled by renderFixtures() in sync section)
+  var allVotes = await API.getVotes().catch(function () { return []; });
   window.__allVotes = allVotes;
   loadMVPs(allVotes);
 
@@ -714,7 +710,7 @@ async function renderFixtures() {
       var score = m.home_score + ':' + m.away_score;
       var scorers = (m.scorers || []).map(function (s) { return { name: s.name, num: s.number || s.num, goals: s.goals || 1 }; });
       var assisters = (m.assisters || []).map(function (s) { return { name: s.name, num: s.number || s.num, assists: s.assists || 1 }; });
-      var key = m.date + '|' + m.away_team;
+      var key = m.date.replace(/-/g, '.') + '|' + m.away_team;
       apiMap.set(key, {
         date: m.date.replace(/-/g, '.'),
         home: m.home_team || '今日说法',
