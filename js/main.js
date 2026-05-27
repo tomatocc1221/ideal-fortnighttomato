@@ -112,6 +112,21 @@ function checkFileAvatar(number) {
   });
 }
 
+function checkFileBg(number) {
+  return new Promise(function (resolve) {
+    var exts = ['.webp', '.jpg', '.png'];
+    function tryExt(idx) {
+      if (idx >= exts.length) return resolve(null);
+      var img = new Image();
+      var src = 'images/players-bg/' + number + exts[idx];
+      img.onload = function () { resolve(src); };
+      img.onerror = function () { tryExt(idx + 1); };
+      img.src = src;
+    }
+    tryExt(0);
+  });
+}
+
 
 function loadOverrides() {
   try {
@@ -476,6 +491,11 @@ async function loadAllOverridesAndMerge() {
       p._value = Math.max(1000, Math.min(20000, 5000 + p._mvpWins * 3000 + p._goals * 800 + p._assists * 400 - p._leaves * 1500));
       p._attendance = attendance;
     });
+    // Load background photos for card backs
+    var bgPromises = window.__players.map(function (p) {
+      return checkFileBg(p.number).then(function (url) { if (url) p._bgUrl = url; });
+    });
+    Promise.all(bgPromises).then(function () { renderRoster(window.__players); }).catch(function () {});
     renderRoster(window.__players);
   }
 }
@@ -616,8 +636,8 @@ function renderRoster(playersOverride) {
             '<button class="player-card-detail-btn" onclick="event.stopPropagation(); openPlayerDetail(' + origIndex + ')">球员档案 →</button>' +
           '</div>' +
           '<div class="player-card-back">' +
-            (p._avatarUrl
-              ? '<img class="player-card-photo" src="' + p._avatarUrl + '" alt="' + p.name + '">'
+            (p._bgUrl
+              ? '<div class="player-card-bg"><img class="player-card-bg-img" src="' + p._bgUrl + '" alt=""><div class="player-card-bg-glass"></div><div class="player-card-bg-name">' + p.name + '<span>' + p.number + '</span></div></div>'
               : '<div class="player-card-photo-placeholder">暂无照片</div>') +
           '</div>' +
         '</div>' +
