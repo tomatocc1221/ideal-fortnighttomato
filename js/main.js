@@ -584,17 +584,11 @@ function renderRoster(playersOverride) {
     }
     var origIndex = players.indexOf(p);
     var cardClass = p._cardClass || '';
-    var ovr = p._ovr != null ? p._ovr : '--';
-    var ovrColor = ovr === '--' ? 'ovr-loading' : ovr >= 90 ? 'ovr-green' : ovr >= 80 ? 'ovr-blue' : ovr >= 70 ? 'ovr-gold' : ovr >= 60 ? 'ovr-red' : 'ovr-gray';
-    var value = p._value != null ? '¥' + (p._value / 1000).toFixed(1) + 'k' : '';
-    var valueLabel = value ? '<span class="player-value">💰 ' + value + '</span>' : '';
 
     html +=
       '<div class="player-card ' + cardClass + (p.captain ? ' captain' : '') + '" data-player-index="' + origIndex + '" data-player-number="' + p.number + '" onclick="flipCard(this)">' +
         '<div class="player-card-inner">' +
           '<div class="player-card-front">' +
-            valueLabel +
-            '<div class="player-ovr ' + ovrColor + '">' + ovr + '</div>' +
             '<div class="player-avatar">' +
               (p._avatarUrl
                 ? '<img src="' + p._avatarUrl + '" alt="' + p.name + '" decoding="sync">'

@@ -595,35 +595,6 @@ img { max-width: 100%; display: block; }
   color: var(--role-gk);
 }
 
-/* ——— OVR 评分 ——— */
-.player-ovr {
-  position: absolute;
-  bottom: 14px; right: 14px;
-  width: 34px; height: 34px;
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.85rem; font-weight: 800;
-  font-family: var(--font-heading);
-  letter-spacing: 0.04em;
-  z-index: 2;
-}
-.ovr-green  { background: #1a4a1a; color: #4ade80; border: 1.5px solid #4ade80; }
-.ovr-blue   { background: #1a2a4a; color: #60a5fa; border: 1.5px solid #60a5fa; }
-.ovr-gold   { background: #1a1a0a; color: var(--gold); border: 1.5px solid var(--gold); }
-.ovr-red    { background: #2a1a1a; color: #f87171; border: 1.5px solid #f87171; }
-.ovr-gray   { background: #1a1a1a; color: #999; border: 1.5px solid #555; }
-.ovr-loading { background: #1a1a1a; color: var(--text-faint); border: 1.5px solid var(--border-muted); }
-
-/* ——— 身价标签 ——— */
-.player-value {
-  position: absolute; top: 10px; left: 10px;
-  font-size: 0.6rem; font-weight: 700;
-  color: var(--gold); background: rgba(0,0,0,0.6);
-  padding: 2px 8px; border-radius: 10px;
-  letter-spacing: 0.04em; z-index: 2;
-  border: 1px solid rgba(201,169,97,0.3);
-}
-
 /* ——— 出勤率卡片特效 ——— */
 .player-card.card-gold .player-card-front {
   border-color: rgba(201,169,97,0.5) !important;
