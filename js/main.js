@@ -297,10 +297,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   initBackToTop();
 
   initTacticsBoard();
+  initScrollReveal();
 
   // Load overrides from storage and render with merged data
   await loadAllOverridesAndMerge();
-  initScrollReveal();
   initRegButtons();
 
   // 监听其他标签页的数据更新（管理员保存赛果后自动刷新战报）
@@ -325,7 +325,13 @@ async function loadAllOverridesAndMerge() {
   const overrides = loadOverrides();
   const players = getDefaultPlayers();
 
-  // Merge player text overrides
+  // Start network call early — it's independent of the merge work below
+  var photosPromise = API.getAllPhotosGrouped().catch(function (e) {
+    console.warn('[Gallery] 比赛照片获取失败:', e.message);
+    return {};
+  });
+
+  // Merge player text overrides (sync, while API call is in flight)
   const mergedPlayers = players.map(p => {
     const ov = overrides.players[p.number] || {};
     const merged = { ...p };
@@ -356,10 +362,9 @@ async function loadAllOverridesAndMerge() {
   });
 
   // === 拉取 Supabase 比赛照片，融入统一「比赛瞬间」相册 ===
-  var allMatchPhotos = []; // { _imageUrl, _thumbUrl, _matchPhotoId, groupLabel }
-  try {
-    var grouped = await API.getAllPhotosGrouped();
-    var matchAlbums = Object.values(grouped);
+  var allMatchPhotos = [];
+  var grouped = await photosPromise;
+  var matchAlbums = Object.values(grouped);
     matchAlbums.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
     matchAlbums.forEach(function (album) {
 	      var groupTitle = (album.home_team || '今日说法') + ' vs ' + (album.away_team || '') ;
@@ -376,7 +381,6 @@ async function loadAllOverridesAndMerge() {
         });
       });
     });
-  } catch (e) { console.warn('[Gallery] 比赛照片获取失败:', e.message); }
 
   if (allMatchPhotos.length) {
     // 找到或创建「比赛瞬间」相册
@@ -458,15 +462,18 @@ async function loadAllOverridesAndMerge() {
 
   // Render with merged data
   renderRoster(mergedPlayers);
-  await renderFixtures();
+
+  // Start fixtures and votes in parallel (they're independent API calls)
+  var fixturesPromise = renderFixtures();
+  var votesPromise = API.getVotes().catch(function () { return []; });
+
+  await fixturesPromise;
   initCarousel(shuffledSlides);
   initGalleryOverlay(mergedAlbums);
 
   window.__players = mergedPlayers;
 
-  // 预加载 MVP 计数 + 所有投票数据
-  var allVotes = [];
-  try { allVotes = await API.getVotes(); } catch (e) { /* 降级 */ }
+  var allVotes = await votesPromise;
   window.__allVotes = allVotes;
 
   // 在 allVotes 加载完成后调用 loadMVPs
@@ -614,47 +621,77 @@ function renderRoster(playersOverride) {
 async function renderFixtures() {
   const data = window.__fixturesData || { results: [], upcoming: [] };
   let results = data.results || [];
-  const upcoming = data.upcoming || [];
+  let upcoming = data.upcoming || [];
 
-  // 从 API 拉取赛果并合并（API 赛果优先于静态数据）
+  // 从 API 并行拉取赛果 + 所有比赛（含即将开赛）
+  var apiResults = [], apiMatches = [];
   try {
-    const apiResults = await API.getResults();
-    if (apiResults.length) {
-      const apiMap = new Map();
-      apiResults.forEach(m => {
-        const score = m.home_score + ':' + m.away_score;
-        const scorers = (m.scorers || []).map(s => ({ name: s.name, num: s.number || s.num, goals: s.goals || 1 }));
-        const assisters = (m.assisters || []).map(s => ({ name: s.name, num: s.number || s.num, assists: s.assists || 1 }));
-        const key = m.date + '|' + m.away_team;
-        apiMap.set(key, {
-          date: m.date.replace(/-/g, '.'),
-          home: m.home_team || '今日说法',
-          away: m.away_team,
-          score,
-          result: m.result,
-          scorers,
-          assisters,
-          matchId: m.id,
-          vote_deadline: m.vote_deadline,
-          time: m.time,
-          venue: m.venue
-        });
-      });
-      // API 赛果覆盖或追加
-      results = results.filter(r => !apiMap.has(r.date + '|' + r.away));
-      const extra = [];
-      apiMap.forEach((v, k) => {
-        const exists = data.results.some(r => (r.date + '|' + r.away) === k);
-        if (exists) {
-          results.unshift(v);
-        } else {
-          extra.push(v);
-        }
-      });
-      results = [...extra.reverse(), ...results];
-    }
-  } catch (e) { /* API 不可用时降级到纯静态数据 */ }
+    var both = await Promise.all([
+      API.getResults().catch(function () { return []; }),
+      API.getMatches().catch(function () { return []; })
+    ]);
+    apiResults = both[0];
+    apiMatches = both[1];
+  } catch (e) { /* 降级到纯静态数据 */ }
 
+  // --- 合并赛果 ---
+  if (apiResults.length) {
+    const apiMap = new Map();
+    apiResults.forEach(m => {
+      const score = m.home_score + ':' + m.away_score;
+      const scorers = (m.scorers || []).map(s => ({ name: s.name, num: s.number || s.num, goals: s.goals || 1 }));
+      const assisters = (m.assisters || []).map(s => ({ name: s.name, num: s.number || s.num, assists: s.assists || 1 }));
+      const key = m.date + '|' + m.away_team;
+      apiMap.set(key, {
+        date: m.date.replace(/-/g, '.'),
+        home: m.home_team || '今日说法',
+        away: m.away_team,
+        score,
+        result: m.result,
+        scorers,
+        assisters,
+        matchId: m.id,
+        vote_deadline: m.vote_deadline,
+        time: m.time,
+        venue: m.venue
+      });
+    });
+    results = results.filter(r => !apiMap.has(r.date + '|' + r.away));
+    const extra = [];
+    apiMap.forEach((v, k) => {
+      const exists = data.results.some(r => (r.date + '|' + r.away) === k);
+      if (exists) { results.unshift(v); } else { extra.push(v); }
+    });
+    results = [...extra.reverse(), ...results];
+  }
+
+  // --- 合并即将开赛（从 API 中没有比分的比赛提取） ---
+  var now = new Date();
+  apiMatches.forEach(function (m) {
+    if (m.home_score != null) return; // 有比分 = 已结束，跳过
+    var dateStr = (m.date || '').replace(/-/g, '.');
+    var exists = upcoming.some(function (u) {
+      return u.date === dateStr && u.away === m.away_team;
+    });
+    if (exists) return;
+    var t = new Date((m.date || '') + 'T' + (m.time || '14:40') + ':00');
+    if (now >= new Date(t.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000)) return; // 已结束
+    upcoming.push({
+      date: dateStr,
+      home: m.home_team || '今日说法',
+      away: m.away_team,
+      time: m.time || '14:40',
+      venue: m.venue || '',
+      jersey: m.jersey || '',
+      jerseyColor: m.jersey_color || '',
+      _apiMatch: m
+    });
+  });
+  upcoming.sort(function (a, b) {
+    return new Date(a.date.replace(/\./g, '-')) - new Date(b.date.replace(/\./g, '-'));
+  });
+
+  // --- 渲染 ---
   const statusText = { win: "胜", draw: "平", loss: "负" };
   const statusClass = { win: "win", draw: "draw", loss: "loss" };
 
@@ -663,32 +700,22 @@ async function renderFixtures() {
   if (resultsEl) {
     const visible = results.slice(0, 3);
     if (visible.length) {
-      const renderItem = m => {
+      const renderItem = function (m) {
         const hasGoals = m.scorers && m.scorers.length > 0;
         const hasAssists = m.assisters && m.assisters.length > 0;
         const detailHTML = (hasGoals || hasAssists) ? `
           <div class="fixture-detail">
-            ${hasGoals ? `<span class="fixture-goals"><span class="fixture-goal-dot"></span>${m.scorers.map(p => `${p.name}(${p.num})${p.goals > 1 ? '×' + p.goals : ''}`).join("  ")}</span>` : ""}
-            ${hasAssists ? `<span class="fixture-assists"><span class="fixture-assist-badge">A</span>${m.assisters.map(p => `${p.name}(${p.num})${p.assists > 1 ? '×' + p.assists : ''}`).join("  ")}</span>` : ""}
+            ${hasGoals ? '<span class="fixture-goals"><span class="fixture-goal-dot"></span>' + m.scorers.map(function (p) { return p.name + '(' + p.num + ')' + (p.goals > 1 ? '×' + p.goals : ''); }).join("  ") + '</span>' : ""}
+            ${hasAssists ? '<span class="fixture-assists"><span class="fixture-assist-badge">A</span>' + m.assisters.map(function (p) { return p.name + '(' + p.num + ')' + (p.assists > 1 ? '×' + p.assists : ''); }).join("  ") + '</span>' : ""}
           </div>` : "";
-        // 投票中 or MVP 徽章
         const hasVoteOpen = m.vote_deadline && new Date(m.vote_deadline) > new Date();
-        let extraBadge = '';
+        var extraBadge = '';
         if (hasVoteOpen && m.matchId) {
-          extraBadge = `<span class="vote-open-btn" data-vote-match='${JSON.stringify({id:m.matchId,home_team:m.home,away_team:m.away,date:m.date,venue:m.venue,time:m.time}).replace(/'/g,"&#39;")}'>MVP投票</span>`;
+          extraBadge = '<span class="vote-open-btn" data-vote-match=\'' + JSON.stringify({id:m.matchId,home_team:m.home,away_team:m.away,date:m.date,venue:m.venue,time:m.time}).replace(/'/g,"&#39;") + '\'>MVP投票</span>';
         } else {
-          extraBadge = `<span class="mvp-area" data-match-id="${m.matchId || ''}" style="display:none"></span>`;
+          extraBadge = '<span class="mvp-area" data-match-id="' + (m.matchId || '') + '" style="display:none"></span>';
         }
-        return `
-        <div class="fixture-item">
-          <div class="fixture-item-main">
-            <span class="fixture-date">${m.date}</span>
-            <span class="fixture-teams">${m.home} vs ${m.away}</span>
-            <span class="fixture-score ${statusClass[m.result]}">${m.score} ${statusText[m.result]}</span>
-            ${extraBadge}
-          </div>
-          ${detailHTML}
-        </div>`;
+        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + '</span><span class="fixture-score ' + statusClass[m.result] + '">' + m.score + ' ' + statusText[m.result] + '</span>' + extraBadge + '</div>' + detailHTML + '</div>';
       };
       resultsEl.innerHTML = visible.map(renderItem).join("");
     } else {
@@ -698,44 +725,32 @@ async function renderFixtures() {
     const viewAll = document.getElementById("resultsViewAll");
     if (viewAll) {
       viewAll.style.display = "block";
-      viewAll.innerHTML = `<a href="fixtures.html" class="view-all-link">查看全部战绩（${results.length} 场） →</a>`;
+      viewAll.innerHTML = '<a href="fixtures.html" class="view-all-link">查看全部战绩（' + results.length + ' 场） →</a>';
     }
   }
 
   // === 即将开赛 ===
   const upcomingEl = document.getElementById("upcomingList");
-  let upcomingFiltered = upcoming; // 默认值，防止块作用域问题
   if (upcomingEl) {
-    const now = new Date();
-    upcomingFiltered = upcoming.filter(m => {
+    var upcomingFiltered = upcoming.filter(function (m) {
       if (!m || !m.date) return false;
-      const startTime = new Date(m.date.replace(/\./g, "-") + "T" + (m.time || "14:40") + ":00");
+      var startTime = new Date(m.date.replace(/\./g, "-") + "T" + (m.time || "14:40") + ":00");
       if (isNaN(startTime.getTime())) return false;
-      const endTime = new Date(startTime.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
-      return now < endTime; // 比赛未结束才显示
+      var endTime = new Date(startTime.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
+      return now < endTime;
     });
 
     if (upcomingFiltered.length === 0) {
       upcomingEl.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
     } else {
-      upcomingEl.innerHTML = upcomingFiltered.slice(0, 3).map((m, i) => {
-        const jerseyBadge = m.jersey ? `<span class="fixture-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}</span>` : "";
-        return `
-    <div class="fixture-item" data-upcoming-idx="${i}">
-      <div class="fixture-item-main">
-        <span class="fixture-date">${m.date}</span>
-        <span class="fixture-teams">${m.home} vs ${m.away} ${jerseyBadge}</span>
-        <span class="reg-entry-btn upcoming" data-reg-idx="${i}">—</span>
-      </div>
-      <div class="fixture-meta">${m.time || ""} · ${m.venue || ""}</div>
-      <div class="reg-entry-warning" data-warn-idx="${i}" style="display:none"></div>
-    </div>
-    `}).join("");
+      upcomingEl.innerHTML = upcomingFiltered.slice(0, 3).map(function (m, i) {
+        var jerseyBadge = m.jersey ? '<span class="fixture-jersey" style="background:' + m.jerseyColor + ';color:#fff">' + m.jersey + '</span>' : "";
+        return '<div class="fixture-item" data-upcoming-idx="' + i + '"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + ' ' + jerseyBadge + '</span><span class="reg-entry-btn upcoming" data-reg-idx="' + i + '">—</span></div><div class="fixture-meta">' + (m.time || '') + ' · ' + (m.venue || '') + '</div><div class="reg-entry-warning" data-warn-idx="' + i + '" style="display:none"></div></div>';
+      }).join("");
     }
-  }
 
-  // 存储过滤后的 upcoming，供 countdown 和 reg buttons 使用
-  window.__upcoming = upcomingFiltered;
+    window.__upcoming = upcomingFiltered;
+  }
 
   startCountdown();
 }
@@ -790,62 +805,18 @@ async function loadMVPs(prefetchedVotes) {
 }
 
 /* === Registration Buttons === */
-async function initRegButtons() {
+function initRegButtons() {
   const upcoming = window.__upcoming || [];
-
-  let apiMatches = [];
-  try { apiMatches = await API.getMatches(); } catch (e) { /* API unavailable */ }
+  if (!upcoming.length) return;
 
   const now = new Date();
 
-  // 找出 API 中有但静态数据中没有的 upcoming 比赛（排除已结束的）
-  const staticKeys = new Set(upcoming.map(m => m.date.replace(/\./g, '-') + '|' + m.away));
-  const extraMatches = apiMatches.filter(m => {
-    if (staticKeys.has(m.date + '|' + m.away_team)) return false;
-    const matchStart = new Date(m.date + 'T' + (m.time || '14:40') + ':00');
-    const matchEnd = new Date(matchStart.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
-    return now < matchEnd;
-  });
-
-  // 将额外的 API 比赛追加到 upcoming 列表
-  if (extraMatches.length > 0) {
-    const upcomingEl = document.getElementById('upcomingList');
-    const baseCount = upcoming.length;
-    const extraHTML = extraMatches.map((m, i) => {
-      const jerseyBadge = m.jersey ? `<span class="fixture-jersey" style="background:${m.jersey_color};color:#fff">${m.jersey}</span>` : '';
-      const idx = baseCount + i;
-      return `
-    <div class="fixture-item" data-upcoming-idx="${idx}">
-      <div class="fixture-item-main">
-        <span class="fixture-date">${(m.date || '').replace(/-/g, '.')}</span>
-        <span class="fixture-teams">${m.home_team || '今日说法'} vs ${m.away_team} ${jerseyBadge}</span>
-        <span class="reg-entry-btn upcoming" data-reg-idx="${idx}">—</span>
-      </div>
-      <div class="fixture-meta">${m.time || ''} · ${m.venue || ''}</div>
-      <div class="reg-entry-warning" data-warn-idx="${idx}" style="display:none"></div>
-    </div>`;
-    }).join('');
-    upcomingEl.insertAdjacentHTML('beforeend', extraHTML);
-    // 扩展 upcoming 数组以便后续处理
-    extraMatches.forEach(m => {
-      upcoming.push({
-        date: m.date, time: m.time, home: m.home_team || '今日说法', away: m.away_team,
-        venue: m.venue, jersey: m.jersey, jerseyColor: m.jersey_color,
-        _apiMatch: m
-      });
-    });
-  }
-
-  if (!upcoming.length) return;
-
-  upcoming.forEach((m, i) => {
-    const btn = document.querySelector(`[data-reg-idx="${i}"]`);
-    const warn = document.querySelector(`[data-warn-idx="${i}"]`);
+  upcoming.forEach(function (m, i) {
+    const btn = document.querySelector('[data-reg-idx="' + i + '"]');
+    const warn = document.querySelector('[data-warn-idx="' + i + '"]');
     if (!btn) return;
 
-    // 使用已有的 API 匹配或静态数据中的 API 匹配
-    const apiMatch = m._apiMatch || apiMatches.find(am => am.date === m.date && am.away_team === m.away);
-    const match = apiMatch || m;
+    const match = m._apiMatch || m;
 
     // 标记 data 属性以便关闭面板时刷新
     if (match.id) {
@@ -1060,7 +1031,7 @@ function initPageFlags() {
       if (loadedCount >= 3 && flags.length === 0) spawnFlags();
     };
     img.onerror = function () { loadedCount++; };
-    img.src = 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/flags/4x3/' + code + '.svg';
+    img.src = 'images/flags/' + code + '.png';
   });
 
   function createFlagEl(code) {
@@ -1104,7 +1075,11 @@ function initPageFlags() {
     }
   }
 
+  var animId;
+  var paused = false;
+
   function update() {
+    if (paused) return;
     // Lazy spawn as images load
     if (flags.length < FLAG_COUNT && Object.keys(flagImgs).length >= 3) {
       spawnFlags();
@@ -1158,8 +1133,18 @@ function initPageFlags() {
       f.el.style.opacity = alpha;
     });
 
-    requestAnimationFrame(update);
+    animId = requestAnimationFrame(update);
   }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      paused = true;
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+    } else {
+      paused = false;
+      animId = requestAnimationFrame(update);
+    }
+  });
 
   function onResize() {
     w = window.innerWidth;
@@ -1167,7 +1152,7 @@ function initPageFlags() {
   }
   window.addEventListener('resize', rafThrottle(onResize));
 
-  update();
+  animId = requestAnimationFrame(update);
 }
 
 /* === Carousel === */
@@ -1444,7 +1429,7 @@ function initTacticsBoard() {
       ctx.stroke();
 
       ctx.fillStyle = color;
-      ctx.font = "bold " + Math.max(12, dotR * 0.85) + "px \"Bebas Neue\", -apple-system, sans-serif";
+      ctx.font = "bold " + Math.max(12, dotR * 0.85) + "px \"Impact\", \"Arial Black\", sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(pos.label, cx, cy);

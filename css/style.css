@@ -31,7 +31,7 @@
   --role-df-rgb: 96, 165, 250;
   --role-gk: #fb923c;
   --role-gk-rgb: 251, 146, 60;
-  --font-heading: "Bebas Neue", -apple-system, sans-serif;
+  --font-heading: "Impact", "Arial Black", "Microsoft YaHei", sans-serif;
   --duration-fast: 0.2s;
   --duration-medium: 0.35s;
   --duration-slow: 0.5s;
@@ -250,22 +250,6 @@ img { max-width: 100%; display: block; }
   opacity: 0.45;
 }
 
-/* === Noise Texture Overlay === */
-.noise-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.035;
-}
-.noise-overlay::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
-}
 
 /* === Hero === */
 .hero {
