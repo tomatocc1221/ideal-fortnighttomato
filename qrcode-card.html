@@ -5,339 +5,106 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>今日说法 — 球队二维码</title>
 <style>
-  :root {
-    --gold: #c9a961;
-    --gold-bright: #e0c870;
-    --bg: #080808;
-    --card: #111;
-  }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
-    background: var(--bg);
-    display: flex; justify-content: center; align-items: center;
-    min-height: 100vh;
+    background: #080808;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    min-height: 100vh; gap: 16px; padding: 20px;
     font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-    overflow-x: hidden;
   }
-
-  /* Ambient glow behind the card */
-  .glow {
-    position: fixed;
-    width: 500px; height: 500px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(201,169,97,0.12) 0%, transparent 70%);
-    pointer-events: none;
-    animation: glowPulse 4s ease-in-out infinite;
-  }
-  @keyframes glowPulse {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.15); opacity: 1; }
-  }
-
-  /* Particles */
-  .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-  .particle {
-    position: absolute;
-    width: 2px; height: 2px;
-    background: var(--gold);
-    border-radius: 50%;
-    animation: float linear infinite;
-    opacity: 0;
-  }
-  @keyframes float {
-    0% { opacity: 0; transform: translateY(100vh) scale(0); }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-100px) scale(1.5); }
-  }
-
-  /* Card */
-  .qr-card {
-    position: relative; z-index: 1;
-    background: linear-gradient(160deg, #1a1a1a 0%, #0f0f0f 50%, #111 100%);
-    border: 1.5px solid rgba(201,169,97,0.3);
-    border-radius: 28px;
-    padding: 52px 44px 40px;
-    text-align: center;
-    max-width: 440px; width: calc(100% - 32px);
-    box-shadow:
-      0 0 80px rgba(201,169,97,0.08),
-      0 0 120px rgba(201,169,97,0.03),
-      0 30px 80px rgba(0,0,0,0.6);
-  }
-
-  /* Gold corner accents */
-  .corner {
-    position: absolute; width: 32px; height: 32px;
-    border-color: var(--gold); border-style: solid;
-    opacity: 0.5;
-  }
-  .corner-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; border-radius: 6px 0 0 0; }
-  .corner-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; border-radius: 0 6px 0 0; }
-  .corner-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; border-radius: 0 0 0 6px; }
-  .corner-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; border-radius: 0 0 6px 0; }
-
-  /* Logo area */
-  .qr-logo-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 8px; }
-  .qr-logo-img { width: 44px; height: 47px; border-radius: 8px; filter: drop-shadow(0 0 10px rgba(201,169,97,0.4)); }
-  .qr-team-name {
-    font-size: 1.55rem; font-weight: 800; color: var(--gold);
-    letter-spacing: 0.1em; line-height: 1.2;
-  }
-  .qr-team-sub {
-    font-size: 0.68rem; color: #777;
-    letter-spacing: 0.18em; margin-bottom: 28px;
-  }
-
-  /* QR code with glowing ring */
-  .qr-code-stage {
-    position: relative; display: inline-block;
-    margin: 0 auto 24px;
-  }
-  .qr-ring {
-    position: absolute; inset: -8px; border-radius: 22px;
-    border: 2px solid var(--gold);
-    animation: ringPulse 3s ease-in-out infinite;
-    box-shadow: 0 0 20px rgba(201,169,97,0.3), inset 0 0 20px rgba(201,169,97,0.05);
-  }
-  @keyframes ringPulse {
-    0%, 100% { box-shadow: 0 0 20px rgba(201,169,97,0.3), inset 0 0 20px rgba(201,169,97,0.05); }
-    50% { box-shadow: 0 0 40px rgba(201,169,97,0.5), inset 0 0 30px rgba(201,169,97,0.1); }
-  }
-  .qr-code-inner {
-    display: block; background: #fff;
-    padding: 14px; border-radius: 16px;
-    position: relative;
-  }
-  .qr-code-inner img,
-  .qr-code-inner canvas {
-    display: block; width: 210px; height: 210px;
-  }
-
-  .qr-hint {
-    font-size: 0.7rem; color: #666;
-    letter-spacing: 0.08em; margin-bottom: 24px;
-  }
-
-  /* Buttons */
-  .qr-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .qr-btn {
-    padding: 10px 28px; border-radius: 24px;
-    font-size: 0.82rem; font-weight: 600;
-    letter-spacing: 0.06em; cursor: pointer;
-    transition: all 0.25s; font-family: inherit;
-  }
-  .qr-btn-gold {
-    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
-    color: #0d0d0d; border: none;
-    box-shadow: 0 4px 20px rgba(201,169,97,0.3);
-  }
-  .qr-btn-gold:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(201,169,97,0.5); }
-
-  /* Footer */
-  .qr-footer-line {
-    display: flex; align-items: center; gap: 10px;
-    margin-top: 28px; padding-top: 20px;
-    border-top: 1px solid rgba(201,169,97,0.12);
-    color: #666; font-size: 0.7rem; letter-spacing: 0.08em;
-  }
-  .qr-footer-line::before,
-  .qr-footer-line::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,169,97,0.2), transparent); }
-
-  @media (max-width: 480px) {
-    .qr-card { padding: 36px 20px 28px; border-radius: 22px; }
-    .qr-team-name { font-size: 1.3rem; }
-    .qr-code-inner img,
-    .qr-code-inner canvas { width: 170px; height: 170px; }
-    .qr-code-inner { padding: 10px; border-radius: 12px; }
-    .qr-ring { inset: -5px; border-radius: 17px; }
-    .qr-btn { padding: 8px 22px; font-size: 0.78rem; }
-  }
+  .loading { color: #c9a961; font-size: 1rem; letter-spacing: 0.1em; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .hint { color: #666; font-size: 0.8rem; letter-spacing: 0.06em; display: none; }
+  #output { display: none; max-width: 400px; width: 100%; border-radius: 24px; box-shadow: 0 0 60px rgba(201,169,97,0.15), 0 24px 64px rgba(0,0,0,0.5); cursor: pointer; }
 </style>
 </head>
 <body>
-
-<div class="glow"></div>
-<div class="particles" id="particles"></div>
-
-<div class="qr-card">
-  <span class="corner corner-tl"></span><span class="corner corner-tr"></span>
-  <span class="corner corner-bl"></span><span class="corner corner-br"></span>
-
-  <div class="qr-logo-row">
-    <img src="images/logo.jpg" alt="队徽" class="qr-logo-img" id="logoImg">
-  </div>
-  <div class="qr-team-name">今日说法</div>
-  <div class="qr-team-sub">JIN RI SHUO FA · 以球会友</div>
-
-  <div class="qr-code-stage">
-    <div class="qr-ring"></div>
-    <div class="qr-code-inner">
-      <img id="qrcodeImg" src="" alt="QR Code">
-    </div>
-  </div>
-
-  <div class="qr-hint">微信扫码打开球队官网</div>
-
-  <div class="qr-actions">
-    <button class="qr-btn qr-btn-gold" id="downloadBtn">保存高清图片</button>
-  </div>
-
-  <div class="qr-footer-line">
-    <span>2025.03.30 成立于重庆溉澜溪</span>
-  </div>
-</div>
+<div class="loading" id="loading">生成中...</div>
+<img id="output" alt="今日说法球队二维码 · 长按或右键保存">
+<div class="hint" id="hint">长按图片保存 · 发到群里大家扫码访问</div>
 
 <script>
-// Particles
-(function() {
-  var container = document.getElementById('particles');
-  for (var i = 0; i < 30; i++) {
-    var p = document.createElement('div');
-    p.className = 'particle';
-    p.style.left = Math.random() * 100 + '%';
-    p.style.animationDuration = (6 + Math.random() * 12) + 's';
-    p.style.animationDelay = Math.random() * 10 + 's';
-    p.style.width = p.style.height = (1 + Math.random() * 2.5) + 'px';
-    container.appendChild(p);
-  }
-})();
-
-// QR Code
 var siteUrl = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
-var qrImg = document.getElementById('qrcodeImg');
+
+var qrImg = new Image();
+qrImg.crossOrigin = 'anonymous';
+qrImg.onload = renderCard;
+qrImg.onerror = function() {
+  document.getElementById('loading').textContent = '加载失败，请刷新重试';
+};
 qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=0d0d0d&bgcolor=ffffff&margin=10&data=' + encodeURIComponent(siteUrl);
 
-// Download high-res composite
-document.getElementById('downloadBtn').addEventListener('click', function() {
-  var img = document.getElementById('qrcodeImg');
-  if (!img.complete || img.naturalWidth === 0) {
-    alert('二维码加载中，请稍等再试');
-    return;
-  }
-  downloadCard(img);
-});
+var logoImg = new Image();
+logoImg.crossOrigin = 'anonymous';
+logoImg.src = 'images/logo.jpg';
+var logoReady = false;
+logoImg.onload = function() { logoReady = true; };
 
-function downloadCard(qrImg) {
-  var scale = 3;
-  var cardW = 440 * scale;
-  var cardH = 620 * scale;
-  var canvas = document.createElement('canvas');
-  canvas.width = cardW;
-  canvas.height = cardH;
-  var ctx = canvas.getContext('2d');
-  var cw = canvas.width, ch = canvas.height;
+function renderCard() {
+  var S = 3, cw = 440 * S, ch = 640 * S;
+  var c = document.createElement('canvas');
+  c.width = cw; c.height = ch;
+  var x = c.getContext('2d');
 
-  // Background gradient
-  var grad = ctx.createLinearGradient(0, 0, cw, ch);
-  grad.addColorStop(0, '#1a1a1a');
-  grad.addColorStop(0.5, '#0f0f0f');
-  grad.addColorStop(1, '#111111');
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.roundRect(0, 0, cw, ch, 28 * scale);
-  ctx.fill();
+  // BG
+  var g = x.createLinearGradient(0, 0, cw, ch);
+  g.addColorStop(0, '#1a1a1a'); g.addColorStop(0.5, '#0f0f0f'); g.addColorStop(1, '#111');
+  x.fillStyle = g;
+  x.beginPath(); x.roundRect(0, 0, cw, ch, 24 * S); x.fill();
 
-  // Gold border
-  ctx.strokeStyle = 'rgba(201,169,97,0.4)';
-  ctx.lineWidth = 2 * scale;
-  ctx.beginPath();
-  ctx.roundRect(4, 4, cw - 8, ch - 8, 28 * scale);
-  ctx.stroke();
-
-  // Corner accents
-  var cs = 32 * scale;
-  ctx.strokeStyle = 'rgba(201,169,97,0.5)';
-  ctx.lineWidth = 2 * scale;
-  [[12, 12, 1, 1], [cardW - 12, 12, -1, 1], [12, cardH - 12, 1, -1], [cardW - 12, cardH - 12, -1, -1]].forEach(function(c) {
-    ctx.beginPath();
-    ctx.moveTo(c[0] * scale, (c[1] + cs) * scale);
-    ctx.lineTo(c[0] * scale, c[1] * scale);
-    ctx.lineTo((c[0] + c[2] * cs) * scale, c[1] * scale);
-    ctx.stroke();
-  });
+  // Border
+  x.strokeStyle = 'rgba(201,169,97,0.3)'; x.lineWidth = 2 * S;
+  x.beginPath(); x.roundRect(6, 6, cw - 12, ch - 12, 24 * S); x.stroke();
 
   // Logo
-  var logo = document.getElementById('logoImg');
-  if (logo && logo.complete && logo.naturalWidth > 0) {
-    var lr = 24 * scale;
-    var lx = (cw - lr * 2) / 2 - 100 * scale;
-    var ly = 40 * scale;
-    // Draw logo in a small circle
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(lx + lr, ly + lr, lr, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(logo, lx, ly, lr * 2, lr * 2);
-    ctx.restore();
-    ctx.strokeStyle = 'rgba(201,169,97,0.5)';
-    ctx.lineWidth = 1.5 * scale;
-    ctx.beginPath();
-    ctx.arc(lx + lr, ly + lr, lr, 0, Math.PI * 2);
-    ctx.stroke();
+  if (logoReady) {
+    var r = 30 * S, lx = 34 * S, ly = 28 * S;
+    x.save(); x.beginPath(); x.arc(lx + r, ly + r, r + 3, 0, Math.PI * 2); x.clip();
+    x.drawImage(logoImg, lx - 3, ly - 3, (r + 3) * 2, (r + 3) * 2); x.restore();
+    x.strokeStyle = 'rgba(201,169,97,0.45)'; x.lineWidth = 2 * S;
+    x.beginPath(); x.arc(lx + r, ly + r, r + 3, 0, Math.PI * 2); x.stroke();
   }
 
-  // Team name
-  ctx.fillStyle = '#c9a961';
-  ctx.font = 'bold ' + (20 * scale) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('今日说法足球俱乐部', cw / 2, 70 * scale);
+  // Title
+  x.fillStyle = '#c9a961'; x.textAlign = 'center';
+  x.font = 'bold ' + (22 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('今日说法足球俱乐部', cw / 2 + (logoReady ? 24 : 0) * S, 52 * S);
+  x.fillStyle = '#888';
+  x.font = (10 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('JIN RI SHUO FA F.C.', cw / 2 + (logoReady ? 24 : 0) * S, 68 * S);
 
-  ctx.fillStyle = '#888';
-  ctx.font = (10 * scale) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  ctx.fillText('JIN RI SHUO FA F.C. · 以球会友', cw / 2, 90 * scale);
+  // QR
+  var qs = 272 * S, qx = (cw - qs) / 2, qy = 100 * S, qp = 16 * S;
+  x.fillStyle = '#fff';
+  x.beginPath(); x.roundRect(qx - qp, qy - qp, qs + qp * 2, qs + qp * 2, 14 * S); x.fill();
+  x.strokeStyle = '#c9a961'; x.lineWidth = 3 * S;
+  x.shadowColor = 'rgba(201,169,97,0.35)'; x.shadowBlur = 14 * S;
+  x.beginPath(); x.roundRect(qx - qp - 3, qy - qp - 3, qs + (qp + 3) * 2, qs + (qp + 3) * 2, 16 * S); x.stroke();
+  x.shadowColor = 'transparent'; x.shadowBlur = 0;
+  x.drawImage(qrImg, qx, qy, qs, qs);
 
-  // QR code
-  var qrSize = 260 * scale;
-  var qrX = (cw - qrSize) / 2;
-  var qrY = 120 * scale;
-  var qrPad = 16 * scale;
+  // Hint
+  x.fillStyle = '#777';
+  x.font = (9 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('微信扫码访问球队官网', cw / 2, qy + qs + qp + 32 * S);
 
-  // White background
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.roundRect(qrX - qrPad, qrY - qrPad, qrSize + qrPad * 2, qrSize + qrPad * 2, 16 * scale);
-  ctx.fill();
+  // Footer
+  var dy = qy + qs + 72 * S;
+  x.strokeStyle = 'rgba(201,169,97,0.15)'; x.lineWidth = 1 * S;
+  x.beginPath(); x.moveTo(80 * S, dy); x.lineTo(cw - 80 * S, dy); x.stroke();
+  x.fillStyle = '#666';
+  x.font = (9 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('2025.03.30 成立于重庆溉澜溪体育公园', cw / 2, dy + 24 * S);
+  x.fillText('以球会友 · 欢迎热爱足球的朋友加入', cw / 2, dy + 40 * S);
 
-  // Gold glow ring
-  ctx.strokeStyle = '#c9a961';
-  ctx.lineWidth = 3 * scale;
-  ctx.shadowColor = 'rgba(201,169,97,0.5)';
-  ctx.shadowBlur = 20 * scale;
-  ctx.beginPath();
-  ctx.roundRect(qrX - qrPad - 2, qrY - qrPad - 2, qrSize + (qrPad + 2) * 2, qrSize + (qrPad + 2) * 2, 18 * scale);
-  ctx.stroke();
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
-
-  // Draw QR image
-  ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-
-  // Hint text
-  ctx.fillStyle = '#777';
-  ctx.font = (9 * scale) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  ctx.fillText('微信扫码访问球队官网', cw / 2, qrY + qrSize + qrPad + 28 * scale);
-
-  // Footer line
-  var fy = qrY + qrSize + 70 * scale;
-  ctx.strokeStyle = 'rgba(201,169,97,0.2)';
-  ctx.lineWidth = 1 * scale;
-  ctx.beginPath();
-  ctx.moveTo(60 * scale, fy);
-  ctx.lineTo(cw - 60 * scale, fy);
-  ctx.stroke();
-
-  ctx.fillStyle = '#666';
-  ctx.font = (9 * scale) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  ctx.fillText('2025.03.30 成立于重庆溉澜溪体育公园', cw / 2, fy + 22 * scale);
-
-  // Download
-  var a = document.createElement('a');
-  a.download = '今日说法_球队二维码.png';
-  a.href = canvas.toDataURL('image/png');
-  a.click();
+  // Show
+  var dataUrl = c.toDataURL('image/jpeg', 0.92);
+  var out = document.getElementById('output');
+  out.src = dataUrl;
+  out.style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('hint').style.display = 'block';
 }
 </script>
 </body>
