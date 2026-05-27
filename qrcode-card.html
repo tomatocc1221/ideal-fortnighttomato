@@ -1,317 +1,361 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>今日说法 - 球队二维码</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今日说法 — 球队二维码</title>
+<style>
+  :root {
+    --gold: #c9a961;
+    --gold-bright: #e0c870;
+    --bg: #080808;
+    --card: #111;
+  }
 
-    body {
-      background: #0d0d0d;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
-      padding: 20px;
-    }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    .qr-card {
-      background: linear-gradient(145deg, #1a1a1a 0%, #111 100%);
-      border: 2px solid #c9a961;
-      border-radius: 24px;
-      padding: 48px 40px 36px;
-      text-align: center;
-      max-width: 420px;
-      width: 100%;
-      position: relative;
-      box-shadow:
-        0 0 60px rgba(201,169,97,0.15),
-        0 20px 60px rgba(0,0,0,0.5);
-    }
+  body {
+    background: var(--bg);
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    overflow-x: hidden;
+  }
 
-    /* 装饰角标 */
-    .qr-card::before {
-      content: "⚽";
-      position: absolute;
-      top: -18px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 36px;
-      background: #0d0d0d;
-      padding: 0 16px;
-    }
+  /* Ambient glow behind the card */
+  .glow {
+    position: fixed;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,169,97,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+  @keyframes glowPulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
 
-    .qr-card::after {
-      content: "";
-      position: absolute;
-      top: 0; left: 20px; right: 20px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #c9a961, transparent);
-    }
+  /* Particles */
+  .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .particle {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: float linear infinite;
+    opacity: 0;
+  }
+  @keyframes float {
+    0% { opacity: 0; transform: translateY(100vh) scale(0); }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-100px) scale(1.5); }
+  }
 
-    .qr-header {
-      margin-bottom: 24px;
-    }
+  /* Card */
+  .qr-card {
+    position: relative; z-index: 1;
+    background: linear-gradient(160deg, #1a1a1a 0%, #0f0f0f 50%, #111 100%);
+    border: 1.5px solid rgba(201,169,97,0.3);
+    border-radius: 28px;
+    padding: 52px 44px 40px;
+    text-align: center;
+    max-width: 440px; width: calc(100% - 32px);
+    box-shadow:
+      0 0 80px rgba(201,169,97,0.08),
+      0 0 120px rgba(201,169,97,0.03),
+      0 30px 80px rgba(0,0,0,0.6);
+  }
 
-    .qr-team-name {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #c9a961;
-      letter-spacing: 0.08em;
-      margin-bottom: 4px;
-    }
+  /* Gold corner accents */
+  .corner {
+    position: absolute; width: 32px; height: 32px;
+    border-color: var(--gold); border-style: solid;
+    opacity: 0.5;
+  }
+  .corner-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; border-radius: 6px 0 0 0; }
+  .corner-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; border-radius: 0 6px 0 0; }
+  .corner-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; border-radius: 0 0 0 6px; }
+  .corner-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; border-radius: 0 0 6px 0; }
 
-    .qr-team-sub {
-      font-size: 0.78rem;
-      color: #888;
-      letter-spacing: 0.12em;
-    }
+  /* Logo area */
+  .qr-logo-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 8px; }
+  .qr-logo-img { width: 44px; height: 47px; border-radius: 8px; filter: drop-shadow(0 0 10px rgba(201,169,97,0.4)); }
+  .qr-team-name {
+    font-size: 1.55rem; font-weight: 800; color: var(--gold);
+    letter-spacing: 0.1em; line-height: 1.2;
+  }
+  .qr-team-sub {
+    font-size: 0.68rem; color: #777;
+    letter-spacing: 0.18em; margin-bottom: 28px;
+  }
 
-    /* QR 码容器 */
-    .qr-code-wrapper {
-      display: inline-block;
-      background: #fff;
-      padding: 16px;
-      border-radius: 16px;
-      margin: 0 auto 28px;
-      position: relative;
-      box-shadow: 0 0 30px rgba(201,169,97,0.25);
-    }
+  /* QR code with glowing ring */
+  .qr-code-stage {
+    position: relative; display: inline-block;
+    margin: 0 auto 24px;
+  }
+  .qr-ring {
+    position: absolute; inset: -8px; border-radius: 22px;
+    border: 2px solid var(--gold);
+    animation: ringPulse 3s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(201,169,97,0.3), inset 0 0 20px rgba(201,169,97,0.05);
+  }
+  @keyframes ringPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(201,169,97,0.3), inset 0 0 20px rgba(201,169,97,0.05); }
+    50% { box-shadow: 0 0 40px rgba(201,169,97,0.5), inset 0 0 30px rgba(201,169,97,0.1); }
+  }
+  .qr-code-inner {
+    display: block; background: #fff;
+    padding: 14px; border-radius: 16px;
+    position: relative;
+  }
+  .qr-code-inner img,
+  .qr-code-inner canvas {
+    display: block; width: 210px; height: 210px;
+  }
 
-    /* 金色边框环 */
-    .qr-code-wrapper::before {
-      content: "";
-      position: absolute;
-      inset: -3px;
-      border-radius: 19px;
-      border: 2px solid #c9a961;
-      pointer-events: none;
-    }
+  .qr-hint {
+    font-size: 0.7rem; color: #666;
+    letter-spacing: 0.08em; margin-bottom: 24px;
+  }
 
-    #qrcode {
-      display: flex;
-      justify-content: center;
-    }
+  /* Buttons */
+  .qr-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .qr-btn {
+    padding: 10px 28px; border-radius: 24px;
+    font-size: 0.82rem; font-weight: 600;
+    letter-spacing: 0.06em; cursor: pointer;
+    transition: all 0.25s; font-family: inherit;
+  }
+  .qr-btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+    color: #0d0d0d; border: none;
+    box-shadow: 0 4px 20px rgba(201,169,97,0.3);
+  }
+  .qr-btn-gold:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(201,169,97,0.5); }
+  .qr-btn-outline {
+    background: transparent; color: var(--gold);
+    border: 1.5px solid var(--gold);
+  }
+  .qr-btn-outline:hover { background: rgba(201,169,97,0.08); }
 
-    #qrcode img,
-    #qrcode canvas {
-      display: block;
-      width: 220px;
-      height: 220px;
-    }
+  /* Footer */
+  .qr-footer-line {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 28px; padding-top: 20px;
+    border-top: 1px solid rgba(201,169,97,0.12);
+    color: #666; font-size: 0.7rem; letter-spacing: 0.08em;
+  }
+  .qr-footer-line::before,
+  .qr-footer-line::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,169,97,0.2), transparent); }
 
-    .qr-url {
-      font-size: 0.72rem;
-      color: #666;
-      letter-spacing: 0.05em;
-      margin-bottom: 20px;
-      word-break: break-all;
-    }
-
-    .qr-footer {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 14px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(201,169,97,0.2);
-    }
-
-    .qr-footer-icon {
-      font-size: 24px;
-    }
-
-    .qr-footer-logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 1.5px solid #c9a961;
-    }
-
-    .qr-footer-text {
-      font-size: 0.78rem;
-      color: #999;
-      letter-spacing: 0.06em;
-    }
-
-    /* 下载按钮 */
-    .qr-download-btn {
-      display: inline-block;
-      margin-top: 24px;
-      padding: 10px 32px;
-      background: transparent;
-      color: #c9a961;
-      border: 1.5px solid #c9a961;
-      border-radius: 24px;
-      font-size: 0.85rem;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      transition: all 0.25s;
-      font-family: inherit;
-    }
-
-    .qr-download-btn:hover {
-      background: #c9a961;
-      color: #0d0d0d;
-    }
-
-    /* 底部装饰线 */
-    .qr-ornament {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 20px;
-      color: #555;
-      font-size: 0.7rem;
-      letter-spacing: 0.08em;
-    }
-
-    .qr-ornament::before,
-    .qr-ornament::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(201,169,97,0.3), transparent);
-    }
-
-    @media (max-width: 480px) {
-      .qr-card {
-        padding: 36px 24px 28px;
-      }
-      #qrcode img,
-      #qrcode canvas {
-        width: 180px;
-        height: 180px;
-      }
-    }
-  </style>
+  @media (max-width: 480px) {
+    .qr-card { padding: 36px 20px 28px; border-radius: 22px; }
+    .qr-team-name { font-size: 1.3rem; }
+    .qr-code-inner img,
+    .qr-code-inner canvas { width: 170px; height: 170px; }
+    .qr-code-inner { padding: 10px; border-radius: 12px; }
+    .qr-ring { inset: -5px; border-radius: 17px; }
+    .qr-btn { padding: 8px 22px; font-size: 0.78rem; }
+  }
+</style>
 </head>
 <body>
 
-  <div class="qr-card">
-    <div class="qr-header">
-      <div class="qr-team-name">今日说法足球俱乐部</div>
-      <div class="qr-team-sub">JIN RI SHUO FA F.C.</div>
+<div class="glow"></div>
+<div class="particles" id="particles"></div>
+
+<div class="qr-card">
+  <span class="corner corner-tl"></span><span class="corner corner-tr"></span>
+  <span class="corner corner-bl"></span><span class="corner corner-br"></span>
+
+  <div class="qr-logo-row">
+    <img src="images/logo.jpg" alt="队徽" class="qr-logo-img" id="logoImg">
+  </div>
+  <div class="qr-team-name">今日说法</div>
+  <div class="qr-team-sub">JIN RI SHUO FA · 以球会友</div>
+
+  <div class="qr-code-stage">
+    <div class="qr-ring"></div>
+    <div class="qr-code-inner">
+      <img id="qrcodeImg" src="" alt="QR Code">
     </div>
-
-    <div class="qr-code-wrapper">
-      <img id="qrcodeImg" src="" alt="QR Code" width="220" height="220" style="display:block;">
-    </div>
-
-    <div class="qr-url">tomatocc1221.github.io/ideal-fortnighttomato</div>
-
-    <div class="qr-footer">
-      <img src="images/logo.jpg" alt="队徽" class="qr-footer-logo" id="footerLogo" style="width:40px;height:40px;">
-    </div>
-
-    <button class="qr-download-btn" id="downloadBtn">保存二维码图片</button>
-
-    <div class="qr-ornament">扫码访问球队官网</div>
   </div>
 
-  <script>
-    const siteUrl = "https://tomatocc1221.github.io/ideal-fortnighttomato/";
-    const qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0d0d0d&bgcolor=ffffff&data=" + encodeURIComponent(siteUrl);
+  <div class="qr-hint">微信扫码打开球队官网</div>
 
-    // 直接设置图片源
-    document.getElementById("qrcodeImg").src = qrApiUrl;
+  <div class="qr-actions">
+    <button class="qr-btn qr-btn-gold" id="downloadBtn">保存高清图片</button>
+    <button class="qr-btn qr-btn-outline" id="copyBtn">复制链接</button>
+  </div>
 
-    // 下载功能
-    document.getElementById("downloadBtn").addEventListener("click", () => {
-      const qrImg = document.getElementById("qrcodeImg");
-      if (!qrImg.complete || qrImg.naturalWidth === 0) {
-        alert("二维码还在加载中，请稍后再试");
-        return;
-      }
-      downloadPNG(qrImg);
-    });
+  <div class="qr-footer-line">
+    <span>2025.03.30 成立于重庆溉澜溪</span>
+  </div>
+</div>
 
-    function downloadPNG(qrImg) {
-      const scale = 3;
-      const padding = 40 * scale;
-      const size = 220 * scale;
-      const totalSize = size + padding * 2;
+<script>
+// Particles
+(function() {
+  var container = document.getElementById('particles');
+  for (var i = 0; i < 30; i++) {
+    var p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (6 + Math.random() * 12) + 's';
+    p.style.animationDelay = Math.random() * 10 + 's';
+    p.style.width = p.style.height = (1 + Math.random() * 2.5) + 'px';
+    container.appendChild(p);
+  }
+})();
 
-      const exportCanvas = document.createElement("canvas");
-      exportCanvas.width = totalSize;
-      exportCanvas.height = totalSize + 100 * scale;
-      const ctx = exportCanvas.getContext("2d");
+// QR Code
+var siteUrl = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
+var qrImg = document.getElementById('qrcodeImg');
+qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=0d0d0d&bgcolor=ffffff&margin=10&data=' + encodeURIComponent(siteUrl);
 
-      // 背景
-      ctx.fillStyle = "#1a1a1a";
-      ctx.beginPath();
-      ctx.roundRect(0, 0, totalSize, totalSize + 100 * scale, 24 * scale);
-      ctx.fill();
+// Copy link
+document.getElementById('copyBtn').addEventListener('click', function() {
+  navigator.clipboard.writeText(siteUrl).then(function() {
+    var btn = document.getElementById('copyBtn');
+    btn.textContent = '已复制!';
+    setTimeout(function() { btn.textContent = '复制链接'; }, 2000);
+  }).catch(function() {
+    prompt('请手动复制链接:', siteUrl);
+  });
+});
 
-      // 金色边框
-      ctx.strokeStyle = "#c9a961";
-      ctx.lineWidth = 2 * scale;
-      ctx.beginPath();
-      ctx.roundRect(2 * scale, 2 * scale, totalSize - 4 * scale, totalSize + 100 * scale - 4 * scale, 24 * scale);
-      ctx.stroke();
+// Download high-res composite
+document.getElementById('downloadBtn').addEventListener('click', function() {
+  var img = document.getElementById('qrcodeImg');
+  if (!img.complete || img.naturalWidth === 0) {
+    alert('二维码加载中，请稍等再试');
+    return;
+  }
+  downloadCard(img);
+});
 
-      // QR 码白色背景
-      const qrX = padding;
-      const qrY = padding;
-      const qrBgSize = size + 16 * scale;
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.roundRect(qrX - 4 * scale, qrY - 4 * scale, qrBgSize + 8 * scale, qrBgSize + 8 * scale, 8 * scale);
-      ctx.fill();
+function downloadCard(qrImg) {
+  var scale = 3;
+  var cardW = 440 * scale;
+  var cardH = 620 * scale;
+  var canvas = document.createElement('canvas');
+  canvas.width = cardW;
+  canvas.height = cardH;
+  var ctx = canvas.getContext('2d');
+  var cw = canvas.width, ch = canvas.height;
 
-      // 金色细边框
-      ctx.strokeStyle = "#c9a961";
-      ctx.lineWidth = 1.5 * scale;
-      ctx.beginPath();
-      ctx.roundRect(qrX - 3 * scale, qrY - 3 * scale, qrBgSize + 6 * scale, qrBgSize + 6 * scale, 8 * scale);
-      ctx.stroke();
+  // Background gradient
+  var grad = ctx.createLinearGradient(0, 0, cw, ch);
+  grad.addColorStop(0, '#1a1a1a');
+  grad.addColorStop(0.5, '#0f0f0f');
+  grad.addColorStop(1, '#111111');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, cw, ch, 28 * scale);
+  ctx.fill();
 
-      // 绘制 QR 码
-      ctx.drawImage(qrImg, qrX + 8 * scale, qrY + 8 * scale, size - 16 * scale, size - 16 * scale);
+  // Gold border
+  ctx.strokeStyle = 'rgba(201,169,97,0.4)';
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.roundRect(4, 4, cw - 8, ch - 8, 28 * scale);
+  ctx.stroke();
 
-      // 标题文字
-      const textY = qrY + qrBgSize + 30 * scale;
-      ctx.fillStyle = "#c9a961";
-      ctx.font = `bold ${14 * scale}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText("今日说法足球俱乐部", totalSize / 2, textY);
+  // Corner accents
+  var cs = 32 * scale;
+  ctx.strokeStyle = 'rgba(201,169,97,0.5)';
+  ctx.lineWidth = 2 * scale;
+  [[12, 12, 1, 1], [cardW - 12, 12, -1, 1], [12, cardH - 12, 1, -1], [cardW - 12, cardH - 12, -1, -1]].forEach(function(c) {
+    ctx.beginPath();
+    ctx.moveTo(c[0] * scale, (c[1] + cs) * scale);
+    ctx.lineTo(c[0] * scale, c[1] * scale);
+    ctx.lineTo((c[0] + c[2] * cs) * scale, c[1] * scale);
+    ctx.stroke();
+  });
 
-      // 绘制队徽
-      const logoImg = document.getElementById("footerLogo");
-      if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
-        const logoSize = 24 * scale;
-        const logoX = totalSize / 2 - logoSize / 2;
-        const logoY = textY + 8 * scale;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(totalSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-        ctx.restore();
-        ctx.strokeStyle = "#c9a961";
-        ctx.lineWidth = 1.5 * scale;
-        ctx.beginPath();
-        ctx.arc(totalSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-        ctx.stroke();
+  // Logo
+  var logo = document.getElementById('logoImg');
+  if (logo && logo.complete && logo.naturalWidth > 0) {
+    var lr = 24 * scale;
+    var lx = (cw - lr * 2) / 2 - 100 * scale;
+    var ly = 40 * scale;
+    // Draw logo in a small circle
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(lx + lr, ly + lr, lr, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(logo, lx, ly, lr * 2, lr * 2);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(201,169,97,0.5)';
+    ctx.lineWidth = 1.5 * scale;
+    ctx.beginPath();
+    ctx.arc(lx + lr, ly + lr, lr, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
-        ctx.fillStyle = "#888";
-        ctx.font = `${9 * scale}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-        ctx.fillText("扫码访问球队官网 · 以球会友", totalSize / 2, logoY + logoSize + 18 * scale);
-      } else {
-        ctx.fillStyle = "#888";
-        ctx.font = `${9 * scale}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-        ctx.fillText("扫码访问球队官网 · 以球会友", totalSize / 2, textY + 22 * scale);
-      }
+  // Team name
+  ctx.fillStyle = '#c9a961';
+  ctx.font = 'bold ' + (20 * scale) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('今日说法足球俱乐部', cw / 2, 70 * scale);
 
-      const link = document.createElement("a");
-      link.download = "今日说法足球俱乐部_二维码.png";
-      link.href = exportCanvas.toDataURL("image/png");
-      link.click();
-    }
-  </script>
+  ctx.fillStyle = '#888';
+  ctx.font = (10 * scale) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('JIN RI SHUO FA F.C. · 以球会友', cw / 2, 90 * scale);
+
+  // QR code
+  var qrSize = 260 * scale;
+  var qrX = (cw - qrSize) / 2;
+  var qrY = 120 * scale;
+  var qrPad = 16 * scale;
+
+  // White background
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.roundRect(qrX - qrPad, qrY - qrPad, qrSize + qrPad * 2, qrSize + qrPad * 2, 16 * scale);
+  ctx.fill();
+
+  // Gold glow ring
+  ctx.strokeStyle = '#c9a961';
+  ctx.lineWidth = 3 * scale;
+  ctx.shadowColor = 'rgba(201,169,97,0.5)';
+  ctx.shadowBlur = 20 * scale;
+  ctx.beginPath();
+  ctx.roundRect(qrX - qrPad - 2, qrY - qrPad - 2, qrSize + (qrPad + 2) * 2, qrSize + (qrPad + 2) * 2, 18 * scale);
+  ctx.stroke();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+
+  // Draw QR image
+  ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+  // Hint text
+  ctx.fillStyle = '#777';
+  ctx.font = (9 * scale) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('微信扫码访问球队官网', cw / 2, qrY + qrSize + qrPad + 28 * scale);
+
+  // Footer line
+  var fy = qrY + qrSize + 70 * scale;
+  ctx.strokeStyle = 'rgba(201,169,97,0.2)';
+  ctx.lineWidth = 1 * scale;
+  ctx.beginPath();
+  ctx.moveTo(60 * scale, fy);
+  ctx.lineTo(cw - 60 * scale, fy);
+  ctx.stroke();
+
+  ctx.fillStyle = '#666';
+  ctx.font = (9 * scale) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('2025.03.30 成立于重庆溉澜溪体育公园', cw / 2, fy + 22 * scale);
+
+  // Download
+  var a = document.createElement('a');
+  a.download = '今日说法_球队二维码.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+</script>
 </body>
 </html>
