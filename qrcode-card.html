@@ -22,7 +22,7 @@
 <body>
 <div class="loading" id="loading">生成中...</div>
 <img id="output" alt="今日说法球队二维码">
-<div class="tip" id="tip">长按保存图片 · 发到群里扫码访问</div>
+<div class="tip" id="tip">点击图片保存 · 发到群里扫码访问</div>
 
 <script>
 var SITE = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
@@ -126,6 +126,21 @@ function draw() {
   out.src = url; out.style.display = 'block';
   document.getElementById('loading').style.display = 'none';
   document.getElementById('tip').style.display = 'block';
+
+  // Click image to download
+  out.addEventListener('click', function() {
+    var a = document.createElement('a');
+    a.download = '今日说法_球队二维码.jpg';
+    a.href = url;
+    a.click();
+  });
+  // Also try auto-download
+  setTimeout(function() {
+    var a = document.createElement('a');
+    a.download = '今日说法_球队二维码.jpg';
+    a.href = url;
+    a.click();
+  }, 500);
 }
 </script>
 </body>
