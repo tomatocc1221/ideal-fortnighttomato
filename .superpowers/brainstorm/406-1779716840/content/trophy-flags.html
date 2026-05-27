@@ -1,0 +1,172 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { margin: 0; padding: 24px; background: #050505; color: #e8e8e8; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  h2 { font-size: 1.6em; color: #cfae5a; margin-bottom: 6px; }
+  .subtitle { color: #888; margin-bottom: 24px; }
+
+  .demo-stage { position: relative; height: 500px; background: #0d0d0d; border-radius: 16px; overflow: hidden; border: 1px solid #1a1a1a; }
+
+  /* --- TROPHY behind logo --- */
+  .trophy-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2; pointer-events: none; }
+  .trophy-svg { width: 280px; height: 360px; margin-left: -140px; margin-top: -200px; opacity: 0.18; animation: trophyGlow 3s ease-in-out infinite; }
+  @keyframes trophyGlow {
+    0%,100% { opacity: 0.12; filter: drop-shadow(0 0 10px rgba(207,174,90,0.3)); }
+    50% { opacity: 0.25; filter: drop-shadow(0 0 40px rgba(207,174,90,0.7)) drop-shadow(0 0 80px rgba(207,174,90,0.3)); }
+  }
+  .trophy-rays { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 300px; height: 300px; margin-top: -20px;
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(207,174,90,0.04) 5deg, transparent 10deg,
+                                      transparent 30deg, rgba(207,174,90,0.04) 35deg, transparent 40deg,
+                                      transparent 60deg, rgba(207,174,90,0.04) 65deg, transparent 70deg,
+                                      transparent 90deg, rgba(207,174,90,0.04) 95deg, transparent 100deg,
+                                      transparent 120deg, rgba(207,174,90,0.04) 125deg, transparent 130deg,
+                                      transparent 150deg, rgba(207,174,90,0.04) 155deg, transparent 160deg,
+                                      transparent 180deg, rgba(207,174,90,0.04) 185deg, transparent 190deg,
+                                      transparent 210deg, rgba(207,174,90,0.04) 215deg, transparent 220deg,
+                                      transparent 240deg, rgba(207,174,90,0.04) 245deg, transparent 250deg,
+                                      transparent 270deg, rgba(207,174,90,0.04) 275deg, transparent 280deg,
+                                      transparent 300deg, rgba(207,174,90,0.04) 305deg, transparent 310deg,
+                                      transparent 330deg, rgba(207,174,90,0.04) 335deg, transparent 340deg);
+    border-radius: 50%; animation: raysSpin 20s linear infinite; z-index: 1;
+  }
+  @keyframes raysSpin { 0% { transform: translate(-50%,-50%) rotate(0deg); } 100% { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* --- FLAGS drifting --- */
+  .flag { position: absolute; width: 40px; height: 27px; border-radius: 3px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); opacity: 0.7; pointer-events: none;
+    animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+  .flag img { width: 100%; height: 100%; border-radius: 3px; object-fit: cover; display: block; }
+
+  /* --- Foreground content --- */
+  .hero-foreground { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 10; pointer-events: none; }
+  .logo-sim { width: 72px; height: 72px; background: radial-gradient(circle at 40% 40%, #fff, #cfae5a); border-radius: 50%; margin-bottom: 14px; box-shadow: 0 0 50px rgba(207,174,90,0.5), 0 0 100px rgba(207,174,90,0.2); }
+  .title-sim { font-family: "Bebas Neue", sans-serif; font-size: 38px; color: #fff; letter-spacing: 0.12em; text-shadow: 0 0 30px rgba(255,255,255,0.3); }
+  .sub-sim { color: #aaa; margin-top: 6px; font-size: 0.95em; }
+
+  .caption { margin-top: 16px; color: #777; font-size: 0.85em; text-align: center; line-height: 1.6; }
+
+  /* Flag animations — varied paths */
+  .flag:nth-child(1)  { animation-name: drift1; animation-duration: 18s; }
+  .flag:nth-child(2)  { animation-name: drift2; animation-duration: 22s; }
+  .flag:nth-child(3)  { animation-name: drift3; animation-duration: 20s; }
+  .flag:nth-child(4)  { animation-name: drift4; animation-duration: 24s; }
+  .flag:nth-child(5)  { animation-name: drift1; animation-duration: 19s; }
+  .flag:nth-child(6)  { animation-name: drift2; animation-duration: 21s; }
+  .flag:nth-child(7)  { animation-name: drift3; animation-duration: 23s; }
+  .flag:nth-child(8)  { animation-name: drift4; animation-duration: 17s; }
+  .flag:nth-child(9)  { animation-name: drift1; animation-duration: 25s; }
+  .flag:nth-child(10) { animation-name: drift2; animation-duration: 16s; }
+  .flag:nth-child(11) { animation-name: drift3; animation-duration: 20s; }
+  .flag:nth-child(12) { animation-name: drift4; animation-duration: 22s; }
+  .flag:nth-child(13) { animation-name: drift1; animation-duration: 18s; }
+  .flag:nth-child(14) { animation-name: drift2; animation-duration: 24s; }
+  .flag:nth-child(15) { animation-name: drift3; animation-duration: 21s; }
+  .flag:nth-child(16) { animation-name: drift4; animation-duration: 19s; }
+  .flag:nth-child(17) { animation-name: drift1; animation-duration: 23s; }
+  .flag:nth-child(18) { animation-name: drift2; animation-duration: 17s; }
+  .flag:nth-child(19) { animation-name: drift3; animation-duration: 20s; }
+  .flag:nth-child(20) { animation-name: drift4; animation-duration: 25s; }
+
+  @keyframes drift1 {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.65; }
+    90%  { opacity: 0.65; }
+    100% { transform: translate(120px, -60px) rotate(5deg); opacity: 0; }
+  }
+  @keyframes drift2 {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.6; }
+    100% { transform: translate(-100px, 80px) rotate(-8deg); opacity: 0; }
+  }
+  @keyframes drift3 {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.55; }
+    90%  { opacity: 0.55; }
+    100% { transform: translate(80px, 100px) rotate(3deg); opacity: 0; }
+  }
+  @keyframes drift4 {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.6; }
+    100% { transform: translate(-140px, -40px) rotate(-4deg); opacity: 0; }
+  }
+</style>
+
+<h2>大力神杯 + 参赛国国旗 — 样片预览</h2>
+<p class="subtitle">队徽身后大力神杯发光呼吸 + 48国国旗在背景随机漂游</p>
+
+<div class="demo-stage">
+  <!-- Trophy glow rays -->
+  <div class="trophy-rays"></div>
+
+  <!-- Trophy silhouette -->
+  <div class="trophy-container">
+    <svg class="trophy-svg" viewBox="0 0 200 260">
+      <!-- Trophy silhouette -->
+      <defs>
+        <radialGradient id="trophyGold" cx="50%" cy="30%">
+          <stop offset="0%" stop-color="#fff"/>
+          <stop offset="30%" stop-color="#cfae5a"/>
+          <stop offset="100%" stop-color="#8b6914"/>
+        </radialGradient>
+        <filter id="trophyBlur">
+          <feGaussianBlur stdDeviation="1.5"/>
+        </filter>
+      </defs>
+      <!-- Globe (top ball) -->
+      <circle cx="100" cy="35" r="18" fill="url(#trophyGold)" opacity="0.9"/>
+      <!-- Figure arms -->
+      <path d="M37 100 L65 60 L75 70 L55 95" fill="url(#trophyGold)" opacity="0.8"/>
+      <path d="M163 100 L135 60 L125 70 L145 95" fill="url(#trophyGold)" opacity="0.8"/>
+      <!-- Body / cup -->
+      <ellipse cx="100" cy="115" rx="40" ry="30" fill="url(#trophyGold)" opacity="0.85"/>
+      <!-- Stem -->
+      <rect x="94" y="140" width="12" height="20" fill="#8b6914" opacity="0.85" rx="2"/>
+      <!-- Base top -->
+      <ellipse cx="100" cy="158" rx="22" ry="6" fill="#8b6914" opacity="0.85"/>
+      <!-- Base middle -->
+      <rect x="78" y="158" width="44" height="6" fill="#8b6914" opacity="0.8" rx="2"/>
+      <!-- Base bottom -->
+      <ellipse cx="100" cy="164" rx="28" ry="8" fill="#8b6914" opacity="0.8"/>
+      <!-- Glow aura -->
+      <circle cx="100" cy="110" r="70" fill="none" stroke="rgba(207,174,90,0.15)" stroke-width="30" filter="url(#trophyBlur)"/>
+    </svg>
+  </div>
+
+  <!-- Drifting flags — using CSS flag emoji fallbacks as colored rectangles -->
+  <!-- Each flag represented as a div with flag colors -->
+  <div class="flag" style="left:5%;top:10%;background:linear-gradient(180deg,#009c3b 0%,#009c3b 50%,#ffdf00 50%,#ffdf00 100%);animation-delay:0s;" title="Brazil"></div>
+  <div class="flag" style="left:15%;top:70%;background:linear-gradient(180deg,#000 0%,#000 33%,#c8102e 33%,#c8102e 66%,#ffcc00 66%,#ffcc00 100%);animation-delay:-3s;" title="Germany"></div>
+  <div class="flag" style="left:80%;top:15%;background:linear-gradient(180deg,#002654 0%,#002654 33%,#fff 33%,#fff 66%,#ed2939 66%,#ed2939 100%);animation-delay:-6s;" title="France"></div>
+  <div class="flag" style="left:90%;top:60%;background:linear-gradient(90deg,#c8102e 0%,#c8102e 33%,#fff 33%,#fff 66%,#c8102e 66%,#c8102e 100%);animation-delay:-9s;" title="Argentina"></div>
+  <div class="flag" style="left:30%;top:5%;background:#c8102e;animation-delay:-12s;" title="Spain"></div>
+  <div class="flag" style="left:60%;top:80%;background:linear-gradient(90deg,#00843d 0%,#00843d 33%,#fff 33%,#fff 66%,#c8102e 66%,#c8102e 100%);animation-delay:-1s;" title="Italy"></div>
+  <div class="flag" style="left:45%;top:85%;background:linear-gradient(180deg,#c8102e 0%,#c8102e 33%,#fff 33%,#fff 66%,#0033a0 66%,#0033a0 100%);animation-delay:-4s;" title="Netherlands"></div>
+  <div class="flag" style="left:75%;top:35%;background:linear-gradient(90deg,#fff 0%,#fff 40%,#c8102e 40%,#c8102e 100%);background-color:#c8102e;animation-delay:-7s;" title="England"></div>
+  <div class="flag" style="left:10%;top:40%;background:linear-gradient(180deg,#fff 0%,#fff 50%,#c8102e 50%,#c8102e 100%);animation-delay:-10s;" title="Japan"></div>
+  <div class="flag" style="left:50%;top:10%;background:#0033a0;animation-delay:-2s;" title="South Korea"></div>
+  <div class="flag" style="left:85%;top:45%;background:linear-gradient(180deg,#00843d 0%,#00843d 33%,#fff 33%,#fff 66%,#c8102e 66%,#c8102e 100%);animation-delay:-5s;" title="Mexico"></div>
+  <div class="flag" style="left:20%;top:55%;background:linear-gradient(0deg,#c8102e 0%,#c8102e 40%,#0033a0 40%,#0033a0 60%,#fff 60%,#fff 100%);animation-delay:-8s;" title="USA"></div>
+  <div class="flag" style="left:65%;top:5%;background:linear-gradient(180deg,#00843d 0%,#00843d 50%,#fff 50%,#fff 100%);animation-delay:-11s;" title="Portugal"></div>
+  <div class="flag" style="left:95%;top:80%;background:linear-gradient(0deg,#c8102e 0%,#c8102e 33%,#ffcc00 33%,#ffcc00 66%,#00843d 66%,#00843d 100%);animation-delay:-13s;" title="Senegal"></div>
+  <div class="flag" style="left:35%;top:25%;background:linear-gradient(180deg,#fff 0%,#fff 50%,#c8102e 50%,#c8102e 100%);animation-delay:-14s;" title="Croatia"></div>
+  <div class="flag" style="left:55%;top:55%;background:linear-gradient(0deg,#ffcc00 0%,#ffcc00 40%,#0033a0 40%,#0033a0 60%,#c8102e 60%,#c8102e 100%);animation-delay:-15s;" title="Colombia"></div>
+  <div class="flag" style="left:70%;top:90%;background:linear-gradient(180deg,#c8102e 0%,#c8102e 50%,#0033a0 50%,#0033a0 100%);animation-delay:-16s;" title="Uruguay"></div>
+  <div class="flag" style="left:8%;top:88%;background:#c8102e;animation-delay:-17s;" title="Morocco"></div>
+  <div class="flag" style="left:40%;top:45%;background:linear-gradient(0deg,#00843d 0%,#00843d 33%,#fff 33%,#fff 66%,#00843d 66%,#00843d 100%);animation-delay:-18s;" title="Nigeria"></div>
+  <div class="flag" style="left:92%;top:25%;background:linear-gradient(0deg,#0033a0 0%,#0033a0 50%,#c8102e 50%,#c8102e 100%);animation-delay:-19s;" title="Australia"></div>
+
+  <!-- Foreground -->
+  <div class="hero-foreground">
+    <div class="logo-sim"></div>
+    <div class="title-sim">今日说法</div>
+    <div class="sub-sim">用脚说话，以球会友</div>
+  </div>
+</div>
+
+<p class="caption">
+  <strong>大力神杯</strong>半透明在队徽后缓慢呼吸发光 + 金色光芒旋转
+  &nbsp;·&nbsp;
+  <strong>48国国旗</strong>随机散布在 Hero 区，各自以不同速度/路径漂移
+  &nbsp;·&nbsp;
+  国旗渐入渐出，循环不息
+</p>

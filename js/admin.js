@@ -377,7 +377,7 @@ async function loadRegistrations(matchId) {
   var waitlist = list.filter(function (r) { return r.status === 'waitlist'; });
   var cancelled = list.filter(function (r) { return r.status === 'cancelled'; });
 
-  count.textContent = '(正选' + confirmed.length + '/14 + 候补' + waitlist.length + '/4)';
+  count.textContent = '(正选' + confirmed.length + '/13 + 候补' + waitlist.length + '/4)';
 
   // 检测连续缺席：按队员分组，检查最近连续 cancelled（60s 缓存避免频繁全量查询）
   var now = Date.now();

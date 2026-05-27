@@ -359,10 +359,9 @@ async function loadAllOverridesAndMerge() {
 
   // === IMMEDIATE RENDER (sync, before any await) ===
   renderRoster(mergedPlayers);
-  renderFixtures();       // renders from cache/static immediately, API in background
+  renderFixtures();       // renders from cache+API, startCountdown+DOM inside
   initCarousel(mergedSlides);
   initGalleryOverlay(mergedAlbums);
-  startCountdown();
   initRegButtons();
   window.__players = mergedPlayers;
 
@@ -684,14 +683,16 @@ function _renderFixturesDOM(results, upcoming, now) {
 }
 
 async function renderFixtures() {
+  var staticData = window.__fixturesData || { results: [], upcoming: [] };
+
   // === IMMEDIATE: render from cache/static (sync, no network) ===
   var cached = null;
   try { cached = JSON.parse(localStorage.getItem('jrsf_fixtures_cache')); } catch (e) {}
-  var src = (cached && (cached.results && cached.results.length || cached.upcoming && cached.upcoming.length)) ? cached
-          : (window.__fixturesData || { results: [], upcoming: [] });
+  var src = (cached && ((cached.results && cached.results.length) || (cached.upcoming && cached.upcoming.length))) ? cached : staticData;
   var results = (src.results || []).slice();
   var upcoming = (src.upcoming || []).slice();
   _renderFixturesDOM(results, upcoming, new Date());
+  startCountdown();
 
   // === ASYNC: fetch from API and update ===
   var apiResults = [], apiMatches = [];
@@ -706,33 +707,33 @@ async function renderFixtures() {
 
   // --- 合并赛果 ---
   if (apiResults.length) {
-    const apiMap = new Map();
-    apiResults.forEach(m => {
-      const score = m.home_score + ':' + m.away_score;
-      const scorers = (m.scorers || []).map(s => ({ name: s.name, num: s.number || s.num, goals: s.goals || 1 }));
-      const assisters = (m.assisters || []).map(s => ({ name: s.name, num: s.number || s.num, assists: s.assists || 1 }));
-      const key = m.date + '|' + m.away_team;
+    var apiMap = new Map();
+    apiResults.forEach(function (m) {
+      var score = m.home_score + ':' + m.away_score;
+      var scorers = (m.scorers || []).map(function (s) { return { name: s.name, num: s.number || s.num, goals: s.goals || 1 }; });
+      var assisters = (m.assisters || []).map(function (s) { return { name: s.name, num: s.number || s.num, assists: s.assists || 1 }; });
+      var key = m.date + '|' + m.away_team;
       apiMap.set(key, {
         date: m.date.replace(/-/g, '.'),
         home: m.home_team || '今日说法',
         away: m.away_team,
-        score,
+        score: score,
         result: m.result,
-        scorers,
-        assisters,
+        scorers: scorers,
+        assisters: assisters,
         matchId: m.id,
         vote_deadline: m.vote_deadline,
         time: m.time,
         venue: m.venue
       });
     });
-    results = results.filter(r => !apiMap.has(r.date + '|' + r.away));
-    const extra = [];
-    apiMap.forEach((v, k) => {
-      const exists = data.results.some(r => (r.date + '|' + r.away) === k);
+    results = results.filter(function (r) { return !apiMap.has(r.date + '|' + r.away); });
+    var extra = [];
+    apiMap.forEach(function (v, k) {
+      var exists = staticData.results.some(function (r) { return (r.date + '|' + r.away) === k; });
       if (exists) { results.unshift(v); } else { extra.push(v); }
     });
-    results = [...extra.reverse(), ...results];
+    results = extra.reverse().concat(results);
   }
 
   // --- 合并即将开赛（从 API 中没有比分的比赛提取） ---
@@ -830,7 +831,7 @@ async function refreshMainRegButton(matchId) {
     var list = await API.getRegistrations(matchId);
     var n = list.filter(function (r) { return r.status === 'confirmed'; }).length;
     var btn = document.querySelector('[data-reg-match="' + matchId + '"]');
-    if (btn) btn.innerHTML = '<span class="reg-icon"></span>✋ 立即报名 (' + n + '/14)';
+    if (btn) btn.innerHTML = '<span class="reg-icon"></span>✋ 立即报名 (' + n + '/13)';
   } catch (e) { /* 静默降级 */ }
 }
 window.refreshMainRegButton = refreshMainRegButton;
@@ -1690,10 +1691,10 @@ function renderCountdownRegBtn(m) {
         var n = list.filter(function (r) { return r.status === 'confirmed'; }).length;
         var btn = regEl.querySelector('button');
         if (btn) {
-          btn.innerHTML = '<span class="reg-icon"></span>✋ 立即报名 (' + n + '/14)';
+          btn.innerHTML = '<span class="reg-icon"></span>✋ 立即报名 (' + n + '/13)';
         }
         var twoHBefore = new Date(regClose.getTime() - 2 * 60 * 60 * 1000);
-        if (now >= twoHBefore && n < 14) {
+        if (now >= twoHBefore && n < 13) {
           var warnEl = document.createElement('div');
           warnEl.className = 'countdown-reg-warning';
           warnEl.textContent = '距截止不足2小时，仅' + n + '人报名';

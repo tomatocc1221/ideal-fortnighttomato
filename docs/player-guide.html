@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>队员操作手册 — 今日说法足球俱乐部</title>
+<style>
+  :root {
+    --gold: #c9a961;
+    --bg: #0d0d0d;
+    --bg-card: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #d4d4d4;
+    --loss: #c0392b;
+    --success: #2d8a2d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f5f5f5;
+    color: #333;
+    font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 60px 70px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.06);
+  }
+
+  @media (max-width: 900px) {
+    .page { padding: 30px 24px; }
+  }
+
+  /* Cover */
+  .cover {
+    text-align: center;
+    padding: 60px 0 50px;
+    border-bottom: 2px solid var(--gold);
+    margin-bottom: 50px;
+  }
+  .cover h1 { font-size: 2rem; color: #111; letter-spacing: 2px; margin-bottom: 8px; }
+  .cover .sub { color: var(--gold); font-size: 1.1rem; letter-spacing: 4px; }
+
+  /* Table of Contents */
+  .toc { background: #fafafa; padding: 28px 32px; border: 1px solid #e8e8e8; border-radius: 6px; margin-bottom: 48px; }
+  .toc h3 { font-size: 0.95rem; color: #111; margin-bottom: 12px; letter-spacing: 2px; }
+  .toc ol { padding-left: 20px; color: #666; font-size: 0.92rem; line-height: 2.2; }
+  .toc a { color: #333; text-decoration: none; }
+  .toc a:hover { color: var(--gold); }
+
+  /* Headings */
+  h2 {
+    font-size: 1.4rem;
+    color: #111;
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e8e8e8;
+    letter-spacing: 1px;
+  }
+  h3 { font-size: 1.1rem; color: #222; margin: 32px 0 10px; }
+  h4 { font-size: 1rem; color: #333; margin: 20px 0 8px; }
+
+  p { margin-bottom: 12px; }
+  strong { color: #111; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.92rem; }
+  th { background: #f8f8f8; color: #111; font-weight: 600; padding: 10px 13px; text-align: left; border: 1px solid #e0e0e0; }
+  td { padding: 10px 13px; border: 1px solid #e0e0e0; color: #444; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  /* Lists */
+  ul, ol { margin: 8px 0 16px 20px; }
+  li { margin-bottom: 6px; }
+
+  /* Info box */
+  .info {
+    background: #fffdf5;
+    border-left: 3px solid var(--gold);
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.92rem;
+    color: #555;
+  }
+  .info strong { color: #333; }
+
+  /* Step number */
+  .step {
+    display: inline-block;
+    background: var(--gold);
+    color: #fff;
+    width: 24px; height: 24px;
+    text-align: center;
+    line-height: 24px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .tag-green { background: #e6f4ea; color: var(--success); }
+  .tag-red { background: #fce8e6; color: var(--loss); }
+  .tag-gold { background: #fef7e0; color: #b8860b; }
+
+  /* FAQ */
+  .faq-q { font-weight: 700; color: #111; margin-top: 20px; }
+  .faq-a { color: #555; margin-bottom: 16px; padding-left: 12px; border-left: 2px solid #e0e0e0; }
+
+  /* Footer */
+  .footer-note {
+    text-align: center;
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid #e0e0e0;
+    color: #999;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; max-width: 100%; padding: 40px 50px; }
+    .cover { padding: 20px 0 30px; margin-bottom: 30px; }
+    h2 { page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <h1>队员操作手册</h1>
+  <div class="sub">今日说法足球俱乐部</div>
+  <div style="margin-top:12px;color:#999;font-size:0.9rem">版本 1.1.5 · 2025 年 5 月</div>
+</div>
+
+<!-- ============ TOC ============ -->
+<div class="toc">
+  <h3>目录</h3>
+  <ol>
+    <li><a href="#s1">如何访问网站</a></li>
+    <li><a href="#s2">认识首页</a></li>
+    <li><a href="#s3">查看队员阵容</a></li>
+    <li><a href="#s4">赛程战果与倒计时</a></li>
+    <li><a href="#s5">比赛报名</a></li>
+    <li><a href="#s6">MVP 投票（金球奖）</a></li>
+    <li><a href="#s7">精彩瞬间与相册</a></li>
+    <li><a href="#s8">战术板</a></li>
+    <li><a href="#s9">完整赛程页面</a></li>
+    <li><a href="#s10">常见问题</a></li>
+  </ol>
+</div>
+
+<!-- ============ S1 ============ -->
+<h2 id="s1">1. 如何访问网站</h2>
+
+<h3>手机端</h3>
+<ul>
+  <li>浏览器打开网站链接（队长会在微信群发布）</li>
+</ul>
+<div class="info">
+  <strong>建议添加到主屏幕（像 App 一样使用）：</strong><br>
+  iPhone：Safari 打开 → 底部「分享」→「添加到主屏幕」<br>
+  Android：Chrome 打开 → 右上角「⋮」→「添加到主屏幕」
+</div>
+
+<h3>电脑端</h3>
+<ul>
+  <li>浏览器打开网站链接即可</li>
+  <li>推荐 Chrome 或 Edge 浏览器</li>
+</ul>
+
+<!-- ============ S2 ============ -->
+<h2 id="s2">2. 认识首页</h2>
+
+<p>打开网站后你会看到以下区域：</p>
+
+<table>
+  <tr><th>区域</th><th>说明</th></tr>
+  <tr><td>顶部导航栏</td><td>固定在屏幕顶部，点击各链接可快速跳转</td></tr>
+  <tr><td>Hero 大屏</td><td>队徽 + 队名 + "用脚说话，以球会友"</td></tr>
+  <tr><td>球队介绍</td><td>建队信息 + 4 个统计卡片（建队年份、城市、主场、班底）</td></tr>
+  <tr><td>队员阵容</td><td>全体队员卡片，点击可翻面查看详情</td></tr>
+  <tr><td>赛程战果</td><td>倒计时 + 最新战报 + 即将开赛 + 报名按钮</td></tr>
+  <tr><td>精彩瞬间</td><td>比赛照片轮播 + 相册浏览</td></tr>
+  <tr><td>战术板</td><td>3-3-1 阵型图</td></tr>
+  <tr><td>底部</td><td>联系方式 + 社交链接 + 管理后台入口</td></tr>
+</table>
+
+<div class="info">
+  <strong>手机端提示：</strong>导航栏在手机上会收起到左上角汉堡菜单（三道横线图标），点击展开导航链接。
+</div>
+
+<!-- ============ S3 ============ -->
+<h2 id="s3">3. 查看队员阵容</h2>
+
+<ol>
+  <li>点击导航栏「队员阵容」或向下滚动到阵容区域</li>
+  <li>队员按位置分组显示：教练、门将、后卫、中场、前锋</li>
+  <li><strong>点击卡片正面</strong> → 卡片 3D 翻转，显示背面详细信息（位置、简介、身高体重、擅长位置标签）</li>
+  <li><strong>点击「查看详情」</strong> → 打开完整信息弹窗（含 MVP 次数统计）</li>
+</ol>
+
+<div class="info">
+  <strong>快速关闭：</strong>点击「← 返回」按钮、点击背景遮罩、或按键盘 Esc 键均可关闭详情弹窗。<br>
+  <strong>队长标识：</strong>队长（#22 李泽）的卡片边框为金色高亮。
+</div>
+
+<!-- ============ S4 ============ -->
+<h2 id="s4">4. 赛程战果与倒计时</h2>
+
+<h3>倒计时栏</h3>
+<ul>
+  <li>位于赛程区域顶部，显示最近一场即将开赛的比赛</li>
+  <li><strong>倒计时精确到秒</strong>：天、时、分、秒，金色数字实时跳动</li>
+  <li>比赛进行中时显示<span style="color:#4ade80;font-weight:700">绿色「比赛进行中」</span>+ 剩余时间</li>
+  <li>报名按钮位于倒计时正下方（见第 5 节）</li>
+</ul>
+
+<h3>最新战报（左侧）</h3>
+<ul>
+  <li>显示最近 3 场比赛结果</li>
+  <li>包含：比分、胜负标记（<span class="tag tag-green">胜</span>/<span class="tag tag-gold">平</span>/<span class="tag tag-red">负</span>）、进球队员、助攻队员</li>
+  <li>已投票的比赛右侧显示 ★ MVP 徽章</li>
+  <li>点击「查看全部战绩」进入完整赛程页面</li>
+</ul>
+
+<h3>即将开赛（右侧）</h3>
+<ul>
+  <li>显示未来 3 场比赛</li>
+  <li>包含：日期、对手、时间、场地、球衣颜色标志</li>
+</ul>
+
+<!-- ============ S5 ============ -->
+<h2 id="s5">5. 比赛报名 ⭐</h2>
+
+<div class="info">
+  <strong>这是最常用的功能。</strong>每次比赛前需要在网站上报名的，请大家务必关注报名窗口。
+</div>
+
+<h3>报名窗口时间</h3>
+<table>
+  <tr><th>项目</th><th>时间</th></tr>
+  <tr><td>报名开放</td><td>比赛日前 <strong>4 天</strong>的晚上 <strong>9:00</strong></td></tr>
+  <tr><td>报名截止</td><td>比赛日前 <strong>2 天</strong>的中午 <strong>12:00</strong></td></tr>
+</table>
+
+<div class="info">
+  <strong>举例：</strong>周日比赛 → 周三晚 9:00 开放报名，周五中午 12:00 截止。<br>
+  周六比赛 → 周二晚 9:00 开放报名，周四中午 12:00 截止。
+</div>
+
+<h3>报名步骤</h3>
+
+<p><span class="step">1</span> 在首页赛程区域，倒计时栏下方找到报名按钮</p>
+<p><span class="step">2</span> 按钮在不同阶段显示不同内容：</p>
+
+<table>
+  <tr><th>阶段</th><th>按钮显示</th><th>可操作</th></tr>
+  <tr><td>报名未开放</td><td>距报名 X天XX时XX分XX秒（倒计时）</td><td>不可点击</td></tr>
+  <tr><td>报名进行中</td><td>✋ 立即报名（金色按钮）</td><td>可点击</td></tr>
+  <tr><td>报名已截止</td><td>报名已截止（灰色按钮）</td><td>不可点击</td></tr>
+</table>
+
+<p><span class="step">3</span> 报名开放后，点击金色按钮打开报名面板</p>
+<p><span class="step">4</span> <strong>验证身份</strong>：在下拉列表中选择你的名字 → 输入个人 PIN 码 → 点击「验证身份」</p>
+<p><span class="step">5</span> <strong>选择报名类型</strong>：</p>
+
+<ul>
+  <li><strong>正选（0/13）</strong>：前 13 名报名的队员进入正选名单</li>
+  <li><strong>候补（0/4）</strong>：正选满员后自动进入候补队列</li>
+</ul>
+
+<p><span class="step">6</span> 报名成功后显示「已报名 · 正选」或「已报名 · 候补」状态标签</p>
+
+<h3>请假</h3>
+<p>如果报名后临时有事不能参加：</p>
+<ol>
+  <li>在报名面板中点击「我要请假」</li>
+  <li>选择请假原因：临时有事 / 身体不适 / 工作加班 / 家庭事务 / 其他（可自由输入）</li>
+  <li>确认后自动取消报名，候补队列第一位自动递补为正选</li>
+  <li>截止前可以重新报名</li>
+</ol>
+
+<h3>注意事项</h3>
+<ul>
+  <li>正选 <strong>13 人</strong>，候补 <strong>4 人</strong>，先报先得</li>
+  <li>截止前 <strong>2 小时</strong>若报名人数不足 13 人，按钮下方会出现红色提醒</li>
+  <li>报名记录在截止前可随时修改（取消后重新报名）</li>
+</ul>
+
+<!-- ============ S6 ============ -->
+<h2 id="s6">6. MVP 投票（金球奖）</h2>
+
+<p>每场比赛结束后，正选队员可以为当场表现最好的队友投票。累计积分决定「金球奖」得主。</p>
+
+<h3>谁可以投票</h3>
+<ul>
+  <li>只有该场比赛的 <strong>正选报名队员</strong> 可以投票</li>
+  <li>每人只能投一次，提交后 <strong>不可修改</strong></li>
+</ul>
+
+<h3>投票步骤</h3>
+<p><span class="step">1</span> 在最新战报中找到对应比赛，点击右侧「MVP 投票」按钮</p>
+<p><span class="step">2</span> 验证身份（选择名字 + 输入 PIN 码）</p>
+<p><span class="step">3</span> 选择排名：</p>
+<ul>
+  <li>第一名（3 分）</li>
+  <li>第二名（2 分）</li>
+  <li>第三名（1 分）</li>
+</ul>
+<p><span class="step">4</span> 同一人不能出现在多个排名中（选择后自动禁用）</p>
+<p><span class="step">5</span> 确认投票内容无误后提交</p>
+
+<h3>查看结果</h3>
+<ul>
+  <li>比赛结果右上方显示 <strong>「★ MVP: 队员名」</strong></li>
+  <li>鼠标悬停（手机长按）可查看前三名票数分布</li>
+  <li>个人累计 MVP 次数会显示在队员详情弹窗中</li>
+</ul>
+
+<!-- ============ S7 ============ -->
+<h2 id="s7">7. 精彩瞬间与相册</h2>
+
+<h3>照片轮播</h3>
+<ul>
+  <li>首页「精彩瞬间」区域自动轮播比赛照片</li>
+  <li>点击左右箭头手动切换</li>
+  <li>手机端支持左右滑动</li>
+  <li>鼠标悬停时自动播放暂停</li>
+</ul>
+
+<h3>相册浏览</h3>
+<ul>
+  <li>点击导航栏「精彩瞬间」打开相册面板</li>
+  <li>照片按比赛分组（如「今日说法 vs XX 队」）</li>
+  <li>「比赛瞬间」相册收录所有比赛照片</li>
+  <li>点击任意照片全屏放大查看</li>
+  <li>关闭：点击背景遮罩或按 Esc 键</li>
+</ul>
+
+<!-- ============ S8 ============ -->
+<h2 id="s8">8. 战术板</h2>
+
+<p>首页「战术板」区域展示球队 3-3-1 阵型图，各位置颜色：</p>
+
+<ul>
+  <li><span class="tag tag-gold" style="background:#fef0d0">橙色</span> = 门将（1人）</li>
+  <li><span class="tag" style="background:#d6e8ff;color:#2d6ab0">蓝色</span> = 后卫（3人）</li>
+  <li><span class="tag tag-green">绿色</span> = 中场（3人）</li>
+  <li><span class="tag tag-red">红色</span> = 前锋（1人）</li>
+</ul>
+
+<p>此为静态展示，仅供参考。</p>
+
+<!-- ============ S9 ============ -->
+<h2 id="s9">9. 完整赛程页面</h2>
+
+<p>点击导航栏「赛程战果」或首页「查看全部战绩」进入独立赛程页面。</p>
+
+<table>
+  <tr><th>功能</th><th>说明</th></tr>
+  <tr><td>赛季筛选</td><td>下拉框选择赛季，数据自动切换</td></tr>
+  <tr><td>统计面板</td><td>总场次、胜、平、负统计</td></tr>
+  <tr><td>分页浏览</td><td>每页 15 场比赛，底部翻页按钮</td></tr>
+  <tr><td>即将开赛</td><td>所有未开赛的比赛列表</td></tr>
+  <tr><td>返回首页</td><td>顶部「← 返回主页」链接</td></tr>
+</table>
+
+<!-- ============ S10 ============ -->
+<h2 id="s10">10. 常见问题</h2>
+
+<p class="faq-q">Q: 忘记 PIN 码怎么办？</p>
+<p class="faq-a">联系队长重置。PIN 码用于验证身份，确保是本人操作。</p>
+
+<p class="faq-q">Q: 报名后怎么知道是否成功？</p>
+<p class="faq-a">报名面板中显示你的报名状态（正选/候补），同时首页报名按钮上的数字会更新。</p>
+
+<p class="faq-q">Q: 手机上看加载很慢？</p>
+<p class="faq-a">首次访问可能需要几秒加载图片和数据。之后每次打开会使用本地缓存，基本秒开。建议添加到手机主屏幕像 App 一样使用。</p>
+
+<p class="faq-q">Q: 微信里打开能用吗？</p>
+<p class="faq-a">微信内置浏览器可正常使用全部功能，包括报名和投票。</p>
+
+<p class="faq-q">Q: 报名截止后还能取消吗？</p>
+<p class="faq-a">截止后系统锁定，无法自助取消。如需取消请在微信群里告诉队长。</p>
+
+<p class="faq-q">Q: 别人能看到我的 PIN 码吗？</p>
+<p class="faq-a">PIN 码使用 SHA-256 加密传输和验证，任何人（包括队长）都无法看到你的密码明文。</p>
+
+<p class="faq-q">Q: 发现 bug 或功能建议？</p>
+<p class="faq-a">告诉队长或副队长，他们会反馈给开发同学。欢迎任何建议！</p>
+
+<!-- ============ FOOTER ============ -->
+<div class="footer-note">
+  今日说法足球俱乐部 · 2025年3月30日成立于重庆溉澜溪体育公园<br>
+  用脚说话，以球会友 · 版本 1.1.5
+</div>
+
+</div>
+</body>
+</html>

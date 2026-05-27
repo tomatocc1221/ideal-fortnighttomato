@@ -91,7 +91,7 @@ async function refreshRegList() {
   const waitlist = _regList.filter(r => r.status === 'waitlist');
   const cancelled = _regList.filter(r => r.status === 'cancelled');
 
-  document.getElementById('regConfirmedCount').innerHTML = `<strong>${confirmed.length}</strong>/14`;
+  document.getElementById('regConfirmedCount').innerHTML = `<strong>${confirmed.length}</strong>/13`;
   document.getElementById('regWaitlistCount').innerHTML = `<strong>${waitlist.length}</strong>/4`;
 
 
@@ -148,6 +148,15 @@ function updateRegActions() {
   }
 
   if (now > regClose) {
+    // 截止后：已报名队员仍可请假，但不可新报名
+    if (myReg && (myReg.status === 'confirmed' || myReg.status === 'waitlist')) {
+      status.innerHTML = '<span class="reg-tag closed">报名已截止</span>';
+      btns.innerHTML = '<button class="btn btn-cancel reg-btn" id="regLeaveBtn">我要请假</button>';
+      document.getElementById('regLeaveBtn').addEventListener('click', () => {
+        cancelForm.style.display = 'flex';
+      });
+      return;
+    }
     status.innerHTML = '<span class="reg-tag closed">报名已截止</span>';
     btns.innerHTML = '';
     return;
@@ -170,7 +179,7 @@ function updateRegActions() {
     } else if (myReg.status === 'cancelled') {
       status.innerHTML = '<span class="reg-tag cancelled">已请假</span>';
       const confirmedCount = _regList.filter(r => r.status === 'confirmed').length;
-      const maxPlayers = _regMatch.max_players || 14;
+      const maxPlayers = _regMatch.max_players || 13;
       const nextStatus = confirmedCount < maxPlayers ? '正选' : '候补';
       btns.innerHTML = `<button class="btn btn-gold reg-btn" id="regRejoinBtn">重新报名（${nextStatus}）</button>`;
       document.getElementById('regRejoinBtn').addEventListener('click', async () => {
@@ -181,7 +190,7 @@ function updateRegActions() {
     }
   } else {
     const confirmedCount = _regList.filter(r => r.status === 'confirmed').length;
-    const maxPlayers = _regMatch.max_players || 14;
+    const maxPlayers = _regMatch.max_players || 13;
     const statusText = confirmedCount < maxPlayers ? '正选' : '候补';
     status.innerHTML = '<span class="reg-tag open">报名开放中</span>';
     btns.innerHTML = `<button class="btn btn-gold reg-btn" id="regJoinBtn">立即报名（${statusText}）</button>`;

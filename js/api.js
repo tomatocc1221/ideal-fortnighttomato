@@ -123,7 +123,7 @@ const API = {
         venue: data.venue || '',
         jersey: data.jersey || '',
         jersey_color: data.jersey_color || '',
-        max_players: data.max_players || 14,
+        max_players: data.max_players || 13,
         max_substitutes: data.max_substitutes || 4,
         reg_open_at: data.reg_open_at,
         reg_close_at: data.reg_close_at,

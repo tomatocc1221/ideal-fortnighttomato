@@ -1,0 +1,132 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0a; color: #e8e8e8; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; padding: 32px; }
+  h2 { font-size: 1.8em; color: #cfae5a; margin-bottom: 8px; }
+  .subtitle { color: #888; margin-bottom: 32px; }
+  .demo-row { display: flex; gap: 24px; margin-bottom: 40px; flex-wrap: wrap; }
+  .demo-card { flex: 1; min-width: 320px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid #262626; }
+  .demo-label { padding: 14px 20px; font-weight: 700; font-size: 1.05em; border-bottom: 1px solid #262626; display: flex; align-items: center; gap: 10px; }
+  .demo-label .badge { background: #cfae5a; color: #0d0d0d; padding: 2px 10px; border-radius: 20px; font-size: 0.75em; }
+  .demo-stage { position: relative; height: 420px; background: #0d0d0d; display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; }
+
+  /* ===== A: Cinematic ===== */
+  .cinema-overlay { position: absolute; inset: 0; background: #000; z-index: 10; animation: cinemaFade 4s ease-in-out infinite; }
+  .cinema-countdown { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 11; animation: countPulse 4s ease-in-out infinite; }
+  .count-num { font-family: "Bebas Neue", sans-serif; font-size: 120px; color: #cfae5a; text-shadow: 0 0 60px rgba(207,174,90,0.6); }
+  .cinema-particles { position: absolute; inset: 0; z-index: 9; }
+  .particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #cfae5a; animation: particleFly 2s ease-out infinite; }
+  .particle:nth-child(1) { left: 50%; top: 50%; animation-delay: 0s; }
+  .particle:nth-child(2) { left: 50%; top: 50%; animation-delay: 0.3s; }
+  .particle:nth-child(3) { left: 50%; top: 50%; animation-delay: 0.6s; }
+  .particle:nth-child(4) { left: 50%; top: 50%; animation-delay: 0.9s; }
+  .particle:nth-child(5) { left: 50%; top: 50%; animation-delay: 1.2s; }
+  .particle:nth-child(6) { left: 50%; top: 50%; animation-delay: 0.15s; }
+  .particle:nth-child(7) { left: 50%; top: 50%; animation-delay: 0.45s; }
+  .particle:nth-child(8) { left: 50%; top: 50%; animation-delay: 0.75s; }
+  .cinema-logo { position: absolute; z-index: 12; text-align: center; animation: logoReveal 4s ease-in-out infinite; }
+  .cinema-logo .trophy { font-size: 64px; margin-bottom: 8px; }
+  .cinema-logo .text { font-family: "Bebas Neue", sans-serif; font-size: 28px; color: #cfae5a; letter-spacing: 0.15em; }
+  @keyframes cinemaFade { 0%,15% { opacity: 1; } 40%,100% { opacity: 0; } }
+  @keyframes countPulse { 0%,5% { opacity: 1; transform: scale(1); } 15% { opacity: 0; transform: scale(2); } 16%,100% { opacity: 0; } }
+  @keyframes particleFly { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
+  @keyframes logoReveal { 0%,35% { opacity: 0; transform: translateY(30px); } 50%,100% { opacity: 1; transform: translateY(0); } }
+  .hero-static { text-align: center; z-index: 1; }
+  .hero-static .logo-img { width: 80px; height: 80px; background: radial-gradient(circle, #cfae5a 0%, #0d0d0d 70%); border-radius: 50%; margin: 0 auto 12px; animation: logoShine 2s ease-in-out infinite; }
+  .hero-static .title { font-family: "Bebas Neue", sans-serif; font-size: 36px; color: #cfae5a; letter-spacing: 0.12em; }
+  .hero-static .sub { color: #888; margin-top: 6px; font-size: 0.95em; }
+  @keyframes logoShine { 0%,100% { box-shadow: 0 0 20px rgba(207,174,90,0.3); } 50% { box-shadow: 0 0 50px rgba(207,174,90,0.7); } }
+
+  /* ===== B: Hero Enhancement ===== */
+  .hero-extra { position: absolute; pointer-events: none; z-index: 5; }
+  .wc-badge { animation: badgeFloat 3s ease-in-out infinite; display: inline-block; padding: 8px 18px; background: rgba(207,174,90,0.12); border: 1px solid rgba(207,174,90,0.3); border-radius: 30px; color: #cfae5a; font-size: 0.85em; letter-spacing: 0.1em; margin-top: 16px; }
+  .ring-particle { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #cfae5a; }
+  @keyframes badgeFloat { 0%,100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(-6px); opacity: 1; } }
+  .orbit-ring { position: absolute; width: 180px; height: 180px; border-radius: 50%; border: 1px solid rgba(207,174,90,0.12); top: 50%; left: 50%; transform: translate(-50%,-50%); animation: ringSpin 8s linear infinite; }
+  .orbit-ring .dot { position: absolute; width: 6px; height: 6px; background: #cfae5a; border-radius: 50%; top: -3px; left: 50%; margin-left: -3px; box-shadow: 0 0 10px rgba(207,174,90,0.6); }
+  @keyframes ringSpin { 0% { transform: translate(-50%,-50%) rotate(0deg); } 100% { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* ===== C: Scroll Narrative ===== */
+  .scroll-stage { position: relative; height: 420px; background: #0d0d0d; overflow-y: auto; overflow-x: hidden; }
+  .scroll-inner { padding: 20px; }
+  .scroll-chapter { min-height: 280px; display: flex; align-items: center; justify-content: center; flex-direction: column; border-bottom: 1px dashed #1a1a1a; padding: 40px 20px; position: relative; }
+  .scroll-chapter .chap-icon { font-size: 48px; margin-bottom: 12px; }
+  .scroll-chapter .chap-title { font-family: "Bebas Neue", sans-serif; font-size: 22px; color: #cfae5a; letter-spacing: 0.1em; }
+  .scroll-chapter .chap-desc { color: #888; font-size: 0.85em; margin-top: 6px; }
+  .scroll-hint { text-align: center; color: #555; padding: 10px; font-size: 0.8em; animation: hintPulse 1.5s ease-in-out infinite; }
+  @keyframes hintPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+</style>
+
+<h2>🎬 三种开场动画样片预览</h2>
+<p class="subtitle">循环播放模拟动画效果 — 实际实现会用 GSAP 更流畅</p>
+
+<div class="demo-row">
+  <!-- A: Cinematic -->
+  <div class="demo-card">
+    <div class="demo-label"><span class="badge">A</span> 影院式全屏开场</div>
+    <div class="demo-stage">
+      <div class="cinema-overlay"></div>
+      <div class="cinema-countdown"><span class="count-num">3</span></div>
+      <div class="cinema-particles">
+        <div class="particle" style="--dx:-80px;--dy:-120px"></div>
+        <div class="particle" style="--dx:100px;--dy:-90px"></div>
+        <div class="particle" style="--dx:-60px;--dy:100px"></div>
+        <div class="particle" style="--dx:90px;--dy:80px"></div>
+        <div class="particle" style="--dx:-100px;--dy:-40px"></div>
+        <div class="particle" style="--dx:70px;--dy:-110px"></div>
+        <div class="particle" style="--dx:-40px;--dy:-150px"></div>
+        <div class="particle" style="--dx:120px;--dy:-30px"></div>
+      </div>
+      <div class="cinema-logo"><div class="trophy">🏆</div><div class="text">2026 WORLD CUP</div></div>
+      <div class="hero-static">
+        <div class="logo-img"></div>
+        <div class="title">今日说法</div>
+        <div class="sub">用脚说话，以球会友</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: Hero Enhancement -->
+  <div class="demo-card">
+    <div class="demo-label"><span class="badge">B</span> Hero 区增强动画 <span style="color:#cfae5a;font-size:0.8em">← 推荐</span></div>
+    <div class="demo-stage">
+      <div class="orbit-ring"><div class="dot"></div></div>
+      <div class="hero-static" style="animation: none;">
+        <div class="logo-img" style="animation: logoShine 2s ease-in-out infinite;"></div>
+        <div class="title">今日说法</div>
+        <div class="sub">用脚说话，以球会友</div>
+        <div class="wc-badge">🏆 2026 WORLD CUP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: Scroll Narrative -->
+  <div class="demo-card">
+    <div class="demo-label"><span class="badge">C</span> 滚动叙事开场</div>
+    <div class="scroll-stage">
+      <div class="scroll-hint">↓ 向下滚动浏览 ↓</div>
+      <div class="scroll-inner">
+        <div class="scroll-chapter">
+          <div class="chap-icon">🌍</div>
+          <div class="chap-title">2026 世界杯</div>
+          <div class="chap-desc">美加墨三国联办，48 队逐梦</div>
+        </div>
+        <div class="scroll-chapter">
+          <div class="chap-icon">⚽</div>
+          <div class="chap-title">足球飞入</div>
+          <div class="chap-desc">金色轨迹划破黑暗</div>
+        </div>
+        <div class="scroll-chapter">
+          <div class="chap-icon">🦁</div>
+          <div class="chap-title">今日说法</div>
+          <div class="chap-desc">用脚说话，以球会友</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="color:#cfae5a;margin-top:16px">对比要点</h3>
+<div class="pros-cons" style="margin-top:12px">
+  <div class="pros"><h4>A 全屏：适合想要「大事件感」</h4><ul><li>倒计时 + 金色爆发，如大型赛事直播</li><li>代价：每次打开都要等 3-5 秒</li><li>建议加"跳过"按钮 + 当天只播一次</li></ul></div>
+  <div class="cons"><h4>B Hero：最适合你的网站</h4><ul><li>金色光环旋转 + 世界杯徽章浮现</li><li>不遮挡内容，精致不打扰</li><li>与现有粒子系统完美融合</li></ul></div>
+</div>

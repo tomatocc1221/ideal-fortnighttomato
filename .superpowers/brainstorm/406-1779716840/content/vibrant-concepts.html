@@ -1,0 +1,217 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #050505; color: #e8e8e8; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; padding: 24px; }
+  h2 { font-size: 1.6em; background: linear-gradient(135deg, #ff6b35, #ff2e7e, #7c3aed, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+  .subtitle { color: #777; margin-bottom: 24px; font-size: 0.9em; }
+  .demo-row { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+  .demo-card { flex: 1; min-width: 340px; background: #0a0a0a; border-radius: 16px; overflow: hidden; border: 1px solid #1a1a1a; transition: border-color 0.3s; }
+  .demo-card:hover { border-color: #444; }
+  .demo-label { padding: 12px 20px; font-weight: 700; font-size: 0.95em; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 10px; background: #0d0d0d; }
+  .demo-label .badge { padding: 3px 12px; border-radius: 20px; font-size: 0.75em; font-weight: 800; color: #fff; }
+  .demo-stage { position: relative; height: 400px; overflow: hidden; }
+  .hero-foreground { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 10; pointer-events: none; }
+  .hero-foreground .logo-sim { width: 65px; height: 65px; background: radial-gradient(circle at 40% 40%, #fff, #cfae5a); border-radius: 50%; margin-bottom: 12px; box-shadow: 0 0 50px rgba(207,174,90,0.5), 0 0 100px rgba(207,174,90,0.2); }
+  .hero-foreground .title-sim { font-family: "Bebas Neue", sans-serif; font-size: 34px; color: #fff; letter-spacing: 0.12em; text-shadow: 0 0 30px rgba(255,255,255,0.3); }
+  .hero-foreground .sub-sim { color: #aaa; margin-top: 6px; font-size: 0.9em; }
+
+  /* ===== 1. ELECTRIC PITCH ===== */
+  .ep-bg { position: absolute; inset: 0; background: #0a0f0a; }
+  .pitch-grass { position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, #0d2d0d 0%, #061206 60%, #020602 100%);
+  }
+  .pitch-stripes { position: absolute; inset: 0; opacity: 0.12;
+    background: repeating-linear-gradient(0deg, transparent, transparent 28px, #1a5c1a 28px, #1a5c1a 29px);
+    animation: stripeDrift 8s linear infinite;
+  }
+  @keyframes stripeDrift { 0% { background-position: 0 0; } 100% { background-position: 0 58px; } }
+  .pitch-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 200px; height: 200px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.12); }
+  .pitch-center::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 15px #fff, 0 0 30px rgba(255,255,255,0.5); }
+  .pitch-halfline { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: rgba(255,255,255,0.1); }
+  .neon-player { position: absolute; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 15px, 0 0 30px; animation: playerMove 6s ease-in-out infinite; }
+  .np1 { left: 25%; top: 40%; background: #00ff88; box-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0,255,136,0.5); animation-delay: 0s; }
+  .np2 { left: 60%; top: 55%; background: #ff4466; box-shadow: 0 0 12px #ff4466, 0 0 24px rgba(255,68,102,0.5); animation-delay: -2s; }
+  .np3 { left: 45%; top: 30%; background: #44aaff; box-shadow: 0 0 12px #44aaff, 0 0 24px rgba(68,170,255,0.5); animation-delay: -4s; }
+  @keyframes playerMove {
+    0%,100% { transform: translate(0,0); }
+    20% { transform: translate(60px, -30px); }
+    40% { transform: translate(100px, 20px); }
+    60% { transform: translate(40px, 50px); }
+    80% { transform: translate(-20px, 10px); }
+  }
+  .energy-pulse { position: absolute; border-radius: 50%; border: 1px solid; animation: ePulse 4s ease-out infinite; }
+  .energy-pulse:nth-child(7) { left: 25%; top: 40%; width: 20px; height: 20px; border-color: #00ff88; }
+  .energy-pulse:nth-child(8) { left: 60%; top: 55%; width: 20px; height: 20px; border-color: #ff4466; animation-delay: -2s; }
+  @keyframes ePulse { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(8); opacity: 0; } }
+
+  /* ===== 2. FIREWORK PARTICLE STORM ===== */
+  .fw-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, #1a0a2e 0%, #0a0a0a 60%, #000 100%); }
+  .fw-particle { position: absolute; width: 3px; height: 3px; border-radius: 50%; animation: fwFly 4s ease-out infinite; }
+  @keyframes fwFly {
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    20% { opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+  .firework-burst { position: absolute; width: 6px; height: 6px; border-radius: 50%; animation: burst 3s ease-out infinite; }
+  @keyframes burst {
+    0% { transform: scale(0); opacity: 1; box-shadow: 0 0 5px, 0 0 15px, 0 0 30px; }
+    50% { opacity: 0.6; }
+    100% { transform: scale(30); opacity: 0; box-shadow: 0 0 20px, 0 0 60px, 0 0 120px; }
+  }
+  .spark-trail { position: absolute; height: 1.5px; border-radius: 1px; transform-origin: left center; animation: trailShoot 2.5s ease-out infinite; }
+  @keyframes trailShoot {
+    0% { width: 0; opacity: 0; }
+    30% { width: var(--len); opacity: 1; }
+    100% { width: var(--len); opacity: 0; transform: rotate(var(--rot)) translateX(60px); }
+  }
+
+  /* ===== 3. NEON ARENA ===== */
+  .na-bg { position: absolute; inset: 0; background: #000; overflow: hidden; }
+  .na-ring { position: absolute; border-radius: 50%; border: 1px solid transparent; top: 50%; left: 50%; animation: ringExpand 5s ease-out infinite; }
+  .na-ring:nth-child(1) { width: 50px; height: 50px; border-color: rgba(255,107,53,0.6); margin: -25px 0 0 -25px; animation-delay: 0s; }
+  .na-ring:nth-child(2) { width: 50px; height: 50px; border-color: rgba(255,46,126,0.5); margin: -25px 0 0 -25px; animation-delay: -1.2s; }
+  .na-ring:nth-child(3) { width: 50px; height: 50px; border-color: rgba(0,212,255,0.5); margin: -25px 0 0 -25px; animation-delay: -2.4s; }
+  .na-ring:nth-child(4) { width: 50px; height: 50px; border-color: rgba(124,58,237,0.4); margin: -25px 0 0 -25px; animation-delay: -3.6s; }
+  @keyframes ringExpand {
+    0% { width: 50px; height: 50px; margin: -25px 0 0 -25px; opacity: 0.9; }
+    100% { width: 600px; height: 600px; margin: -300px 0 0 -300px; opacity: 0; }
+  }
+  .na-beam { position: absolute; bottom: 0; width: 3px; background: linear-gradient(to top, rgba(255,107,53,0.6), transparent); transform-origin: bottom center; animation: beamSweep 8s ease-in-out infinite; }
+  @keyframes beamSweep {
+    0%,100% { transform: rotate(-30deg); opacity: 0.3; }
+    50% { transform: rotate(30deg); opacity: 0.7; }
+  }
+  .na-spotlight { position: absolute; width: 200px; height: 200px; border-radius: 50%; filter: blur(60px); animation: spotFloat 6s ease-in-out infinite; }
+  @keyframes spotFloat {
+    0%,100% { transform: translate(0,0); opacity: 0.08; }
+    33% { transform: translate(80px,-40px); opacity: 0.15; }
+    66% { transform: translate(-60px,30px); opacity: 0.06; }
+  }
+
+  /* ===== 4. COSMIC FOOTBALL ===== */
+  .cf-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 30%, #0d0820 0%, #030108 60%, #000 100%); }
+  .cf-stars { position: absolute; inset: 0; }
+  .cf-star { position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; animation: cfTwinkle 2s ease-in-out infinite; }
+  @keyframes cfTwinkle { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+  .cf-nebula { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.06; animation: nebulaDrift 15s ease-in-out infinite; }
+  .cf-nebula:nth-child(2) { width: 500px; height: 500px; background: radial-gradient(circle, #7c3aed, transparent 70%); left: -10%; top: -20%; }
+  .cf-nebula:nth-child(3) { width: 400px; height: 400px; background: radial-gradient(circle, #00d4ff, transparent 70%); right: -5%; top: 30%; animation-delay: -5s; }
+  .cf-nebula:nth-child(4) { width: 450px; height: 450px; background: radial-gradient(circle, #ff2e7e, transparent 70%); left: 40%; bottom: -20%; animation-delay: -10s; }
+  @keyframes nebulaDrift { 0%,100% { transform: translate(0,0) scale(1); } 25% { transform: translate(40px,-30px) scale(1.15); } 50% { transform: translate(-20px,20px) scale(0.9); } 75% { transform: translate(-30px,-10px) scale(1.05); } }
+  .cf-orbit { position: absolute; top: 50%; left: 50%; border: 1px solid rgba(255,255,255,0.04); border-radius: 50%; animation: orbitSpin 12s linear infinite; }
+  .cf-orbit:nth-child(5) { width: 300px; height: 120px; margin: -60px 0 0 -150px; animation-duration: 10s; }
+  .cf-orbit:nth-child(6) { width: 350px; height: 140px; margin: -70px 0 0 -175px; animation-duration: 14s; animation-direction: reverse; }
+  .cf-orbit:nth-child(7) { width: 400px; height: 160px; margin: -80px 0 0 -200px; animation-duration: 18s; }
+  @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .cf-orbit-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; top: -2.5px; left: 50%; }
+  .cf-orbit:nth-child(5) .cf-orbit-dot { background: #7c3aed; box-shadow: 0 0 10px #7c3aed, 0 0 20px rgba(124,58,237,0.6); }
+  .cf-orbit:nth-child(6) .cf-orbit-dot { background: #00d4ff; box-shadow: 0 0 10px #00d4ff, 0 0 20px rgba(0,212,255,0.6); }
+  .cf-orbit:nth-child(7) .cf-orbit-dot { background: #ff2e7e; box-shadow: 0 0 10px #ff2e7e, 0 0 20px rgba(255,46,126,0.6); }
+  .cf-football { position: absolute; width: 80px; height: 80px; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: radial-gradient(circle at 40% 35%, #fff 0%, #ddd 30%, #888 100%);
+    border-radius: 50%; box-shadow: 0 0 40px rgba(255,255,255,0.15), 0 0 80px rgba(124,58,237,0.1);
+    animation: ballFloat 4s ease-in-out infinite;
+  }
+  @keyframes ballFloat { 0%,100% { transform: translate(-50%,-50%); } 50% { transform: translate(-50%,-60%); } }
+  .cf-pentagon { position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; transform: translate(-50%,-50%); clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); background: #111; }
+</style>
+
+<h2>打破黑金配色 — 四种足球风格炫酷背景</h2>
+<p class="subtitle">不再是金色优雅路线，走足球赛事应有的视觉冲击力</p>
+
+<div class="demo-row">
+  <!-- 1: Electric Pitch -->
+  <div class="demo-card">
+    <div class="demo-label"><span class="badge" style="background:linear-gradient(135deg,#00ff88,#00a854)">1</span> 电光球场 ⚡</div>
+    <div class="demo-stage">
+      <div class="ep-bg">
+        <div class="pitch-grass"></div>
+        <div class="pitch-stripes"></div>
+        <div class="pitch-halfline"></div>
+        <div class="pitch-center"></div>
+        <div class="neon-player np1"></div><div class="neon-player np2"></div><div class="neon-player np3"></div>
+        <div class="energy-pulse"></div><div class="energy-pulse"></div>
+      </div>
+      <div class="hero-foreground">
+        <div class="logo-sim"></div>
+        <div class="title-sim">今日说法</div>
+        <div class="sub-sim">用脚说话，以球会友</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2: Firework Storm -->
+  <div class="demo-card">
+    <div class="demo-label"><span class="badge" style="background:linear-gradient(135deg,#ff6b35,#ff2e7e)">2</span> 烟花粒子风暴 🎆</div>
+    <div class="demo-stage">
+      <div class="fw-bg">
+        <div class="firework-burst" style="left:30%;top:25%;background:#ff6b35;animation-delay:0s;"></div>
+        <div class="firework-burst" style="left:65%;top:20%;background:#ff2e7e;animation-delay:-1s;"></div>
+        <div class="firework-burst" style="left:20%;top:65%;background:#7c3aed;animation-delay:-2s;"></div>
+        <div class="firework-burst" style="left:75%;top:70%;background:#00d4ff;animation-delay:-1.5s;"></div>
+        <div class="firework-burst" style="left:50%;top:45%;background:#ffcc00;animation-delay:-2.5s;"></div>
+        <div class="spark-trail" style="left:15%;top:30%;background:#ff6b35;--len:120px;--rot:35deg;animation-delay:0s;"></div>
+        <div class="spark-trail" style="left:70%;top:25%;background:#00d4ff;--len:90px;--rot:-25deg;animation-delay:-1s;"></div>
+        <div class="spark-trail" style="left:40%;top:70%;background:#ff2e7e;--len:140px;--rot:10deg;animation-delay:-2s;"></div>
+        <!-- scattered particles -->
+        <div class="fw-particle" style="left:20%;top:30%;background:#ff6b35;--dx:80px;--dy:-100px;animation-delay:0s;"></div>
+        <div class="fw-particle" style="left:25%;top:28%;background:#ffcc00;--dx:-60px;--dy:-80px;animation-delay:0.2s;"></div>
+        <div class="fw-particle" style="left:65%;top:22%;background:#ff2e7e;--dx:70px;--dy:-90px;animation-delay:0.5s;"></div>
+        <div class="fw-particle" style="left:60%;top:18%;background:#ff6b35;--dx:-80px;--dy:-70px;animation-delay:0.7s;"></div>
+        <div class="fw-particle" style="left:18%;top:65%;background:#7c3aed;--dx:90px;--dy:60px;animation-delay:1s;"></div>
+        <div class="fw-particle" style="left:22%;top:62%;background:#00d4ff;--dx:-50px;--dy:80px;animation-delay:1.2s;"></div>
+        <div class="fw-particle" style="left:75%;top:68%;background:#ff2e7e;--dx:-70px;--dy:50px;animation-delay:1.5s;"></div>
+        <div class="fw-particle" style="left:80%;top:72%;background:#ffcc00;--dx:40px;--dy:70px;animation-delay:1.7s;"></div>
+      </div>
+      <div class="hero-foreground">
+        <div class="logo-sim"></div>
+        <div class="title-sim">今日说法</div>
+        <div class="sub-sim">用脚说话，以球会友</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="demo-row">
+  <!-- 3: Neon Arena -->
+  <div class="demo-card">
+    <div class="demo-label"><span class="badge" style="background:linear-gradient(135deg,#ff4466,#ff6b35,#ffcc00)">3</span> 霓虹竞技场 🏟️</div>
+    <div class="demo-stage">
+      <div class="na-bg">
+        <div class="na-ring"></div><div class="na-ring"></div><div class="na-ring"></div><div class="na-ring"></div>
+        <div class="na-beam" style="left:25%;animation-delay:0s;"></div>
+        <div class="na-beam" style="left:50%;animation-delay:-3s;background:linear-gradient(to top,rgba(0,212,255,0.5),transparent);"></div>
+        <div class="na-beam" style="left:75%;animation-delay:-6s;background:linear-gradient(to top,rgba(255,46,126,0.5),transparent);"></div>
+        <div class="na-spotlight" style="left:20%;top:30%;background:radial-gradient(circle,rgba(255,107,53,0.3),transparent 70%);animation-delay:0s;"></div>
+        <div class="na-spotlight" style="right:20%;top:40%;background:radial-gradient(circle,rgba(0,212,255,0.3),transparent 70%);animation-delay:-3s;"></div>
+      </div>
+      <div class="hero-foreground">
+        <div class="logo-sim"></div>
+        <div class="title-sim">今日说法</div>
+        <div class="sub-sim">用脚说话，以球会友</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4: Cosmic Football -->
+  <div class="demo-card">
+    <div class="demo-label"><span class="badge" style="background:linear-gradient(135deg,#7c3aed,#00d4ff)">4</span> 星际足球宇宙 🌌</div>
+    <div class="demo-stage">
+      <div class="cf-bg">
+        <div class="cf-nebula"></div><div class="cf-nebula"></div><div class="cf-nebula"></div>
+        <div class="cf-stars">
+          <div class="cf-star" style="left:10%;top:15%;animation-delay:0s;"></div><div class="cf-star" style="left:25%;top:8%;animation-delay:0.3s;"></div><div class="cf-star" style="left:40%;top:12%;animation-delay:0.6s;"></div><div class="cf-star" style="left:55%;top:5%;animation-delay:0.9s;"></div><div class="cf-star" style="left:70%;top:18%;animation-delay:0.15s;"></div><div class="cf-star" style="left:85%;top:10%;animation-delay:0.45s;"></div><div class="cf-star" style="left:15%;top:75%;animation-delay:0.75s;"></div><div class="cf-star" style="left:30%;top:85%;animation-delay:1.05s;"></div><div class="cf-star" style="left:60%;top:78%;animation-delay:0.2s;"></div><div class="cf-star" style="left:78%;top:82%;animation-delay:0.5s;"></div><div class="cf-star" style="left:90%;top:70%;animation-delay:0.8s;"></div><div class="cf-star" style="left:5%;top:50%;animation-delay:1.1s;"></div><div class="cf-star" style="left:95%;top:45%;animation-delay:0.35s;"></div>
+        </div>
+        <div class="cf-orbit"><div class="cf-orbit-dot"></div></div>
+        <div class="cf-orbit"><div class="cf-orbit-dot"></div></div>
+        <div class="cf-orbit"><div class="cf-orbit-dot"></div></div>
+        <div class="cf-football"></div>
+      </div>
+      <div class="hero-foreground">
+        <div class="logo-sim"></div>
+        <div class="title-sim">今日说法</div>
+        <div class="sub-sim">用脚说话，以球会友</div>
+      </div>
+    </div>
+  </div>
+</div>
+
