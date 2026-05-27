@@ -486,9 +486,13 @@ img { max-width: 100%; display: block; }
 /* Back face with frosted glass */
 .player-card-bg {
   position: absolute; inset: 0; z-index: 1; overflow: hidden;
+  background-size: cover; background-position: center;
 }
-.player-card-bg-img {
-  width: 100%; height: 100%; object-fit: cover;
+/* Blur via pseudo-element */
+.player-card-bg::before {
+  content: ''; position: absolute; inset: -4px;
+  background: inherit;
+  background-size: cover; background-position: center;
   filter: blur(1px) brightness(0.92);
 }
 .player-card-bg-glass {
