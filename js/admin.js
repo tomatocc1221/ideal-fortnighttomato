@@ -198,7 +198,7 @@ async function loadMatches() {
 function calcRegWindow(dateStr, timeStr) {
   const d = new Date(dateStr + 'T' + (timeStr || '14:40') + ':00');
   const open = new Date(d);
-  open.setDate(open.getDate() - 3);
+  open.setDate(open.getDate() - 4);
   open.setHours(21, 0, 0, 0);
   const close = new Date(d);
   close.setDate(close.getDate() - 2);

@@ -1688,6 +1688,9 @@ function renderCountdownRegBtn(m) {
   if (!regEl) return;
   var match = m._apiMatch || m;
 
+  // Clear previous reg countdown timer
+  if (renderCountdownRegBtn._timerId) { clearInterval(renderCountdownRegBtn._timerId); renderCountdownRegBtn._timerId = null; }
+
   if (!match.id || !match.reg_open_at || !match.reg_close_at) {
     regEl.innerHTML = '';
     return;
@@ -1696,43 +1699,66 @@ function renderCountdownRegBtn(m) {
   var now = new Date();
   var regOpen = new Date(match.reg_open_at);
   var regClose = new Date(match.reg_close_at);
-  var btnClass, btnText, btnClick;
+
+  function regTick() {
+    var n = new Date();
+    if (n >= regOpen) {
+      // Transition to open state
+      clearInterval(renderCountdownRegBtn._timerId);
+      renderCountdownRegBtn._timerId = null;
+      renderCountdownRegBtn(m);
+      return;
+    }
+
+    var diff = regOpen - n;
+    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    var minutes = Math.floor((diff / (1000 * 60)) % 60);
+    var seconds = Math.floor((diff / 1000) % 60);
+
+    var btn = regEl.querySelector('button');
+    if (btn) {
+      if (days > 0) {
+        btn.innerHTML = '<span class="reg-icon"></span>距报名 ' + days + '天' + String(hours).padStart(2, '0') + '时' + String(minutes).padStart(2, '0') + '分' + String(seconds).padStart(2, '0') + '秒';
+      } else {
+        btn.innerHTML = '<span class="reg-icon"></span>距报名 ' + String(hours).padStart(2, '0') + '时' + String(minutes).padStart(2, '0') + '分' + String(seconds).padStart(2, '0') + '秒';
+      }
+    }
+  }
 
   if (now < regOpen) {
-    btnClass = 'upcoming';
-    btnText = '报名未开启';
-  } else if (now >= regOpen && now <= regClose) {
-    btnClass = 'open';
-    btnText = '✋ 立即报名';
-    btnClick = function () { ensureOpenRegPanel(match); };
-  } else {
-    btnClass = 'closed';
-    btnText = '报名已截止';
+    regEl.innerHTML = '<button class="countdown-reg-btn upcoming" data-reg-match="' + (match.id || '') + '" disabled><span class="reg-icon"></span>报名未开启</button>';
+    regTick();
+    renderCountdownRegBtn._timerId = setInterval(regTick, 1000);
+    return;
   }
 
-  regEl.innerHTML = '<button class="countdown-reg-btn ' + btnClass + '" data-reg-match="' + (match.id || '') + '"' + (btnClick ? '' : ' disabled') + '><span class="reg-icon"></span>' + btnText + '</button>';
+  if (now >= regOpen && now <= regClose) {
+    regEl.innerHTML = '<button class="countdown-reg-btn open" data-reg-match="' + (match.id || '') + '"><span class="reg-icon"></span>✋ 立即报名</button>';
+    regEl.querySelector('button').addEventListener('click', function () { ensureOpenRegPanel(match); });
 
-  if (btnClick) {
-    regEl.querySelector('button').addEventListener('click', btnClick);
+    // 拉取报名人数
+    if (match.id) {
+      API.getRegistrations(match.id).then(function (list) {
+        var n = list.filter(function (r) { return r.status === 'confirmed'; }).length;
+        var btn = regEl.querySelector('button');
+        if (btn) {
+          btn.innerHTML = '<span class="reg-icon"></span>✋ 立即报名 (' + n + '/14)';
+        }
+        var twoHBefore = new Date(regClose.getTime() - 2 * 60 * 60 * 1000);
+        if (now >= twoHBefore && n < 14) {
+          var warnEl = document.createElement('div');
+          warnEl.className = 'countdown-reg-warning';
+          warnEl.textContent = '距截止不足2小时，仅' + n + '人报名';
+          regEl.appendChild(warnEl);
+        }
+      }).catch(function () {});
+    }
+    return;
   }
 
-  // 如果报名进行中，拉取报名人数显示
-  if (btnClass === 'open' && match.id) {
-    API.getRegistrations(match.id).then(function (list) {
-      var n = list.filter(function (r) { return r.status === 'confirmed'; }).length;
-      var btn = regEl.querySelector('button');
-      if (btn) {
-        btn.innerHTML = '<span class="reg-icon"></span>✋ 立即报名 (' + n + '/14)';
-      }
-      var twoHBefore = new Date(regClose.getTime() - 2 * 60 * 60 * 1000);
-      if (now >= twoHBefore && n < 14) {
-        var warnEl = document.createElement('div');
-        warnEl.className = 'countdown-reg-warning';
-        warnEl.textContent = '距截止不足2小时，仅' + n + '人报名';
-        regEl.appendChild(warnEl);
-      }
-    }).catch(function () {});
-  }
+  // 已截止
+  regEl.innerHTML = '<button class="countdown-reg-btn closed" data-reg-match="' + (match.id || '') + '" disabled><span class="reg-icon"></span>报名已截止</button>';
 }
 
 function startCountdown() {
