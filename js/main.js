@@ -435,15 +435,12 @@ async function loadAllOverridesAndMerge() {
     });
   });
 
-  try {
-    await Promise.all(playerImagePromises.concat(slideImagePromises).concat(albumImagePromises));
-  } catch (e) {
-    // IndexedDB 整体失败时静默降级，渲染照常进行
-  }
-
-  // Refresh carousel/gallery with API-enriched data if available
+  // Refresh carousel/gallery immediately — don't wait for IndexedDB
   if (shuffledSlides.length) initCarousel(shuffledSlides);
   if (mergedAlbums) initGalleryOverlay(mergedAlbums);
+
+  // IndexedDB caching in background (fire-and-forget)
+  Promise.all(playerImagePromises.concat(slideImagePromises).concat(albumImagePromises)).catch(function () {});
 
   // Fetch votes (fixtures already handled by renderFixtures() in sync section)
   var allVotes = await API.getVotes().catch(function () { return []; });
