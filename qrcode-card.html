@@ -7,173 +7,141 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #050505;
+    background: #0a0a0a;
     display: flex; flex-direction: column;
     justify-content: center; align-items: center;
-    min-height: 100vh; gap: 16px; padding: 20px;
+    min-height: 100vh; gap: 14px; padding: 20px;
     font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   }
-  .loading { color: #c9a961; font-size: 1rem; letter-spacing: 0.1em; animation: pulse 1.5s ease-in-out infinite; }
+  .loading { color: #c9a961; font-size: 0.95rem; letter-spacing: 0.1em; animation: pulse 1.5s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .hint { color: #777; font-size: 0.78rem; letter-spacing: 0.06em; display: none; }
-  #output { display: none; max-width: 440px; width: 100%; border-radius: 20px; box-shadow: 0 0 80px rgba(201,169,97,0.12), 0 30px 70px rgba(0,0,0,0.6); cursor: pointer; }
+  #output { display: none; max-width: 420px; width: 100%; box-shadow: 0 0 60px rgba(201,169,97,0.1), 0 20px 50px rgba(0,0,0,0.5); }
+  .tip { color: #666; font-size: 0.75rem; letter-spacing: 0.05em; display: none; }
 </style>
 </head>
 <body>
 <div class="loading" id="loading">生成中...</div>
-<img id="output" alt="今日说法 · 扫码访问球队官网">
-<div class="hint" id="hint">长按图片保存 · 发到群里大家扫码</div>
+<img id="output" alt="今日说法球队二维码">
+<div class="tip" id="tip">长按保存图片 · 发到群里扫码访问</div>
 
 <script>
-var SITE = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
+var URL = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
 
 var qr = new Image(); qr.crossOrigin = 'anonymous';
 qr.onload = draw; qr.onerror = function(){ document.getElementById('loading').textContent='加载失败，请刷新'; };
-qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&color=0d0d0d&bgcolor=ffffff&margin=12&data=' + encodeURIComponent(SITE);
+qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=350x350&color=0d0d0d&bgcolor=ffffff&margin=15&data=' + encodeURIComponent(URL);
 
-var logo = new Image(); logo.crossOrigin = 'anonymous';
-logo.src = 'images/logo.jpg';
-var hasLogo = false; logo.onload = function(){ hasLogo = true; };
+var logo = new Image(); logo.crossOrigin = 'anonymous'; logo.src = 'images/logo.jpg';
+var L = false; logo.onload = function(){ L = true; };
 
-function hexagon(x, cx, cy, r, sides) {
-  x.beginPath();
-  for (var i = 0; i < sides; i++) {
-    var a = Math.PI * 2 / sides * i - Math.PI / 2;
-    x.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
-  }
-  x.closePath();
+function roundRect(x, cx, cy, w, h, r) {
+  x.beginPath(); x.moveTo(cx + r, cy); x.lineTo(cx + w - r, cy);
+  x.arcTo(cx + w, cy, cx + w, cy + r, r); x.lineTo(cx + w, cy + h - r);
+  x.arcTo(cx + w, cy + h, cx + w - r, cy + h, r); x.lineTo(cx + r, cy + h);
+  x.arcTo(cx, cy + h, cx, cy + h - r, r); x.lineTo(cx, cy + r);
+  x.arcTo(cx, cy, cx + r, cy, r); x.closePath();
 }
 
 function draw() {
-  var S = 4, W = 400 * S, H = 600 * S;
+  var S = 3, W = 420 * S, H = 600 * S;
   var c = document.createElement('canvas');
   c.width = W; c.height = H;
   var x = c.getContext('2d');
 
-  // ── Deep background ──
-  var bg = x.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H * 0.4, H * 0.8);
-  bg.addColorStop(0, '#1c1a10'); bg.addColorStop(0.6, '#0a0a0a'); bg.addColorStop(1, '#050505');
-  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  // BG
+  x.fillStyle = '#0a0a0a'; x.fillRect(0, 0, W, H);
 
-  // ── Gold aura behind card ──
-  var aura = x.createRadialGradient(W / 2, H * 0.45, H * 0.05, W / 2, H * 0.45, H * 0.55);
-  aura.addColorStop(0, 'rgba(201,169,97,0.15)'); aura.addColorStop(0.5, 'rgba(201,169,97,0.04)'); aura.addColorStop(1, 'transparent');
-  x.fillStyle = aura; x.fillRect(0, 0, W, H);
+  // Card area
+  var cx = 16 * S, cy = 12 * S, cw = W - cx * 2, ch = H - cy * 2;
 
-  // ── Card rect ──
-  var mx = 24 * S, my = 18 * S, mw = W - mx * 2, mh = H - my * 2;
-  var rnd = 22 * S;
+  // Card shadow
+  x.shadowColor = 'rgba(0,0,0,0.6)'; x.shadowBlur = 30 * S; x.shadowOffsetX = 0; x.shadowOffsetY = 12 * S;
+  x.fillStyle = '#111';
+  roundRect(x, cx, cy, cw, ch, 18 * S); x.fill();
+  x.shadowColor = 'transparent'; x.shadowBlur = 0; x.shadowOffsetY = 0;
 
-  // ── Outer frame (double line) ──
-  var frames = [
-    { o: 0, c: 'rgba(201,169,97,0.15)', w: 4 * S },
-    { o: 8 * S, c: 'rgba(201,169,97,0.28)', w: 2 * S }
-  ];
-  frames.forEach(function(f) {
-    x.strokeStyle = f.c; x.lineWidth = f.w;
-    x.beginPath(); x.roundRect(mx - f.o, my - f.o, mw + f.o * 2, mh + f.o * 2, rnd + f.o); x.stroke();
-  });
+  // Gold border
+  x.strokeStyle = '#c9a961'; x.lineWidth = 2 * S;
+  roundRect(x, cx, cy, cw, ch, 18 * S); x.stroke();
 
-  // Card fill
-  x.fillStyle = '#0d0d0d';
-  x.beginPath(); x.roundRect(mx, my, mw, mh, rnd); x.fill();
+  // Inner thin border
+  x.strokeStyle = 'rgba(201,169,97,0.25)'; x.lineWidth = 1 * S;
+  roundRect(x, cx + 8 * S, cy + 8 * S, cw - 16 * S, ch - 16 * S, 14 * S); x.stroke();
 
-  // ── Gold corner shields ──
-  var shield = 40 * S, sd = 2 * S;
-  var corners = [[mx, my], [mx + mw - shield, my], [mx, my + mh - shield], [mx + mw - shield, my + mh - shield]];
-  corners.forEach(function(cv) {
-    x.fillStyle = 'rgba(201,169,97,0.06)'; x.strokeStyle = 'rgba(201,169,97,0.2)'; x.lineWidth = sd;
-    x.beginPath(); x.roundRect(cv[0], cv[1], shield, shield, 10 * S); x.fill(); x.stroke();
-  });
-
-  // ── Top decorative line ──
-  var tly = my + 78 * S;
-  x.strokeStyle = 'rgba(201,169,97,0.18)'; x.lineWidth = 1 * S;
-  x.beginPath(); x.moveTo(mx + 30 * S, tly); x.lineTo(mx + mw - 30 * S, tly); x.stroke();
-
-  // ── Team badge (hexagon) ──
-  var badgeCx = mx + 48 * S, badgeCy = my + 39 * S, badgeR = 32 * S;
-  if (hasLogo) {
-    x.save(); x.beginPath(); x.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2); x.clip();
-    x.drawImage(logo, badgeCx - badgeR, badgeCy - badgeR, badgeR * 2, badgeR * 2); x.restore();
-  } else {
-    x.fillStyle = 'rgba(201,169,97,0.1)'; x.beginPath(); x.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2); x.fill();
+  // ── Header ──
+  var hy = cy + 40 * S;
+  if (L) {
+    var lr = 26 * S, lx = cx + 34 * S, ly = hy - lr;
+    x.save(); x.beginPath(); x.arc(lx + lr, ly + lr, lr + 2, 0, Math.PI * 2); x.clip();
+    x.drawImage(logo, lx - 2, ly - 2, (lr + 2) * 2, (lr + 2) * 2); x.restore();
+    x.strokeStyle = '#c9a961'; x.lineWidth = 2 * S;
+    x.beginPath(); x.arc(lx + lr, ly + lr, lr + 3, 0, Math.PI * 2); x.stroke();
   }
-  x.strokeStyle = 'rgba(201,169,97,0.55)'; x.lineWidth = 2.5 * S;
-  x.beginPath(); x.arc(badgeCx, badgeCy, badgeR + 2, 0, Math.PI * 2); x.stroke();
 
-  // ── Title ──
-  var tx = badgeCx + badgeR + 18 * S;
-  x.fillStyle = '#c9a961'; x.textAlign = 'left';
-  x.font = '800 ' + (22 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('今日说法', tx, my + 34 * S);
-  x.fillStyle = '#ddd';
-  x.font = '600 ' + (12 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('足球俱乐部  ·  JIN RI SHUO FA F.C.', tx, my + 52 * S);
+  x.fillStyle = '#c9a961'; x.textAlign = 'center';
+  x.font = '800 ' + (20 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('今日说法足球俱乐部', W / 2, hy + 10 * S);
+
+  x.fillStyle = '#888';
+  x.font = (9 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('JIN RI SHUO FA F.C.  ·  以球会友', W / 2, hy + 28 * S);
+
+  // ── Divider ──
+  var dy = hy + 48 * S;
+  x.strokeStyle = 'rgba(201,169,97,0.2)'; x.lineWidth = 1 * S;
+  x.beginPath(); x.moveTo(cx + 40 * S, dy); x.lineTo(cx + cw - 40 * S, dy); x.stroke();
 
   // ── QR Code ──
-  var qs = 300 * S, qx = mx + (mw - qs) / 2, qy = my + 108 * S, qp = 20 * S;
+  var qs = 300 * S, qx = cx + (cw - qs) / 2, qy = dy + 24 * S;
 
-  // QR background panel
-  x.fillStyle = '#181818'; x.strokeStyle = 'rgba(201,169,97,0.08)'; x.lineWidth = 1.5 * S;
-  x.beginPath(); x.roundRect(qx - qp, qy - qp, qs + qp * 2, qs + qp * 2, 16 * S); x.fill(); x.stroke();
+  // QR shadow panel
+  x.fillStyle = '#1a1a1a';
+  roundRect(x, qx - 16 * S, qy - 16 * S, qs + 32 * S, qs + 32 * S, 14 * S); x.fill();
 
-  // QR white area
-  var qInnerPad = 12 * S;
+  // White area
   x.fillStyle = '#fff';
-  x.beginPath(); x.roundRect(qx - qInnerPad, qy - qInnerPad, qs + qInnerPad * 2, qs + qInnerPad * 2, 10 * S); x.fill();
+  roundRect(x, qx - 12 * S, qy - 12 * S, qs + 24 * S, qs + 24 * S, 10 * S); x.fill();
 
-  // QR glow ring
-  x.strokeStyle = '#c9a961'; x.lineWidth = 4 * S;
-  x.shadowColor = 'rgba(201,169,97,0.5)'; x.shadowBlur = 18 * S;
-  x.beginPath(); x.roundRect(qx - qInnerPad - 3, qy - qInnerPad - 3, qs + (qInnerPad + 3) * 2, qs + (qInnerPad + 3) * 2, 12 * S); x.stroke();
+  // Gold glow ring
+  x.strokeStyle = '#c9a961'; x.lineWidth = 3 * S;
+  x.shadowColor = 'rgba(201,169,97,0.45)'; x.shadowBlur = 16 * S;
+  roundRect(x, qx - 12 * S - 2, qy - 12 * S - 2, qs + 24 * S + 4, qs + 24 * S + 4, 12 * S); x.stroke();
   x.shadowColor = 'transparent'; x.shadowBlur = 0;
 
-  // Draw QR
   x.drawImage(qr, qx, qy, qs, qs);
 
-  // ── Team logo centered in QR ──
-  if (hasLogo) {
-    var lr = 22 * S, lcx = qx + qs / 2, lcy = qy + qs / 2;
-    x.fillStyle = '#fff'; x.beginPath(); x.arc(lcx, lcy, lr + 4 * S, 0, Math.PI * 2); x.fill();
-    x.save(); x.beginPath(); x.arc(lcx, lcy, lr, 0, Math.PI * 2); x.clip();
-    x.drawImage(logo, lcx - lr, lcy - lr, lr * 2, lr * 2); x.restore();
+  // ── Center logo on QR ──
+  if (L) {
+    var clr = 24 * S, clx = qx + qs / 2 - clr, cly = qy + qs / 2 - clr;
+    x.fillStyle = '#fff';
+    roundRect(x, clx - 4 * S, cly - 4 * S, clr * 2 + 8 * S, clr * 2 + 8 * S, 6 * S); x.fill();
+    x.save(); x.beginPath(); x.arc(qx + qs / 2, qy + qs / 2, clr, 0, Math.PI * 2); x.clip();
+    x.drawImage(logo, clx, cly, clr * 2, clr * 2); x.restore();
     x.strokeStyle = '#c9a961'; x.lineWidth = 1.5 * S;
-    x.beginPath(); x.arc(lcx, lcy, lr + 1, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.arc(qx + qs / 2, qy + qs / 2, clr + 1, 0, Math.PI * 2); x.stroke();
   }
 
-  // ── Scan hint text ──
-  x.textAlign = 'center'; x.fillStyle = '#c9a961';
-  x.font = '600 ' + (11 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillText('微信扫码访问球队官网', W / 2, qy + qs + qp + 24 * S);
+  // ── Scan text ──
+  x.fillStyle = '#c9a961'; x.textAlign = 'center';
+  x.font = '600 ' + (10 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('微信扫码  ·  访问球队官网', W / 2, qy + qs + 36 * S);
 
-  // ── Bottom divider ──
+  // ── Bottom info ──
   var by = qy + qs + 68 * S;
   x.strokeStyle = 'rgba(201,169,97,0.15)'; x.lineWidth = 1 * S;
-  x.beginPath(); x.moveTo(mx + 50 * S, by); x.lineTo(mx + mw - 50 * S, by); x.stroke();
+  x.beginPath(); x.moveTo(cx + 50 * S, by); x.lineTo(cx + cw - 50 * S, by); x.stroke();
 
-  // ── Stats row ──
-  x.fillStyle = '#aaa'; x.textAlign = 'center';
-  x.font = (9 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  var stats = ['2025.03.30 成立', '重庆溉澜溪', '以球会友'];
-  var sx = mx + mw / 2, sy = by + 20 * S, gap = 110 * S;
-  stats.forEach(function(s, i) {
-    x.fillText(s, sx + (i - 1) * gap, sy);
-  });
-
-  // ── Bottom gold bar ──
-  var barW = 80 * S, barH = 3 * S, barY = by + 36 * S;
-  var barGrad = x.createLinearGradient(W / 2 - barW / 2, 0, W / 2 + barW / 2, 0);
-  barGrad.addColorStop(0, 'transparent'); barGrad.addColorStop(0.5, '#c9a961'); barGrad.addColorStop(1, 'transparent');
-  x.fillStyle = barGrad;
-  x.fillRect(W / 2 - barW / 2, barY, barW, barH);
+  x.fillStyle = '#777';
+  x.font = (8.5 * S) + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+  x.fillText('2025年3月30日成立于重庆溉澜溪体育公园', W / 2, by + 18 * S);
+  x.fillText('每周六下午  ·  欢迎热爱足球的朋友加入', W / 2, by + 32 * S);
 
   // Show
-  var dataUrl = c.toDataURL('image/jpeg', 0.94);
+  var url = c.toDataURL('image/jpeg', 0.93);
   var out = document.getElementById('output');
-  out.src = dataUrl; out.style.display = 'block';
+  out.src = url; out.style.display = 'block';
   document.getElementById('loading').style.display = 'none';
-  document.getElementById('hint').style.display = 'block';
+  document.getElementById('tip').style.display = 'block';
 }
 </script>
 </body>
