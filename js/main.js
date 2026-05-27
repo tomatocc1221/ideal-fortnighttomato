@@ -745,7 +745,7 @@ async function renderFixtures() {
     } else {
       upcomingEl.innerHTML = upcomingFiltered.slice(0, 3).map(function (m, i) {
         var jerseyBadge = m.jersey ? '<span class="fixture-jersey" style="background:' + m.jerseyColor + ';color:#fff">' + m.jersey + '</span>' : "";
-        return '<div class="fixture-item" data-upcoming-idx="' + i + '"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + ' ' + jerseyBadge + '</span><span class="reg-entry-btn upcoming" data-reg-idx="' + i + '">—</span></div><div class="fixture-meta">' + (m.time || '') + ' · ' + (m.venue || '') + '</div><div class="reg-entry-warning" data-warn-idx="' + i + '" style="display:none"></div></div>';
+        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + ' ' + jerseyBadge + '</span></div><div class="fixture-meta">' + (m.time || '') + ' · ' + (m.venue || '') + '</div></div>';
       }).join("");
     }
 
@@ -806,81 +806,17 @@ async function loadMVPs(prefetchedVotes) {
 
 /* === Registration Buttons === */
 function initRegButtons() {
-  const upcoming = window.__upcoming || [];
-  if (!upcoming.length) return;
-
-  const now = new Date();
-
-  upcoming.forEach(function (m, i) {
-    const btn = document.querySelector('[data-reg-idx="' + i + '"]');
-    const warn = document.querySelector('[data-warn-idx="' + i + '"]');
-    if (!btn) return;
-
-    const match = m._apiMatch || m;
-
-    // 标记 data 属性以便关闭面板时刷新
-    if (match.id) {
-      btn.setAttribute('data-reg-match', match.id);
-      if (warn) warn.setAttribute('data-warn-match', match.id);
-    }
-
-    if (!match.reg_open_at || !match.reg_close_at) {
-      btn.textContent = '—';
-      btn.className = 'reg-entry-btn closed';
-      return;
-    }
-
-    const regOpen = new Date(match.reg_open_at);
-    const regClose = new Date(match.reg_close_at);
-
-    if (now < regOpen) {
-      btn.textContent = '未开启';
-      btn.className = 'reg-entry-btn upcoming';
-    } else if (now >= regOpen && now <= regClose) {
-      btn.className = 'reg-entry-btn open';
-      btn.style.cursor = 'pointer';
-      if (match.id) {
-        API.getRegistrations(match.id).then(list => {
-          const n = list.filter(r => r.status === 'confirmed').length;
-          btn.textContent = `报名中 (${n}/14)`;
-          const twoHBefore = new Date(regClose.getTime() - 2 * 60 * 60 * 1000);
-          if (now >= twoHBefore && n < 14 && warn) {
-            warn.style.display = 'block';
-            warn.textContent = `距截止不足2小时，仅${n}人报名`;
-          }
-        }).catch(() => { btn.textContent = '报名中'; });
-      } else {
-        btn.textContent = '报名中';
-      }
-      btn.addEventListener('click', () => {
-        if (match.id) ensureOpenRegPanel(match);
-      });
-    } else {
-      btn.textContent = '已截止';
-      btn.className = 'reg-entry-btn closed';
-    }
-  });
+  // 报名按钮已移至倒计时栏（renderCountdownRegBtn），此处保留兼容
 }
 
 /* === Registration count refresh (for real-time update after close) === */
 async function refreshMainRegButton(matchId) {
   if (!matchId) return;
   try {
-    const list = await API.getRegistrations(matchId);
-    const n = list.filter(r => r.status === 'confirmed').length;
-
-    const btn = document.querySelector(`[data-reg-match="${matchId}"]`);
-    if (btn) btn.textContent = `报名中 (${n}/14)`;
-
-    const warnEl = document.querySelector(`[data-warn-match="${matchId}"]`);
-    if (warnEl) {
-      if (n < 14) {
-        warnEl.style.display = 'block';
-        warnEl.textContent = `距截止不足2小时，仅${n}人报名`;
-      } else {
-        warnEl.style.display = 'none';
-      }
-    }
+    var list = await API.getRegistrations(matchId);
+    var n = list.filter(function (r) { return r.status === 'confirmed'; }).length;
+    var btn = document.querySelector('[data-reg-match="' + matchId + '"]');
+    if (btn) btn.innerHTML = '<span class="reg-icon"></span>✋ 立即报名 (' + n + '/14)';
   } catch (e) { /* 静默降级 */ }
 }
 window.refreshMainRegButton = refreshMainRegButton;
@@ -1680,6 +1616,58 @@ function initBackToTop() {
 /* === Countdown Timer === */
 const MATCH_DURATION_HOURS = 2; // 每场比赛2小时
 
+function renderCountdownRegBtn(m) {
+  var regEl = document.getElementById("countdownReg");
+  if (!regEl) return;
+  var match = m._apiMatch || m;
+
+  if (!match.id || !match.reg_open_at || !match.reg_close_at) {
+    regEl.innerHTML = '';
+    return;
+  }
+
+  var now = new Date();
+  var regOpen = new Date(match.reg_open_at);
+  var regClose = new Date(match.reg_close_at);
+  var btnClass, btnText, btnClick;
+
+  if (now < regOpen) {
+    btnClass = 'upcoming';
+    btnText = '报名未开启';
+  } else if (now >= regOpen && now <= regClose) {
+    btnClass = 'open';
+    btnText = '✋ 立即报名';
+    btnClick = function () { ensureOpenRegPanel(match); };
+  } else {
+    btnClass = 'closed';
+    btnText = '报名已截止';
+  }
+
+  regEl.innerHTML = '<button class="countdown-reg-btn ' + btnClass + '" data-reg-match="' + (match.id || '') + '"' + (btnClick ? '' : ' disabled') + '><span class="reg-icon"></span>' + btnText + '</button>';
+
+  if (btnClick) {
+    regEl.querySelector('button').addEventListener('click', btnClick);
+  }
+
+  // 如果报名进行中，拉取报名人数显示
+  if (btnClass === 'open' && match.id) {
+    API.getRegistrations(match.id).then(function (list) {
+      var n = list.filter(function (r) { return r.status === 'confirmed'; }).length;
+      var btn = regEl.querySelector('button');
+      if (btn) {
+        btn.innerHTML = '<span class="reg-icon"></span>✋ 立即报名 (' + n + '/14)';
+      }
+      var twoHBefore = new Date(regClose.getTime() - 2 * 60 * 60 * 1000);
+      if (now >= twoHBefore && n < 14) {
+        var warnEl = document.createElement('div');
+        warnEl.className = 'countdown-reg-warning';
+        warnEl.textContent = '距截止不足2小时，仅' + n + '人报名';
+        regEl.appendChild(warnEl);
+      }
+    }).catch(function () {});
+  }
+}
+
 function startCountdown() {
   const upcoming = window.__upcoming;
   if (!upcoming || !upcoming.length) return;
@@ -1708,7 +1696,9 @@ function startCountdown() {
   // 所有比赛都已结束
   if (matchIndex === -1) {
     if (matchEl) matchEl.innerHTML = '<div class="countdown-teams"><span>—</span><span class="countdown-vs">vs</span><span>—</span></div><div class="countdown-meta">暂无比赛</div>';
-    timer.innerHTML = `<span class="countdown-ended">等待新赛程</span>`;
+    timer.innerHTML = '<span class="countdown-ended">等待新赛程</span>';
+    var regEl0 = document.getElementById("countdownReg");
+    if (regEl0) regEl0.innerHTML = '';
     return;
   }
 
@@ -1721,13 +1711,12 @@ function startCountdown() {
     const d = new Date(targetDate);
     const weekdays = ["周日","周一","周二","周三","周四","周五","周六"];
     const wd = weekdays[d.getDay()];
-    const jerseyHTML = m.jersey ? `<span class="countdown-jersey" style="background:${m.jerseyColor};color:#fff">${m.jersey}球衣</span>` : "";
-    matchEl.innerHTML = `
-      <div class="countdown-teams"><span>${m.home}</span><span class="countdown-vs">vs</span><span>${m.away}</span></div>
-      <div class="countdown-meta">${m.date.replace(/-/g, '.').replace(/\./, "年").replace(/\./, "月")}日 ${wd} · ${timeStr}</div>
-      <div class="countdown-venue">${m.venue || ""} ${jerseyHTML}</div>
-    `;
+    const jerseyHTML = m.jersey ? '<span class="countdown-jersey" style="background:' + m.jerseyColor + ';color:#fff">' + m.jersey + '球衣</span>' : "";
+    matchEl.innerHTML = '<div class="countdown-teams"><span>' + m.home + '</span><span class="countdown-vs">vs</span><span>' + m.away + '</span></div><div class="countdown-meta">' + m.date.replace(/-/g, '.').replace(/\./, "年").replace(/\./, "月") + '日 ' + wd + ' · ' + timeStr + '</div><div class="countdown-venue">' + (m.venue || '') + ' ' + jerseyHTML + '</div>';
   }
+
+  // --- 渲染倒计时报名按钮 ---
+  renderCountdownRegBtn(m);
 
   function tick() {
     const now = new Date();
