@@ -135,11 +135,6 @@
     box-shadow: 0 4px 20px rgba(201,169,97,0.3);
   }
   .qr-btn-gold:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(201,169,97,0.5); }
-  .qr-btn-outline {
-    background: transparent; color: var(--gold);
-    border: 1.5px solid var(--gold);
-  }
-  .qr-btn-outline:hover { background: rgba(201,169,97,0.08); }
 
   /* Footer */
   .qr-footer-line {
@@ -188,7 +183,6 @@
 
   <div class="qr-actions">
     <button class="qr-btn qr-btn-gold" id="downloadBtn">保存高清图片</button>
-    <button class="qr-btn qr-btn-outline" id="copyBtn">复制链接</button>
   </div>
 
   <div class="qr-footer-line">
@@ -215,17 +209,6 @@
 var siteUrl = 'https://tomatocc1221.github.io/ideal-fortnighttomato/';
 var qrImg = document.getElementById('qrcodeImg');
 qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=0d0d0d&bgcolor=ffffff&margin=10&data=' + encodeURIComponent(siteUrl);
-
-// Copy link
-document.getElementById('copyBtn').addEventListener('click', function() {
-  navigator.clipboard.writeText(siteUrl).then(function() {
-    var btn = document.getElementById('copyBtn');
-    btn.textContent = '已复制!';
-    setTimeout(function() { btn.textContent = '复制链接'; }, 2000);
-  }).catch(function() {
-    prompt('请手动复制链接:', siteUrl);
-  });
-});
 
 // Download high-res composite
 document.getElementById('downloadBtn').addEventListener('click', function() {
