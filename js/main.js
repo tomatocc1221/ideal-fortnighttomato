@@ -287,7 +287,7 @@ function ensureOpenVotePanel(match) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", function () {
   initNav();
   initLightbox();
   initHeroParticles();
@@ -299,9 +299,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTacticsBoard();
   initScrollReveal();
 
-  // Load overrides from storage and render with merged data
-  await loadAllOverridesAndMerge();
-  initRegButtons();
+  // Render immediately with static data, then enrich from API in background
+  loadAllOverridesAndMerge();
 
   // 监听其他标签页的数据更新（管理员保存赛果后自动刷新战报）
   window.addEventListener('storage', function (e) {
@@ -317,6 +316,71 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 });
+
+/* ========================================
+   Static Fixtures Render (no API, called immediately)
+   ======================================== */
+function renderFixturesStatic() {
+  var data = window.__fixturesData || { results: [], upcoming: [] };
+  var results = data.results || [];
+  var upcoming = data.upcoming || [];
+  var now = new Date();
+  var statusText = { win: "胜", draw: "平", loss: "负" };
+  var statusClass = { win: "win", draw: "draw", loss: "loss" };
+
+  var resultsEl = document.getElementById("resultsList");
+  if (resultsEl) {
+    var visible = results.slice(0, 3);
+    if (visible.length) {
+      resultsEl.innerHTML = visible.map(function (m) {
+        var d = "";
+        var hasG = m.scorers && m.scorers.length > 0;
+        var hasA = m.assisters && m.assisters.length > 0;
+        if (hasG || hasA) {
+          d = '<div class="fixture-detail">';
+          if (hasG) {
+            d += '<span class="fixture-goals"><span class="fixture-goal-dot"></span>';
+            d += m.scorers.map(function (p) { return p.name + '(' + p.num + ')' + (p.goals > 1 ? '×' + p.goals : ''); }).join("  ");
+            d += '</span>';
+          }
+          if (hasA) {
+            d += '<span class="fixture-assists"><span class="fixture-assist-badge">A</span>';
+            d += m.assisters.map(function (p) { return p.name + '(' + p.num + ')' + (p.assists > 1 ? '×' + p.assists : ''); }).join("  ");
+            d += '</span>';
+          }
+          d += '</div>';
+        }
+        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + '</span><span class="fixture-score ' + statusClass[m.result] + '">' + m.score + ' ' + statusText[m.result] + '</span></div>' + d + '</div>';
+      }).join("");
+    } else {
+      resultsEl.innerHTML = '<div class="fixture-empty">暂无比赛记录</div>';
+    }
+    var viewAll = document.getElementById("resultsViewAll");
+    if (viewAll) {
+      viewAll.style.display = "block";
+      viewAll.innerHTML = '<a href="fixtures.html" class="view-all-link">查看全部战绩（' + results.length + ' 场） →</a>';
+    }
+  }
+
+  var upcomingEl = document.getElementById("upcomingList");
+  if (upcomingEl) {
+    var filtered = upcoming.filter(function (m) {
+      if (!m || !m.date) return false;
+      var t = new Date(m.date.replace(/\./g, "-") + "T" + (m.time || "14:40") + ":00");
+      if (isNaN(t.getTime())) return false;
+      return now < new Date(t.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
+    });
+    if (filtered.length === 0) {
+      upcomingEl.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
+    } else {
+      upcomingEl.innerHTML = filtered.slice(0, 3).map(function (m) {
+        var b = m.jersey ? '<span class="fixture-jersey" style="background:' + m.jerseyColor + ';color:#fff">' + m.jersey + '</span>' : "";
+        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + ' ' + b + '</span></div><div class="fixture-meta">' + (m.time || '') + ' · ' + (m.venue || '') + '</div></div>';
+      }).join("");
+    }
+    window.__upcoming = filtered;
+  }
+}
 
 /* ========================================
    Data Merge & Render Orchestrator
@@ -360,6 +424,15 @@ async function loadAllOverridesAndMerge() {
     });
     return { ...a, photos: mergedPhotos };
   });
+
+  // === IMMEDIATE RENDER with static data (before any network) ===
+  renderRoster(mergedPlayers);
+  renderFixturesStatic();
+  initCarousel(mergedSlides);
+  initGalleryOverlay(mergedAlbums);
+  startCountdown();
+  initRegButtons();
+  window.__players = mergedPlayers;
 
   // === 拉取 Supabase 比赛照片，融入统一「比赛瞬间」相册 ===
   var allMatchPhotos = [];
@@ -460,26 +533,20 @@ async function loadAllOverridesAndMerge() {
     // IndexedDB 整体失败时静默降级，渲染照常进行
   }
 
-  // Render with merged data
-  renderRoster(mergedPlayers);
+  // Refresh carousel/gallery with API-enriched data if available
+  if (shuffledSlides.length) initCarousel(shuffledSlides);
+  if (mergedAlbums) initGalleryOverlay(mergedAlbums);
 
-  // Start fixtures and votes in parallel (they're independent API calls)
+  // Fetch API fixtures and votes in parallel
   var fixturesPromise = renderFixtures();
   var votesPromise = API.getVotes().catch(function () { return []; });
 
   await fixturesPromise;
-  initCarousel(shuffledSlides);
-  initGalleryOverlay(mergedAlbums);
-
-  window.__players = mergedPlayers;
-
   var allVotes = await votesPromise;
   window.__allVotes = allVotes;
-
-  // 在 allVotes 加载完成后调用 loadMVPs
   loadMVPs(allVotes);
 
-  // Ballon d'Or 计分：按场次分组，每场积分最高者当选 MVP
+  // Ballon d'Or 计分
   var matchPoints = {};
   allVotes.forEach(function (v) {
     var mid = String(v.match_id);
