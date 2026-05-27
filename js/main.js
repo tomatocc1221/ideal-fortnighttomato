@@ -732,6 +732,7 @@ async function renderFixtures() {
       if (exists) { results.unshift(v); } else { extra.push(v); }
     });
     results = extra.reverse().concat(results);
+    results.sort(function (a, b) { return new Date(b.date.replace(/\./g, '-')) - new Date(a.date.replace(/\./g, '-')); });
   }
 
   // --- 合并即将开赛（从 API 中没有比分的比赛提取） ---
