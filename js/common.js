@@ -85,10 +85,6 @@ function showTableSkeleton(tbody, columns, rows) {
   }
   showSkeleton(tbody, html);
 }
-function hideTableSkeleton(tbody) {
-  hideSkeleton(tbody);
-}
-
 // === 表单验证 ===
 function clearFieldErrors(formEl) {
   formEl.querySelectorAll('.field-error').forEach(function (e) { e.classList.remove('show'); });
@@ -105,11 +101,6 @@ function showFieldError(input, msg) {
   errEl.textContent = msg;
   errEl.classList.add('show');
 }
-function validateRequired(input, msg) {
-  if (!input.value.trim()) { showFieldError(input, msg); return false; }
-  return true;
-}
-
 // === 网络状态感知 ===
 (function initNetworkStatus() {
   var banner = document.createElement('div');

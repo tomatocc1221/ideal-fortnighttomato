@@ -133,10 +133,10 @@ async function sha256(message) {
 if (!window.location.pathname.includes('admin')) {
   setTimeout(function () {
     sb.from('players').select('count').then(function () {
-      console.log('[Supabase] 连接成功');
+      // Supabase connected
     }).catch(function (e) {
       console.warn('[Supabase] 未连接（需先在 Supabase SQL Editor 执行 sql/create_tables.sql）:', e.message);
     });
   }, 2000);
 }
-window.__fixturesData = { results: [], upcoming: [] };
+

@@ -263,26 +263,6 @@ const API = {
     }
   },
 
-  async getPlayerMVPCount(playerName) {
-    try {
-      // 按比赛分组，计算每场积分最高的球员，统计该球员 MVP 次数
-      const allVotes = await sb.from('votes').select('*');
-      var matchPoints = {}; // {matchId: {name: points}}
-      allVotes.forEach(function (v) {
-        var mid = String(v.match_id);
-        if (!matchPoints[mid]) matchPoints[mid] = {};
-        var pts = v.rank === 1 ? 3 : v.rank === 2 ? 2 : 1;
-        matchPoints[mid][v.candidate_name] = (matchPoints[mid][v.candidate_name] || 0) + pts;
-      });
-      var wins = 0;
-      Object.values(matchPoints).forEach(function (pts) {
-        var sorted = Object.entries(pts).sort(function (a, b) { return b[1] - a[1]; });
-        if (sorted.length && sorted[0][0] === playerName) wins++;
-      });
-      return wins;
-    } catch (e) { console.warn('[API] getPlayerMVPCount 失败:', e.message); return 0; }
-  },
-
   // ===== 统计 =====
   async getStats() {
     try {
@@ -327,28 +307,6 @@ const API = {
     } catch (e) {
       return { error: '登录失败: ' + e.message };
     }
-  },
-
-  async getConfig() {
-    try {
-      const rows = await sb.from('config').select('*');
-      const cfg = {};
-      rows.forEach(r => { cfg[r.key] = r.value; });
-      return cfg;
-    } catch (e) {
-      console.warn('[API] getConfig 失败:', e.message);
-      return {};
-    }
-  },
-
-  async saveConfig(data) {
-    // config 表 key 为主键，逐条 upsert
-    const entries = Object.entries(data);
-    for (const [key, value] of entries) {
-      await sb.from('config').delete('key=eq.' + key).catch(() => {});
-      await sb.from('config').insert({ key, value: String(value) });
-    }
-    return data;
   },
 
   // ===== 比赛照片 =====
@@ -411,17 +369,6 @@ const API = {
     } catch (e) {
       console.error('[API] addMatchPhoto:', e);
       throw new Error('保存照片失败: ' + (e.message || '网络错误'));
-    }
-  },
-
-  async updateMatchPhoto(id, data) {
-    try {
-      var row = await sb.from('match_photos').update(data, 'id=eq.' + id);
-      if (!row || !row.length) throw new Error('服务器未返回数据');
-      return { ...row[0], id: String(row[0].id), match_id: String(row[0].match_id) };
-    } catch (e) {
-      console.error('[API] updateMatchPhoto:', e);
-      throw new Error('更新照片失败: ' + (e.message || '网络错误'));
     }
   },
 

@@ -77,15 +77,6 @@ function openDB() {
   return openDB._promise;
 }
 
-const _blobURLs = new Set();
-function revokeBlobURL(url) {
-  if (url && url.startsWith("blob:")) { _blobURLs.add(url); }
-}
-function revokeAllBlobURLs() {
-  _blobURLs.forEach(url => URL.revokeObjectURL(url));
-  _blobURLs.clear();
-}
-
 function loadImage(storeName, key) {
   return openDB().then(db => {
     return new Promise((resolve) => {
@@ -356,7 +347,6 @@ async function loadAllOverridesAndMerge() {
   renderFixtures();       // renders from cache+API, startCountdown+DOM inside
   initCarousel(mergedSlides);
   initGalleryOverlay(mergedAlbums);
-  initRegButtons();
   window.__players = mergedPlayers;
 
   // === 拉取 Supabase 比赛照片，融入统一「比赛瞬间」相册 ===
@@ -811,11 +801,6 @@ async function loadMVPs(prefetchedVotes) {
     el.style.display = '';
     el.outerHTML = '<span class="mvp-badge mvp-badge--result" title="' + topThree.replace(/"/g, '&quot;') + '"><span class="mvp-crown">★</span> MVP: ' + mvpName + '</span>';
   }
-}
-
-/* === Registration Buttons === */
-function initRegButtons() {
-  // 报名按钮已移至倒计时栏（renderCountdownRegBtn），此处保留兼容
 }
 
 /* === Registration count refresh (for real-time update after close) === */

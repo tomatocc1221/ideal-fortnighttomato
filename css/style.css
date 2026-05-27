@@ -715,12 +715,6 @@ img { max-width: 100%; display: block; }
 .fixture-score.draw { color: var(--text-muted); background: rgba(136, 136, 136, 0.06); }
 .fixture-score.loss { color: var(--loss); background: rgba(192, 57, 43, 0.06); }
 
-.fixture-upcoming {
-  color: var(--text-subtle);
-  font-size: 0.85rem;
-  min-width: 56px;
-  text-align: center;
-}
 .fixture-jersey {
   display: inline-block;
   padding: 1px 8px;
@@ -745,10 +739,6 @@ img { max-width: 100%; display: block; }
   letter-spacing: 0.04em;
 }
 
-/* 战果折叠 */
-.results-hidden {
-  overflow: hidden;
-}
 
 .view-all-link {
   display: inline-flex;
@@ -1887,45 +1877,6 @@ img { max-width: 100%; display: block; }
   font-size: 0.72rem;
   color: var(--text-faint);
   font-weight: 500;
-}
-
-/* ——— 报名入口按钮（主页） ——— */
-.reg-entry-btn {
-  display: inline-block;
-  padding: 5px 16px;
-  border-radius: 14px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: 1px solid;
-  cursor: pointer;
-  transition: all var(--duration-fast);
-  letter-spacing: 0.04em;
-  text-align: center;
-  min-width: 90px;
-}
-.reg-entry-btn.open {
-  background: var(--gold);
-  color: #0d0d0d;
-  border-color: var(--gold);
-}
-.reg-entry-btn.open:hover { background: #e0c070; }
-.reg-entry-btn.closed {
-  background: transparent;
-  color: var(--text-faint);
-  border-color: var(--border-muted);
-  cursor: default;
-}
-.reg-entry-btn.upcoming {
-  background: transparent;
-  color: var(--text-dim);
-  border-color: var(--border-muted);
-  cursor: default;
-}
-.reg-entry-warning {
-  font-size: 0.75rem;
-  color: #c0392b;
-  margin-top: 4px;
-  letter-spacing: 0.03em;
 }
 
 /* ——— 移动端 ——— */
