@@ -321,18 +321,17 @@ document.addEventListener("DOMContentLoaded", function () {
    Data Merge & Render Orchestrator
    ======================================== */
 async function loadAllOverridesAndMerge() {
-  const overrides = loadOverrides();
-  const players = getDefaultPlayers();
+  var overrides = loadOverrides();
+  var players = getDefaultPlayers();
 
-  // Start network calls early
   var photosPromise = API.getAllPhotosGrouped().catch(function (e) {
     console.warn('[Gallery] 比赛照片获取失败:', e.message);
     return {};
   });
 
-  const mergedPlayers = players.map(p => {
-    const ov = overrides.players[p.number] || {};
-    const merged = { ...p };
+  var mergedPlayers = players.map(function (p) {
+    var ov = overrides.players[p.number] || {};
+    var merged = Object.assign({}, p);
     if (ov.role) merged.role = ov.role;
     if (ov.bio) merged.bio = ov.bio;
     if (ov.height) merged.height = ov.height;
@@ -341,20 +340,20 @@ async function loadAllOverridesAndMerge() {
     return merged;
   });
 
-  const defaultSlides = getDefaultSlides();
-  const mergedSlides = defaultSlides.map((s, i) => {
-    const ov = overrides.slides[i] || {};
-    return { ...s, label: ov.label ?? s.label };
+  var defaultSlides = getDefaultSlides();
+  var mergedSlides = defaultSlides.map(function (s, i) {
+    var ov = overrides.slides[i] || {};
+    return Object.assign({}, s, { label: ov.label != null ? ov.label : s.label });
   });
 
-  const defaultAlbums = getDefaultAlbums();
-  const mergedAlbums = defaultAlbums.map(a => {
-    const mergedPhotos = a.photos.map((p, i) => {
-      const key = a.title + "||" + i;
-      const ov = overrides.albums[key] || {};
-      return { ...p, label: ov.label ?? p.label };
+  var defaultAlbums = getDefaultAlbums();
+  var mergedAlbums = defaultAlbums.map(function (a) {
+    var mergedPhotos = a.photos.map(function (p, i) {
+      var key = a.title + "||" + i;
+      var ov = overrides.albums[key] || {};
+      return Object.assign({}, p, { label: ov.label != null ? ov.label : p.label });
     });
-    return { ...a, photos: mergedPhotos };
+    return Object.assign({}, a, { photos: mergedPhotos });
   });
 
   // === IMMEDIATE RENDER (sync, before any await) ===
@@ -434,32 +433,27 @@ async function loadAllOverridesAndMerge() {
     shuffledSlides = pool.slice(0, 5);
   }
 
-  // Load images: file-based avatars first, then IndexedDB fallback
-  const playerImagePromises = mergedPlayers.map(p =>
-    checkFileAvatar(p.number).then(fileUrl => {
+  var playerImagePromises = mergedPlayers.map(function (p) {
+    return checkFileAvatar(p.number).then(function (fileUrl) {
       if (fileUrl) { p._avatarUrl = fileUrl; return; }
-      return loadImage("playerAvatars", p.number).then(url => { if (url) p._avatarUrl = url; });
-    })
-  );
-  const slideImagePromises = shuffledSlides.map((s, i) =>
-    loadImage("carouselPhotos", i).then(url => { if (url) s._imageUrl = url; })
-  );
-  const albumImagePromises = [];
-  mergedAlbums.forEach(a => {
-    a.photos.forEach((p, i) => {
-      const key = a.title + "||" + i;
+      return loadImage("playerAvatars", p.number).then(function (url) { if (url) p._avatarUrl = url; });
+    });
+  });
+  var slideImagePromises = shuffledSlides.map(function (s, i) {
+    return loadImage("carouselPhotos", i).then(function (url) { if (url) s._imageUrl = url; });
+  });
+  var albumImagePromises = [];
+  mergedAlbums.forEach(function (a) {
+    a.photos.forEach(function (p, i) {
+      var key = a.title + "||" + i;
       albumImagePromises.push(
-        loadImage("galleryPhotos", key).then(url => { if (url) p._imageUrl = url; })
+        loadImage("galleryPhotos", key).then(function (url) { if (url) p._imageUrl = url; })
       );
     });
   });
 
   try {
-    await Promise.all([
-      ...playerImagePromises,
-      ...slideImagePromises,
-      ...albumImagePromises,
-    ]);
+    await Promise.all(playerImagePromises.concat(slideImagePromises).concat(albumImagePromises));
   } catch (e) {
     // IndexedDB 整体失败时静默降级，渲染照常进行
   }
@@ -1533,7 +1527,7 @@ function openPlayerDetail(index) {
   var mvpCount = (window.__mvpCounts && window.__mvpCounts[p.name]) || 0;
   el.info.innerHTML = `
     <div class="player-info-item">
-      <div class="player-info-value">${p.age ?? "—"}</div>
+      <div class="player-info-value">${p.age != null ? p.age : "—"}</div>
       <div class="player-info-label">年龄</div>
     </div>
     <div class="player-info-item">

@@ -574,8 +574,8 @@ function hideResultForm() {
 }
 
 function loadResultForm(m) {
-  document.getElementById('rfHomeScore').value = m.home_score ?? '';
-  document.getElementById('rfAwayScore').value = m.away_score ?? '';
+  document.getElementById('rfHomeScore').value = m.home_score != null ? m.home_score : '';
+  document.getElementById('rfAwayScore').value = m.away_score != null ? m.away_score : '';
   updateResultPreview();
   renderScorerRows(m.scorers || []);
   renderAssisterRows(m.assisters || []);

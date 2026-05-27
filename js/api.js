@@ -127,8 +127,8 @@ const API = {
         max_substitutes: data.max_substitutes || 4,
         reg_open_at: data.reg_open_at,
         reg_close_at: data.reg_close_at,
-        home_score: data.home_score ?? null,
-        away_score: data.away_score ?? null,
+        home_score: data.home_score != null ? data.home_score : null,
+        away_score: data.away_score != null ? data.away_score : null,
         result: data.result || '',
         scorers: data.scorers || [],
         assisters: data.assisters || []
