@@ -194,14 +194,22 @@ function updateRegActions() {
     const statusText = confirmedCount < maxPlayers ? '正选' : '候补';
     status.innerHTML = '<span class="reg-tag open">报名开放中</span>';
     btns.innerHTML = `<button class="btn btn-gold reg-btn" id="regJoinBtn">立即报名（${statusText}）</button>`;
-    document.getElementById('regJoinBtn').addEventListener('click', async () => {
-      await API.addRegistration({
-        match_id: _regMatch.id,
-        player_name: _regPlayer.name,
-        player_number: _regPlayer.number,
-        status: confirmedCount < maxPlayers ? 'confirmed' : 'waitlist'
-      });
-      await refreshRegList();
+    document.getElementById('regJoinBtn').addEventListener('click', async function () {
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = '提交中...';
+      try {
+        await API.addRegistration({
+          match_id: _regMatch.id,
+          player_name: _regPlayer.name,
+          player_number: _regPlayer.number,
+          status: confirmedCount < maxPlayers ? 'confirmed' : 'waitlist'
+        });
+        await refreshRegList();
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = '立即报名（' + statusText + '）';
+      }
     });
   }
 }
