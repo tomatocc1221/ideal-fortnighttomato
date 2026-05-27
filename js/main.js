@@ -400,19 +400,10 @@ async function loadAllOverridesAndMerge() {
     });
   }
 
-  // === 轮播：从全部照片中随机抽取 5 张 ===
+  // === 轮播：用全部真实照片，随机排列 ===
   var carouselPool = [];
-  // 静态照片
-  mergedSlides.forEach(function (s) { carouselPool.push(s); });
-  // 比赛照片
+  mergedSlides.forEach(function (s) { if (s._imageUrl) carouselPool.push(s); });
   allMatchPhotos.forEach(function (p) { carouselPool.push({ label: p.label, _imageUrl: p._imageUrl }); });
-  // 如果照片不够，用占位图标补充
-  var placeholders = [
-    { icon: "⚽", label: "首场比赛" }, { icon: "🏟️", label: "主场作战" },
-    { icon: "🏃", label: "赛前热身" }, { icon: "🎯", label: "精准射门" },
-    { icon: "🔥", label: "激烈对抗" }, { icon: "🏆", label: "赛后合影" }, { icon: "📸", label: "精彩花絮" }
-  ];
-  placeholders.forEach(function (ph) { carouselPool.push(ph); });
 
   var shuffledSlides = [];
   if (carouselPool.length) {
