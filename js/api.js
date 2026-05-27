@@ -173,7 +173,13 @@ const API = {
   },
 
   async addRegistration(data) {
-    const row = await sb.from('registrations').insert({
+    // 检查是否已有有效报名（正选/候补），防止重复
+    var existing = await sb.from('registrations').select('*', 'match_id=eq.' + parseInt(data.match_id) + '&player_name=eq.' + encodeURIComponent(data.player_name));
+    var active = existing.filter(function (r) { return r.status === 'confirmed' || r.status === 'waitlist'; });
+    if (active.length) {
+      throw new Error('该队员已报名，请勿重复提交');
+    }
+    var row = await sb.from('registrations').insert({
       match_id: parseInt(data.match_id),
       player_name: data.player_name,
       player_number: data.player_number,

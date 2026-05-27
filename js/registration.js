@@ -144,10 +144,16 @@ function updateRegActions() {
 
   if (!_regMatch || !_regPlayer) return;
 
-  const now = new Date();
-  const regOpen = new Date(_regMatch.reg_open_at);
-  const regClose = new Date(_regMatch.reg_close_at);
-  const myReg = _regList.find(r => r.player_name === _regPlayer.name);
+  var now = new Date();
+  var regOpen = new Date(_regMatch.reg_open_at);
+  var regClose = new Date(_regMatch.reg_close_at);
+
+  // 先找有效报名（正选或候补），防止重复报名
+  var activeReg = _regList.find(function (r) { return r.player_name === _regPlayer.name && (r.status === 'confirmed' || r.status === 'waitlist'); });
+  var cancelledReg = null;
+  if (!activeReg) {
+    cancelledReg = _regList.find(function (r) { return r.player_name === _regPlayer.name && r.status === 'cancelled'; });
+  }
 
   if (now < regOpen) {
     status.innerHTML = '<span class="reg-tag closed">报名未开启</span>';
@@ -156,13 +162,10 @@ function updateRegActions() {
   }
 
   if (now > regClose) {
-    // 截止后：已报名队员仍可请假，但不可新报名
-    if (myReg && (myReg.status === 'confirmed' || myReg.status === 'waitlist')) {
+    if (activeReg) {
       status.innerHTML = '<span class="reg-tag closed">报名已截止</span>';
       btns.innerHTML = '<button class="btn btn-cancel reg-btn" id="regLeaveBtn">我要请假</button>';
-      document.getElementById('regLeaveBtn').addEventListener('click', () => {
-        cancelForm.style.display = 'flex';
-      });
+      document.getElementById('regLeaveBtn').addEventListener('click', function () { cancelForm.style.display = 'flex'; });
       return;
     }
     status.innerHTML = '<span class="reg-tag closed">报名已截止</span>';
@@ -171,31 +174,25 @@ function updateRegActions() {
   }
 
   // 报名窗口内
-  if (myReg) {
-    if (myReg.status === 'confirmed') {
+  if (activeReg) {
+    if (activeReg.status === 'confirmed') {
       status.innerHTML = '<span class="reg-tag confirmed">已报名 · 正选</span>';
-      btns.innerHTML = '<button class="btn btn-cancel reg-btn" id="regLeaveBtn">我要请假</button>';
-      document.getElementById('regLeaveBtn').addEventListener('click', () => {
-        cancelForm.style.display = 'flex';
-      });
-    } else if (myReg.status === 'waitlist') {
+    } else {
       status.innerHTML = '<span class="reg-tag waitlist">已报名 · 候补</span>';
-      btns.innerHTML = '<button class="btn btn-cancel reg-btn" id="regLeaveBtn">我要请假</button>';
-      document.getElementById('regLeaveBtn').addEventListener('click', () => {
-        cancelForm.style.display = 'flex';
-      });
-    } else if (myReg.status === 'cancelled') {
-      status.innerHTML = '<span class="reg-tag cancelled">已请假</span>';
-      const confirmedCount = _regList.filter(r => r.status === 'confirmed').length;
-      const maxPlayers = _regMatch.max_players || 13;
-      const nextStatus = confirmedCount < maxPlayers ? '正选' : '候补';
-      btns.innerHTML = `<button class="btn btn-gold reg-btn" id="regRejoinBtn">重新报名（${nextStatus}）</button>`;
-      document.getElementById('regRejoinBtn').addEventListener('click', async () => {
-        const newStatus = confirmedCount < maxPlayers ? 'confirmed' : 'waitlist';
-        await API.updateRegistration(myReg.id, { status: newStatus, cancel_reason: '' });
-        await refreshRegList();
-      });
     }
+    btns.innerHTML = '<button class="btn btn-cancel reg-btn" id="regLeaveBtn">我要请假</button>';
+    document.getElementById('regLeaveBtn').addEventListener('click', function () { cancelForm.style.display = 'flex'; });
+  } else if (cancelledReg) {
+    status.innerHTML = '<span class="reg-tag cancelled">已请假</span>';
+    var confirmedCount = _regList.filter(function (r) { return r.status === 'confirmed'; }).length;
+    var maxPlayers = _regMatch.max_players || 13;
+    var nextStatus = confirmedCount < maxPlayers ? '正选' : '候补';
+    btns.innerHTML = '<button class="btn btn-gold reg-btn" id="regRejoinBtn">重新报名（' + nextStatus + '）</button>';
+    document.getElementById('regRejoinBtn').addEventListener('click', async function () {
+      var ns = confirmedCount < maxPlayers ? 'confirmed' : 'waitlist';
+      await API.updateRegistration(cancelledReg.id, { status: ns, cancel_reason: '' });
+      await refreshRegList();
+    });
   } else {
     const confirmedCount = _regList.filter(r => r.status === 'confirmed').length;
     const maxPlayers = _regMatch.max_players || 13;
