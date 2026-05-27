@@ -321,7 +321,11 @@ document.addEventListener("DOMContentLoaded", function () {
    Static Fixtures Render (no API, called immediately)
    ======================================== */
 function renderFixturesStatic() {
-  var data = window.__fixturesData || { results: [], upcoming: [] };
+  // Try localStorage cache first (from previous API fetch), then static data
+  var cached = null;
+  try { cached = JSON.parse(localStorage.getItem('jrsf_fixtures_cache')); } catch (e) {}
+  var data = (cached && cached.results && cached.results.length) ? cached
+           : (window.__fixturesData || { results: [], upcoming: [] });
   var results = data.results || [];
   var upcoming = data.upcoming || [];
   var now = new Date();
@@ -757,6 +761,9 @@ async function renderFixtures() {
   upcoming.sort(function (a, b) {
     return new Date(a.date.replace(/\./g, '-')) - new Date(b.date.replace(/\./g, '-'));
   });
+
+  // Cache for instant display on next refresh
+  try { localStorage.setItem('jrsf_fixtures_cache', JSON.stringify({ results: results, upcoming: upcoming })); } catch (e) {}
 
   // --- 渲染 ---
   const statusText = { win: "胜", draw: "平", loss: "负" };
