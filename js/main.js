@@ -686,13 +686,21 @@ async function renderFixtures() {
   var staticData = window.__fixturesData || { results: [], upcoming: [] };
 
   // === IMMEDIATE: render from cache/static (sync, no network) ===
-  var cached = null;
-  try { cached = JSON.parse(localStorage.getItem('jrsf_fixtures_cache')); } catch (e) {}
-  var src = (cached && ((cached.results && cached.results.length) || (cached.upcoming && cached.upcoming.length))) ? cached : staticData;
-  var results = (src.results || []).slice();
-  var upcoming = (src.upcoming || []).slice();
-  _renderFixturesDOM(results, upcoming, new Date());
-  startCountdown();
+  try {
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem('jrsf_fixtures_cache')); } catch (e) {}
+    var src = (cached && ((cached.results && cached.results.length) || (cached.upcoming && cached.upcoming.length))) ? cached : staticData;
+    var results = (src.results || []).slice();
+    var upcoming = (src.upcoming || []).slice();
+    _renderFixturesDOM(results, upcoming, new Date());
+    startCountdown();
+  } catch (e) {
+    // Fallback: render empty fixtures on any error
+    var el1 = document.getElementById('resultsList');
+    if (el1) el1.innerHTML = '<div class="fixture-empty">暂无比赛记录</div>';
+    var el2 = document.getElementById('upcomingList');
+    if (el2) el2.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
+  }
 
   // === ASYNC: fetch from API and update ===
   var apiResults = [], apiMatches = [];
