@@ -456,158 +456,115 @@ img { max-width: 100%; display: block; }
 .roster-group-title.role-fw { background: rgba(248,113,113,0.22); box-shadow: 0 0 18px rgba(248,113,113,0.15), inset 0 1px 0 rgba(255,255,255,0.06); }
 .roster-group-title:not([class*="role-"]) { background: rgba(212,168,67,0.25); box-shadow: 0 0 18px rgba(212,168,67,0.15), inset 0 1px 0 rgba(255,255,255,0.06); }
 
+/* ── 球员卡片 (数据卡片风格) ── */
 .player-card {
-  perspective: 800px;
-  height: 260px;
-  cursor: pointer;
-  transition: transform 0.35s ease;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  padding: 16px;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .player-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
+  border-color: rgba(212,168,67,0.3);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(212,168,67,0.06);
 }
 
-.player-card-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.35s ease;
-  -webkit-transform-style: preserve-3d;
-  transform-style: preserve-3d;
+/* ——— Top: avatar + info ——— */
+.player-card-top {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  margin-bottom: 10px;
 }
-.player-card.flipped .player-card-inner {
-  transform: rotateY(180deg);
-}
-.player-card:hover .player-card-inner {
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 30px rgba(212, 168, 67, 0.08);
-}
-
-.player-card-front,
-.player-card-back {
-  position: absolute;
-  inset: 0;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  border-radius: 10px;
-  overflow: hidden;
-  text-align: center;
-  padding: 28px 16px 20px;
-  border: 1px solid var(--border-default);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.player-card-front {
-  background: var(--bg-card);
-  position: relative;
-  transition: border-color 0.35s ease, box-shadow 0.35s ease;
-}
-.player-card:hover .player-card-front {
-  border-color: rgba(212, 168, 67, 0.35);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(212, 168, 67, 0.08);
-}
-.player-card.captain .player-card-front {
-  border-color: var(--gold);
-  box-shadow: 0 0 20px rgba(212, 168, 67, 0.12);
-}
-
-.player-card-back {
-  background: var(--bg-card-alt);
-  border-color: var(--gold);
-  transform: rotateY(180deg);
-  padding: 20px 16px;
-  justify-content: space-between;
-}
-
-.player-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin: 0 auto 12px;
+.player-card-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
   background: var(--border-default);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  color: var(--text-faint);
-  border: 2px solid var(--border-muted);
-  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; color: #fff; flex-shrink: 0;
+  overflow: hidden;
 }
-.player-avatar-initial {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--gold);
-  opacity: 0.7;
-  line-height: 1;
+.player-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.player-card-avatar-initial { font-weight: 700; color: var(--gold); opacity: 0.8; }
+.player-card-info { flex: 1; min-width: 0; }
+.player-card-num {
+  font-size: 1.8rem; font-weight: 800; color: var(--gold);
+  font-family: var(--font-heading); line-height: 1; letter-spacing: 0.04em;
 }
-.player-card.captain .player-avatar {
-  border-color: var(--gold);
-  box-shadow: 0 0 16px rgba(212, 168, 67, 0.2);
+.player-card-name { font-size: 0.9rem; font-weight: 600; color: #fff; }
+.player-card-role {
+  display: inline-block; margin-top: 2px; padding: 1px 8px;
+  border-radius: 3px; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.06em;
+  background: rgba(212,168,67,0.12); color: var(--gold);
 }
-.player-card.captain .player-avatar-initial {
-  opacity: 1;
-  color: var(--gold);
+.player-card-role.role-fw { background: rgba(248,113,113,0.15); color: var(--role-fw); }
+.player-card-role.role-mf { background: rgba(74,222,128,0.15); color: var(--role-mf); }
+.player-card-role.role-df { background: rgba(96,165,250,0.15); color: var(--role-df); }
+.player-card-role.role-gk { background: rgba(251,146,60,0.15); color: var(--role-gk); }
+
+/* ——— Stats grid ——— */
+.player-card-stats {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 0; text-align: center; padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.04); margin-bottom: 8px;
+}
+.pcs-item { }
+.pcs-val {
+  font-size: 0.95rem; font-weight: 700; color: #fff;
+  font-family: "SF Mono","Consolas",monospace;
+}
+.pcs-label { font-size: 0.52rem; color: var(--text-faint); letter-spacing: 0.06em; margin-top: 1px; }
+
+/* ——— Attribute bars ——— */
+.player-card-bars { display: flex; flex-direction: column; gap: 4px; }
+.pcb-row { display: flex; align-items: center; gap: 8px; }
+.pcb-label {
+  width: 28px; font-size: 0.58rem; color: var(--text-dim); text-align: right; flex-shrink: 0;
+}
+.pcb-track { flex: 1; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+.pcb-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.pcb-fill.bar-green  { background: #4ade80; }
+.pcb-fill.bar-red    { background: #f87171; }
+.pcb-fill.bar-gold   { background: #c9a961; }
+.pcb-fill.bar-blue   { background: #60a5fa; }
+.pcb-fill.bar-orange { background: #fb923c; }
+.pcb-val {
+  width: 14px; text-align: right; font-size: 0.55rem; font-weight: 700;
+  color: #aaa; flex-shrink: 0; font-family: "SF Mono","Consolas",monospace;
 }
 
-.player-number {
-  font-size: 2rem;
-  font-weight: 900;
-  color: var(--gold);
-  line-height: 1;
+/* ——— Detail button ——— */
+.player-card-detail-btn {
+  display: block; width: 100%; margin-top: 10px; padding: 6px 0;
+  background: transparent; border: 1px solid rgba(201,169,97,0.15);
+  border-radius: 6px; color: var(--text-dim); font-size: 0.65rem;
+  letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s;
+  font-family: inherit;
 }
-.player-name {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-top: 6px;
+.player-card-detail-btn:hover {
+  border-color: rgba(201,169,97,0.4); color: var(--gold);
+  background: rgba(201,169,97,0.04);
 }
-.player-role {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 3px 14px;
-  background: rgba(212, 168, 67, 0.12);
-  border: 1px solid rgba(212, 168, 67, 0.4);
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--gold);
-  letter-spacing: 0.06em;
+
+/* ——— Captain ——— */
+.player-card.captain {
+  border-color: rgba(201,169,97,0.4);
+  box-shadow: 0 0 16px rgba(201,169,97,0.08);
 }
-.player-role.role-fw {
-  background: rgba(248, 113, 113, 0.15);
-  border-color: rgba(248, 113, 113, 0.4);
-  color: var(--role-fw);
-}
-.player-role.role-mf {
-  background: rgba(74, 222, 128, 0.15);
-  border-color: rgba(74, 222, 128, 0.4);
-  color: var(--role-mf);
-}
-.player-role.role-df {
-  background: rgba(96, 165, 250, 0.15);
-  border-color: rgba(96, 165, 250, 0.4);
-  color: var(--role-df);
-}
-.player-role.role-gk {
-  background: rgba(251, 146, 60, 0.15);
-  border-color: rgba(251, 146, 60, 0.4);
-  color: var(--role-gk);
+.player-card.captain .player-card-avatar {
+  box-shadow: 0 0 10px rgba(201,169,97,0.25);
 }
 
 /* ——— 出勤率卡片特效 ——— */
-.player-card.card-gold .player-card-front {
-  border-color: rgba(201,169,97,0.5) !important;
-  box-shadow: 0 0 18px rgba(201,169,97,0.15), inset 0 0 18px rgba(201,169,97,0.03);
+.player-card.card-gold {
+  border-color: rgba(201,169,97,0.45) !important;
+  box-shadow: 0 0 16px rgba(201,169,97,0.1), inset 0 1px 0 rgba(201,169,97,0.04);
 }
-.player-card.card-worn .player-card-front {
-  filter: saturate(0.5) brightness(0.85);
-  border-color: var(--border-muted) !important;
+.player-card.card-worn {
+  filter: saturate(0.5) brightness(0.88);
 }
-.player-card.card-broken .player-card-front {
-  filter: saturate(0.2) brightness(0.6);
-  border-color: rgba(192,57,43,0.3) !important;
-  box-shadow: inset 0 0 30px rgba(192,57,43,0.08);
+.player-card.card-broken {
+  filter: saturate(0.2) brightness(0.65);
+  border-color: rgba(192,57,43,0.25) !important;
 }
 
 /* ——— 球员详情：生涯摘要 ——— */
@@ -659,34 +616,6 @@ img { max-width: 100%; display: block; }
 .player-transfer-btn:hover {
   border-color: var(--gold); color: var(--gold);
   background: rgba(201,169,97,0.06);
-}
-
-/* Back face */
-.player-back-name {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--gold);
-}
-.player-back-bio {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin: 8px 0;
-}
-.player-back-btn {
-  background: none;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: 6px 20px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  cursor: pointer;
-  letter-spacing: 0.04em;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-.player-back-btn:hover {
-  background: var(--gold);
-  color: var(--bg-primary);
 }
 
 /* === Fixtures === */
@@ -1275,16 +1204,15 @@ img { max-width: 100%; display: block; }
   /* Roster */
   .roster-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .roster-group-title { font-size: 1rem; padding: 8px 16px; margin-bottom: 0; }
-  .player-card { height: 190px; }
-  .player-card-front,
-  .player-card-back { padding: 16px 10px 14px; }
-  .player-avatar { width: 52px; height: 52px; margin-bottom: 8px; font-size: 1.3rem; }
-  .player-number { font-size: 1.35rem; }
-  .player-name { font-size: 0.88rem; margin-top: 3px; }
-  .player-role { font-size: 0.68rem; padding: 2px 10px; margin-top: 3px; }
-  .player-back-name { font-size: 0.95rem; }
-  .player-back-bio { font-size: 0.78rem; }
-  .player-back-btn { padding: 8px 16px; font-size: 0.78rem; min-height: 36px; }
+  .player-card { padding: 12px; }
+  .player-card-avatar { width: 40px; height: 40px; }
+  .player-card-num { font-size: 1.5rem; }
+  .player-card-name { font-size: 0.82rem; }
+  .player-card-role { font-size: 0.54rem; }
+  .pcs-val { font-size: 0.82rem; }
+  .pcb-label { width: 24px; font-size: 0.54rem; }
+  .pcb-val { font-size: 0.5rem; }
+  .player-card-detail-btn { font-size: 0.6rem; padding: 5px 0; }
 
   /* Fixtures */
   .fixtures-columns { grid-template-columns: 1fr; gap: 36px; }
@@ -1345,16 +1273,16 @@ img { max-width: 100%; display: block; }
   .roster-group-title { font-size: 0.85rem; padding: 6px 10px; margin-bottom: 2px; }
   .carousel-slide-placeholder { font-size: 0.8rem; padding: 8px 16px; }
   .about-stats { grid-template-columns: 1fr; }
-  .player-card { height: 170px; }
-  .player-card-front,
-  .player-card-back { padding: 12px 6px 10px; }
-  .player-avatar { width: 44px; height: 44px; margin-bottom: 6px; font-size: 1.1rem; }
-  .player-number { font-size: 1.2rem; }
-  .player-name { font-size: 0.78rem; margin-top: 2px; }
-  .player-role { font-size: 0.65rem; padding: 1px 8px; margin-top: 2px; }
-  .player-back-name { font-size: 0.85rem; }
-  .player-back-bio { font-size: 0.7rem; }
-  .player-back-btn { padding: 6px 12px; font-size: 0.72rem; min-height: 36px; }
+  .player-card { padding: 10px; }
+  .player-card-avatar { width: 36px; height: 36px; }
+  .player-card-num { font-size: 1.3rem; }
+  .player-card-name { font-size: 0.75rem; }
+  .player-card-role { font-size: 0.5rem; padding: 1px 6px; }
+  .pcs-val { font-size: 0.75rem; }
+  .pcb-label { width: 22px; font-size: 0.5rem; }
+  .pcb-track { height: 2px; }
+  .pcb-val { font-size: 0.48rem; }
+  .player-card-detail-btn { font-size: 0.56rem; padding: 4px 0; margin-top: 8px; }
 }
 
 /* ========================================

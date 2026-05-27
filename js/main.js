@@ -584,26 +584,45 @@ function renderRoster(playersOverride) {
     }
     var origIndex = players.indexOf(p);
     var cardClass = p._cardClass || '';
+    var goals = p._goals || 0, asts = p._assists || 0, apps = p._apps || 0, lv = p._leaves || 0;
+    var mvp = (window.__mvpCounts && window.__mvpCounts[p.name]) || 0;
+    var attrs = p._attrs || { speed: 5, power: 5, shoot: 5, vision: 5, stamina: 5 };
+    var bars = [
+      { label: '速度', key: 'speed',  color: 'bar-green' },
+      { label: '力量', key: 'power',  color: 'bar-red' },
+      { label: '射门', key: 'shoot',  color: 'bar-gold' },
+      { label: '意识', key: 'vision', color: 'bar-blue' },
+      { label: '体能', key: 'stamina',color: 'bar-orange' }
+    ];
 
     html +=
-      '<div class="player-card ' + cardClass + (p.captain ? ' captain' : '') + '" data-player-index="' + origIndex + '" data-player-number="' + p.number + '" onclick="flipCard(this)">' +
-        '<div class="player-card-inner">' +
-          '<div class="player-card-front">' +
-            '<div class="player-avatar">' +
-              (p._avatarUrl
-                ? '<img src="' + p._avatarUrl + '" alt="' + p.name + '" decoding="sync">'
-                : '<span class="player-avatar-initial">' + p.name[0] + '</span>') +
-            '</div>' +
-            '<div class="player-number">' + p.number + '</div>' +
-            '<div class="player-name">' + p.name + '</div>' +
-            '<div class="player-role ' + getPositionGroup(p.role) + '">' + p.role + '</div>' +
+      '<div class="player-card ' + cardClass + (p.captain ? ' captain' : '') + '" data-player-index="' + origIndex + '" data-player-number="' + p.number + '">' +
+        '<div class="player-card-top">' +
+          '<div class="player-card-avatar">' +
+            (p._avatarUrl
+              ? '<img src="' + p._avatarUrl + '" alt="' + p.name + '">'
+              : '<span class="player-card-avatar-initial">' + p.name[0] + '</span>') +
           '</div>' +
-          '<div class="player-card-back">' +
-            '<div class="player-back-name">' + p.name + ' · ' + p.number + '号</div>' +
-            '<div class="player-back-bio">' + (p.bio || '场上位置：' + p.role) + '</div>' +
-            '<button class="player-back-btn" onclick="event.stopPropagation(); openPlayerDetail(' + origIndex + ')">查看详情</button>' +
+          '<div class="player-card-info">' +
+            '<div class="player-card-num">' + p.number + '</div>' +
+            '<div class="player-card-name">' + p.name + '</div>' +
+            '<div class="player-card-role ' + getPositionGroup(p.role) + '">' + (p.role || '') + '</div>' +
           '</div>' +
         '</div>' +
+        '<div class="player-card-stats">' +
+          '<div class="pcs-item"><div class="pcs-val">' + goals + '</div><div class="pcs-label">进球</div></div>' +
+          '<div class="pcs-item"><div class="pcs-val">' + asts + '</div><div class="pcs-label">助攻</div></div>' +
+          '<div class="pcs-item"><div class="pcs-val">' + mvp + '</div><div class="pcs-label">MVP</div></div>' +
+          '<div class="pcs-item"><div class="pcs-val">' + apps + '</div><div class="pcs-label">出场</div></div>' +
+          '<div class="pcs-item"><div class="pcs-val">' + lv + '</div><div class="pcs-label">请假</div></div>' +
+        '</div>' +
+        '<div class="player-card-bars">' +
+          bars.map(function (b) {
+            var v = attrs[b.key] || 5;
+            return '<div class="pcb-row"><span class="pcb-label">' + b.label + '</span><div class="pcb-track"><div class="pcb-fill ' + b.color + '" style="width:' + (v * 10) + '%"></div></div><span class="pcb-val">' + v + '</span></div>';
+          }).join('') +
+        '</div>' +
+        '<button class="player-card-detail-btn" onclick="event.stopPropagation(); openPlayerDetail(' + origIndex + ')">球员档案 →</button>' +
       '</div>';
   });
 
@@ -1587,7 +1606,6 @@ function closePlayerDetail() {
   if (!__pd) return;
   __pd.overlay.classList.remove("open");
   document.body.style.overflow = "";
-  document.querySelectorAll(".player-card.flipped").forEach(c => c.classList.remove("flipped"));
 }
 
 /* === Scroll Reveal === */
@@ -1853,11 +1871,4 @@ function startCountdown() {
 }
 
 /* === Card Flip === */
-function flipCard(card) {
-  const wasFlipped = card.classList.contains("flipped");
-  document.querySelectorAll(".player-card.flipped").forEach(c => c.classList.remove("flipped"));
-  if (!wasFlipped) {
-    card.classList.add("flipped");
-  }
-}
 
