@@ -476,7 +476,15 @@ async function loadAllOverridesAndMerge() {
       p._value = Math.max(1000, Math.min(20000, 5000 + p._mvpWins * 3000 + p._goals * 800 + p._assists * 400 - p._leaves * 1500));
       p._attendance = attendance;
     });
-    renderRoster(window.__players);
+    // Load bg photos in background, update cards individually
+    window.__players.forEach(function (p) {
+      var img = new Image();
+      img.onload = function () {
+        var card = document.querySelector('.player-card[data-player-number="' + p.number + '"] .player-card-bg');
+        if (card) card.style.display = '';
+      };
+      img.src = 'images/players-bg/' + p.number + '.webp';
+    });
   }
 }
 
@@ -616,8 +624,8 @@ function renderRoster(playersOverride) {
             '<button class="player-card-detail-btn" onclick="event.stopPropagation(); openPlayerDetail(' + origIndex + ')">球员档案 →</button>' +
           '</div>' +
           '<div class="player-card-back">' +
-            '<div class="player-card-bg">' +
-              '<img class="player-card-bg-img" src="images/players-bg/' + p.number + '.webp" alt="" onerror="this.parentElement.style.display=\'none\'" onload="this.parentElement.style.display=\'\'">' +
+            '<div class="player-card-bg" style="display:none">' +
+              '<img class="player-card-bg-img" src="images/players-bg/' + p.number + '.webp" alt="">' +
               '<div class="player-card-bg-glass"></div>' +
               '<div class="player-card-bg-name">' + p.name + '<span>' + p.number + '</span></div>' +
             '</div>' +
