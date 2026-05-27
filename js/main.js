@@ -403,7 +403,7 @@ async function loadAllOverridesAndMerge() {
   // === 轮播：用全部真实照片，随机排列 ===
   var carouselPool = [];
   mergedSlides.forEach(function (s) { if (s._imageUrl) carouselPool.push(s); });
-  allMatchPhotos.forEach(function (p) { carouselPool.push({ label: p.label, _imageUrl: p._imageUrl }); });
+  allMatchPhotos.forEach(function (p) { carouselPool.push({ label: p.label, _imageUrl: p._imageUrl, _thumbUrl: p._thumbUrl }); });
 
   var shuffledSlides = [];
   if (carouselPool.length) {
@@ -1102,13 +1102,14 @@ function initCarousel(slidesOverride) {
     document.head.appendChild(link);
   }
 
-  track.innerHTML = slides.map((s, i) => `
-    <div class="carousel-slide" data-index="${i}">
-      ${s._imageUrl
-        ? `<img class="carousel-slide-img" src="${i === 0 ? s._imageUrl : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}" data-src="${i === 0 ? '' : s._imageUrl}" alt="${s.label}" decoding="async"${i === 0 ? ' fetchpriority="high"' : ' loading="lazy"'} onerror="this.parentElement.innerHTML='<span class=\\'carousel-slide-placeholder\\'>'+this.alt+'</span>'">`
-        : `<span class="carousel-slide-placeholder">${s.label}</span>`}
-    </div>
-  `).join("");
+  track.innerHTML = slides.map(function (s, i) {
+    var displayUrl = s._thumbUrl || s._imageUrl;
+    return '<div class="carousel-slide" data-index="' + i + '"' + (s._imageUrl ? ' data-full="' + s._imageUrl + '"' : '') + '>' +
+      (displayUrl
+        ? '<img class="carousel-slide-img" src="' + (i === 0 ? displayUrl : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7') + '" data-src="' + (i === 0 ? '' : displayUrl) + '" alt="' + s.label + '" decoding="async"' + (i === 0 ? ' fetchpriority="high"' : ' loading="lazy"') + ' onerror="this.parentElement.innerHTML=\'<span class=\\\'carousel-slide-placeholder\\\'>\'+this.alt+\'</span>\'">'
+        : '<span class="carousel-slide-placeholder">' + s.label + '</span>') +
+    '</div>';
+  }).join("");
 
 	// 延迟加载非首张轮播图：首屏只加载第1张，其余在切换时按需加载
 	var lazyLoaded = {};
