@@ -318,88 +318,18 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* ========================================
-   Static Fixtures Render (no API, called immediately)
-   ======================================== */
-function renderFixturesStatic() {
-  // Try localStorage cache first (from previous API fetch), then static data
-  var cached = null;
-  try { cached = JSON.parse(localStorage.getItem('jrsf_fixtures_cache')); } catch (e) {}
-  var data = (cached && cached.results && cached.results.length) ? cached
-           : (window.__fixturesData || { results: [], upcoming: [] });
-  var results = data.results || [];
-  var upcoming = data.upcoming || [];
-  var now = new Date();
-  var statusText = { win: "胜", draw: "平", loss: "负" };
-  var statusClass = { win: "win", draw: "draw", loss: "loss" };
-
-  var resultsEl = document.getElementById("resultsList");
-  if (resultsEl) {
-    var visible = results.slice(0, 3);
-    if (visible.length) {
-      resultsEl.innerHTML = visible.map(function (m) {
-        var d = "";
-        var hasG = m.scorers && m.scorers.length > 0;
-        var hasA = m.assisters && m.assisters.length > 0;
-        if (hasG || hasA) {
-          d = '<div class="fixture-detail">';
-          if (hasG) {
-            d += '<span class="fixture-goals"><span class="fixture-goal-dot"></span>';
-            d += m.scorers.map(function (p) { return p.name + '(' + p.num + ')' + (p.goals > 1 ? '×' + p.goals : ''); }).join("  ");
-            d += '</span>';
-          }
-          if (hasA) {
-            d += '<span class="fixture-assists"><span class="fixture-assist-badge">A</span>';
-            d += m.assisters.map(function (p) { return p.name + '(' + p.num + ')' + (p.assists > 1 ? '×' + p.assists : ''); }).join("  ");
-            d += '</span>';
-          }
-          d += '</div>';
-        }
-        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + '</span><span class="fixture-score ' + statusClass[m.result] + '">' + m.score + ' ' + statusText[m.result] + '</span></div>' + d + '</div>';
-      }).join("");
-    } else {
-      resultsEl.innerHTML = '<div class="fixture-empty">暂无比赛记录</div>';
-    }
-    var viewAll = document.getElementById("resultsViewAll");
-    if (viewAll) {
-      viewAll.style.display = "block";
-      viewAll.innerHTML = '<a href="fixtures.html" class="view-all-link">查看全部战绩（' + results.length + ' 场） →</a>';
-    }
-  }
-
-  var upcomingEl = document.getElementById("upcomingList");
-  if (upcomingEl) {
-    var filtered = upcoming.filter(function (m) {
-      if (!m || !m.date) return false;
-      var t = new Date(m.date.replace(/\./g, "-") + "T" + (m.time || "14:40") + ":00");
-      if (isNaN(t.getTime())) return false;
-      return now < new Date(t.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
-    });
-    if (filtered.length === 0) {
-      upcomingEl.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
-    } else {
-      upcomingEl.innerHTML = filtered.slice(0, 3).map(function (m) {
-        var b = m.jersey ? '<span class="fixture-jersey" style="background:' + m.jerseyColor + ';color:#fff">' + m.jersey + '</span>' : "";
-        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + ' ' + b + '</span></div><div class="fixture-meta">' + (m.time || '') + ' · ' + (m.venue || '') + '</div></div>';
-      }).join("");
-    }
-    window.__upcoming = filtered;
-  }
-}
-
-/* ========================================
    Data Merge & Render Orchestrator
    ======================================== */
 async function loadAllOverridesAndMerge() {
   const overrides = loadOverrides();
   const players = getDefaultPlayers();
 
-  // Start network call early — it's independent of the merge work below
+  // Start network calls early
   var photosPromise = API.getAllPhotosGrouped().catch(function (e) {
     console.warn('[Gallery] 比赛照片获取失败:', e.message);
     return {};
   });
 
-  // Merge player text overrides (sync, while API call is in flight)
   const mergedPlayers = players.map(p => {
     const ov = overrides.players[p.number] || {};
     const merged = { ...p };
@@ -411,14 +341,12 @@ async function loadAllOverridesAndMerge() {
     return merged;
   });
 
-  // Merge slide text overrides
   const defaultSlides = getDefaultSlides();
   const mergedSlides = defaultSlides.map((s, i) => {
     const ov = overrides.slides[i] || {};
     return { ...s, label: ov.label ?? s.label };
   });
 
-  // Merge album/photo text overrides
   const defaultAlbums = getDefaultAlbums();
   const mergedAlbums = defaultAlbums.map(a => {
     const mergedPhotos = a.photos.map((p, i) => {
@@ -429,9 +357,9 @@ async function loadAllOverridesAndMerge() {
     return { ...a, photos: mergedPhotos };
   });
 
-  // === IMMEDIATE RENDER with static data (before any network) ===
+  // === IMMEDIATE RENDER (sync, before any await) ===
   renderRoster(mergedPlayers);
-  renderFixturesStatic();
+  renderFixtures();       // renders from cache/static immediately, API in background
   initCarousel(mergedSlides);
   initGalleryOverlay(mergedAlbums);
   startCountdown();
@@ -689,12 +617,83 @@ function renderRoster(playersOverride) {
 }
 
 /* === Fixtures === */
-async function renderFixtures() {
-  const data = window.__fixturesData || { results: [], upcoming: [] };
-  let results = data.results || [];
-  let upcoming = data.upcoming || [];
+// Shared DOM render logic (used by both immediate and async paths)
+function _renderFixturesDOM(results, upcoming, now) {
+  var statusText = { win: "胜", draw: "平", loss: "负" };
+  var statusClass = { win: "win", draw: "draw", loss: "loss" };
 
-  // 从 API 并行拉取赛果 + 所有比赛（含即将开赛）
+  var resultsEl = document.getElementById("resultsList");
+  if (resultsEl) {
+    var visible = results.slice(0, 3);
+    if (visible.length) {
+      resultsEl.innerHTML = visible.map(function (m) {
+        var d = "";
+        var hasG = m.scorers && m.scorers.length > 0;
+        var hasA = m.assisters && m.assisters.length > 0;
+        if (hasG || hasA) {
+          d = '<div class="fixture-detail">';
+          if (hasG) {
+            d += '<span class="fixture-goals"><span class="fixture-goal-dot"></span>';
+            d += m.scorers.map(function (p) { return p.name + '(' + p.num + ')' + (p.goals > 1 ? '×' + p.goals : ''); }).join("  ");
+            d += '</span>';
+          }
+          if (hasA) {
+            d += '<span class="fixture-assists"><span class="fixture-assist-badge">A</span>';
+            d += m.assisters.map(function (p) { return p.name + '(' + p.num + ')' + (p.assists > 1 ? '×' + p.assists : ''); }).join("  ");
+            d += '</span>';
+          }
+          d += '</div>';
+        }
+        var hasVoteOpen = m.vote_deadline && new Date(m.vote_deadline) > new Date();
+        var extraBadge = '';
+        if (hasVoteOpen && m.matchId) {
+          extraBadge = '<span class="vote-open-btn" data-vote-match=\'' + JSON.stringify({id:m.matchId,home_team:m.home,away_team:m.away,date:m.date,venue:m.venue,time:m.time}).replace(/'/g,"&#39;") + '\'>MVP投票</span>';
+        } else {
+          extraBadge = '<span class="mvp-area" data-match-id="' + (m.matchId || '') + '" style="display:none"></span>';
+        }
+        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + '</span><span class="fixture-score ' + statusClass[m.result] + '">' + m.score + ' ' + statusText[m.result] + '</span>' + extraBadge + '</div>' + d + '</div>';
+      }).join("");
+    } else {
+      resultsEl.innerHTML = '<div class="fixture-empty">暂无比赛记录</div>';
+    }
+    var viewAll = document.getElementById("resultsViewAll");
+    if (viewAll) {
+      viewAll.style.display = "block";
+      viewAll.innerHTML = '<a href="fixtures.html" class="view-all-link">查看全部战绩（' + results.length + ' 场） →</a>';
+    }
+  }
+
+  var upcomingEl = document.getElementById("upcomingList");
+  if (upcomingEl) {
+    var filtered = upcoming.filter(function (m) {
+      if (!m || !m.date) return false;
+      var t = new Date(m.date.replace(/\./g, "-") + "T" + (m.time || "14:40") + ":00");
+      if (isNaN(t.getTime())) return false;
+      return now < new Date(t.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
+    });
+    if (filtered.length === 0) {
+      upcomingEl.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
+    } else {
+      upcomingEl.innerHTML = filtered.slice(0, 3).map(function (m) {
+        var b = m.jersey ? '<span class="fixture-jersey" style="background:' + m.jerseyColor + ';color:#fff">' + m.jersey + '</span>' : "";
+        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + ' ' + b + '</span></div><div class="fixture-meta">' + (m.time || '') + ' · ' + (m.venue || '') + '</div></div>';
+      }).join("");
+    }
+    window.__upcoming = filtered;
+  }
+}
+
+async function renderFixtures() {
+  // === IMMEDIATE: render from cache/static (sync, no network) ===
+  var cached = null;
+  try { cached = JSON.parse(localStorage.getItem('jrsf_fixtures_cache')); } catch (e) {}
+  var src = (cached && (cached.results && cached.results.length || cached.upcoming && cached.upcoming.length)) ? cached
+          : (window.__fixturesData || { results: [], upcoming: [] });
+  var results = (src.results || []).slice();
+  var upcoming = (src.upcoming || []).slice();
+  _renderFixturesDOM(results, upcoming, new Date());
+
+  // === ASYNC: fetch from API and update ===
   var apiResults = [], apiMatches = [];
   try {
     var both = await Promise.all([
@@ -703,7 +702,7 @@ async function renderFixtures() {
     ]);
     apiResults = both[0];
     apiMatches = both[1];
-  } catch (e) { /* 降级到纯静态数据 */ }
+  } catch (e) { /* 降级 */ }
 
   // --- 合并赛果 ---
   if (apiResults.length) {
@@ -765,67 +764,8 @@ async function renderFixtures() {
   // Cache for instant display on next refresh
   try { localStorage.setItem('jrsf_fixtures_cache', JSON.stringify({ results: results, upcoming: upcoming })); } catch (e) {}
 
-  // --- 渲染 ---
-  const statusText = { win: "胜", draw: "平", loss: "负" };
-  const statusClass = { win: "win", draw: "draw", loss: "loss" };
-
-  // === 最新战报（3场 + 链接到独立页面） ===
-  const resultsEl = document.getElementById("resultsList");
-  if (resultsEl) {
-    const visible = results.slice(0, 3);
-    if (visible.length) {
-      const renderItem = function (m) {
-        const hasGoals = m.scorers && m.scorers.length > 0;
-        const hasAssists = m.assisters && m.assisters.length > 0;
-        const detailHTML = (hasGoals || hasAssists) ? `
-          <div class="fixture-detail">
-            ${hasGoals ? '<span class="fixture-goals"><span class="fixture-goal-dot"></span>' + m.scorers.map(function (p) { return p.name + '(' + p.num + ')' + (p.goals > 1 ? '×' + p.goals : ''); }).join("  ") + '</span>' : ""}
-            ${hasAssists ? '<span class="fixture-assists"><span class="fixture-assist-badge">A</span>' + m.assisters.map(function (p) { return p.name + '(' + p.num + ')' + (p.assists > 1 ? '×' + p.assists : ''); }).join("  ") + '</span>' : ""}
-          </div>` : "";
-        const hasVoteOpen = m.vote_deadline && new Date(m.vote_deadline) > new Date();
-        var extraBadge = '';
-        if (hasVoteOpen && m.matchId) {
-          extraBadge = '<span class="vote-open-btn" data-vote-match=\'' + JSON.stringify({id:m.matchId,home_team:m.home,away_team:m.away,date:m.date,venue:m.venue,time:m.time}).replace(/'/g,"&#39;") + '\'>MVP投票</span>';
-        } else {
-          extraBadge = '<span class="mvp-area" data-match-id="' + (m.matchId || '') + '" style="display:none"></span>';
-        }
-        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + '</span><span class="fixture-score ' + statusClass[m.result] + '">' + m.score + ' ' + statusText[m.result] + '</span>' + extraBadge + '</div>' + detailHTML + '</div>';
-      };
-      resultsEl.innerHTML = visible.map(renderItem).join("");
-    } else {
-      resultsEl.innerHTML = '<div class="fixture-empty">暂无比赛记录</div>';
-    }
-
-    const viewAll = document.getElementById("resultsViewAll");
-    if (viewAll) {
-      viewAll.style.display = "block";
-      viewAll.innerHTML = '<a href="fixtures.html" class="view-all-link">查看全部战绩（' + results.length + ' 场） →</a>';
-    }
-  }
-
-  // === 即将开赛 ===
-  const upcomingEl = document.getElementById("upcomingList");
-  if (upcomingEl) {
-    var upcomingFiltered = upcoming.filter(function (m) {
-      if (!m || !m.date) return false;
-      var startTime = new Date(m.date.replace(/\./g, "-") + "T" + (m.time || "14:40") + ":00");
-      if (isNaN(startTime.getTime())) return false;
-      var endTime = new Date(startTime.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000);
-      return now < endTime;
-    });
-
-    if (upcomingFiltered.length === 0) {
-      upcomingEl.innerHTML = '<div class="fixture-empty">暂无即将开赛的比赛</div>';
-    } else {
-      upcomingEl.innerHTML = upcomingFiltered.slice(0, 3).map(function (m, i) {
-        var jerseyBadge = m.jersey ? '<span class="fixture-jersey" style="background:' + m.jerseyColor + ';color:#fff">' + m.jersey + '</span>' : "";
-        return '<div class="fixture-item"><div class="fixture-item-main"><span class="fixture-date">' + m.date + '</span><span class="fixture-teams">' + m.home + ' vs ' + m.away + ' ' + jerseyBadge + '</span></div><div class="fixture-meta">' + (m.time || '') + ' · ' + (m.venue || '') + '</div></div>';
-      }).join("");
-    }
-
-    window.__upcoming = upcomingFiltered;
-  }
-
+  // Re-render with fresh API data
+  _renderFixturesDOM(results, upcoming, new Date());
   startCountdown();
 }
 
