@@ -39,23 +39,31 @@ async function openRegPanel(match) {
   _regList = [];
   resetRegAuth();
 
-  // 比赛信息
-  document.getElementById('regMatch').innerHTML = `
-    <div class="reg-match-teams">${match.home_team || '今日说法'} vs ${match.away_team}</div>
-    <div class="reg-match-meta">${(match.date || '').replace(/-/g, '.')} · ${match.time || '14:40'} · ${match.venue || ''} ${match.jersey ? '· ' + match.jersey : ''}</div>
-  `;
+  // 比赛信息 — 立即显示
+  document.getElementById('regMatch').innerHTML =
+    '<div class="reg-match-teams">' + (match.home_team || '今日说法') + ' vs ' + match.away_team + '</div>' +
+    '<div class="reg-match-meta">' + (match.date || '').replace(/-/g, '.') + ' · ' + (match.time || '14:40') + ' · ' + (match.venue || '') + (match.jersey ? ' · ' + match.jersey : '') + '</div>';
 
-  // 加载队员列表
-  const players = await API.getPlayers();
-  const sel = document.getElementById('regPlayerName');
-  sel.innerHTML = '<option value="">选择你的姓名</option>' +
-    players.map(p => `<option value="${p.name}">${p.name} (${p.number}号)</option>`).join('');
+  // 先显示加载中状态
+  var sel = document.getElementById('regPlayerName');
+  sel.innerHTML = '<option value="">加载中...</option>';
+  document.getElementById('regConfirmedCount').innerHTML = '<strong>—</strong>/13';
+  document.getElementById('regConfirmedList').innerHTML = '<div class="reg-empty">加载中...</div>';
 
-  // 加载报名数据
-  await refreshRegList();
-
+  // 立即打开面板
   document.getElementById('regOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  // 后台加载数据
+  try {
+    var players = await API.getPlayers();
+    sel.innerHTML = '<option value="">选择你的姓名</option>' +
+      players.map(function (p) { return '<option value="' + p.name + '">' + p.name + ' (' + p.number + '号)</option>'; }).join('');
+    await refreshRegList();
+  } catch (e) {
+    sel.innerHTML = '<option value="">加载失败，请重试</option>';
+    document.getElementById('regConfirmedList').innerHTML = '<div class="reg-empty">加载失败</div>';
+  }
 }
 
 // ===== 身份验证 =====

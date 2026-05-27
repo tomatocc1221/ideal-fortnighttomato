@@ -270,12 +270,7 @@ function loadScript(src) {
 }
 
 function ensureOpenRegPanel(match) {
-  var p = window.openRegPanel
-    ? Promise.resolve()
-    : loadScript("js/registration.js").catch(function() {});
-  p.then(function() {
-    if (window.openRegPanel) window.openRegPanel(match);
-  });
+  if (window.openRegPanel) window.openRegPanel(match);
 }
 
 function ensureOpenVotePanel(match) {
