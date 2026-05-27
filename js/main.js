@@ -98,22 +98,17 @@ function loadImage(storeName, key) {
 }
 
 function checkFileAvatar(number) {
-  return new Promise((resolve) => {
-    var img = new Image();
-    img.onload = function () { resolve(this._src); };
-    img.onerror = function () {
-      if (this._src.endsWith('.webp')) {
-        var fallback = new Image();
-        fallback._src = 'images/players/' + number + '.jpg';
-        fallback.onload = function () { resolve(this._src); };
-        fallback.onerror = function () { resolve(null); };
-        fallback.src = fallback._src;
-      } else {
-        resolve(null);
-      }
-    };
-    img._src = 'images/players/' + number + '.webp';
-    img.src = img._src;
+  return new Promise(function (resolve) {
+    var exts = ['.webp', '.jpg', '.png'];
+    function tryExt(idx) {
+      if (idx >= exts.length) return resolve(null);
+      var img = new Image();
+      var src = 'images/players/' + number + exts[idx];
+      img.onload = function () { resolve(src); };
+      img.onerror = function () { tryExt(idx + 1); };
+      img.src = src;
+    }
+    tryExt(0);
   });
 }
 
