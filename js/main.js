@@ -461,6 +461,33 @@ async function loadAllOverridesAndMerge() {
     if (sorted.length) mvpCounts[sorted[0][0]] = (mvpCounts[sorted[0][0]] || 0) + 1;
   });
   window.__mvpCounts = mvpCounts;
+
+  // === 球员整活统计 ===
+  var playerStats = await API.getPlayerStats().catch(function () { return {}; });
+  window.__playerStats = playerStats;
+  if (window.__players) {
+    window.__players.forEach(function (p) {
+      var s = playerStats[p.name] || { goals: 0, assists: 0, apps: 0, leaves: 0, mvpWins: 0 };
+      p._goals = s.goals || 0;
+      p._assists = s.assists || 0;
+      p._apps = s.apps || 0;
+      p._leaves = s.leaves || 0;
+      p._mvpWins = s.mvpWins || 0;
+      // OVR
+      var totalMatches = Math.max(p._apps + p._leaves, 1);
+      var attendance = p._apps / totalMatches;
+      p._ovr = Math.min(99, Math.max(45, Math.round(40 + p._mvpWins * 8 + p._goals * 3 + p._assists * 2 + attendance * 5 * 10)));
+      // 身价
+      p._value = Math.max(1000, Math.min(20000, 5000 + p._mvpWins * 3000 + p._goals * 800 + p._assists * 400 - p._leaves * 1500));
+      // 出勤率
+      p._attendance = attendance;
+      if (attendance >= 0.9) p._cardClass = 'card-gold';
+      else if (attendance >= 0.7) p._cardClass = 'card-normal';
+      else if (attendance >= 0.5) p._cardClass = 'card-worn';
+      else p._cardClass = 'card-broken';
+    });
+    renderRoster(window.__players);
+  }
 }
 
 /* === Navigation === */
@@ -555,27 +582,35 @@ function renderRoster(playersOverride) {
       html += `<div class="roster-group-title ${g}"><span class="group-dot"></span>${GROUP_LABELS[g] || ""}</div>`;
       lastGroup = g;
     }
-    const origIndex = players.indexOf(p);
-    html += `
-      <div class="player-card${p.captain ? " captain" : ""}" data-player-index="${origIndex}" data-player-number="${p.number}" onclick="flipCard(this)">
-        <div class="player-card-inner">
-          <div class="player-card-front">
-            <div class="player-avatar">
-              ${p._avatarUrl
-                ? `<img src="${p._avatarUrl}" alt="${p.name}" decoding="sync">`
-                : `<span class="player-avatar-initial">${p.name[0]}</span>`}
-            </div>
-            <div class="player-number">${p.number}</div>
-            <div class="player-name">${p.name}</div>
-            <div class="player-role ${getPositionGroup(p.role)}">${p.role}</div>
-          </div>
-          <div class="player-card-back">
-            <div class="player-back-name">${p.name} · ${p.number}号</div>
-            <div class="player-back-bio">${p.bio || "场上位置：" + p.role}</div>
-            <button class="player-back-btn" onclick="event.stopPropagation(); openPlayerDetail(${origIndex})">查看详情</button>
-          </div>
-        </div>
-      </div>`;
+    var origIndex = players.indexOf(p);
+    var cardClass = p._cardClass || '';
+    var ovr = p._ovr != null ? p._ovr : '--';
+    var ovrColor = ovr === '--' ? 'ovr-loading' : ovr >= 90 ? 'ovr-green' : ovr >= 80 ? 'ovr-blue' : ovr >= 70 ? 'ovr-gold' : ovr >= 60 ? 'ovr-red' : 'ovr-gray';
+    var value = p._value != null ? '¥' + (p._value / 1000).toFixed(1) + 'k' : '';
+    var valueLabel = value ? '<span class="player-value">💰 ' + value + '</span>' : '';
+
+    html +=
+      '<div class="player-card ' + cardClass + (p.captain ? ' captain' : '') + '" data-player-index="' + origIndex + '" data-player-number="' + p.number + '" onclick="flipCard(this)">' +
+        '<div class="player-card-inner">' +
+          '<div class="player-card-front">' +
+            valueLabel +
+            '<div class="player-ovr ' + ovrColor + '">' + ovr + '</div>' +
+            '<div class="player-avatar">' +
+              (p._avatarUrl
+                ? '<img src="' + p._avatarUrl + '" alt="' + p.name + '" decoding="sync">'
+                : '<span class="player-avatar-initial">' + p.name[0] + '</span>') +
+            '</div>' +
+            '<div class="player-number">' + p.number + '</div>' +
+            '<div class="player-name">' + p.name + '</div>' +
+            '<div class="player-role ' + getPositionGroup(p.role) + '">' + p.role + '</div>' +
+          '</div>' +
+          '<div class="player-card-back">' +
+            '<div class="player-back-name">' + p.name + ' · ' + p.number + '号</div>' +
+            '<div class="player-back-bio">' + (p.bio || '场上位置：' + p.role) + '</div>' +
+            '<button class="player-back-btn" onclick="event.stopPropagation(); openPlayerDetail(' + origIndex + ')">查看详情</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
   });
 
   document.getElementById("rosterGrid").innerHTML = html;
@@ -1480,49 +1515,78 @@ function initPlayerDetail() {
 }
 
 function openPlayerDetail(index) {
-  const p = window.__players[index];
+  var p = window.__players[index];
   if (!p || !__pd) return;
-  const el = __pd;
+  var el = __pd;
 
   el.avatar.className = "player-detail-avatar";
   if (p._avatarUrl) {
-    el.avatar.innerHTML = `<img src="${p._avatarUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    el.avatar.innerHTML = '<img src="' + p._avatarUrl + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
   } else {
-    el.avatar.innerHTML = `<span class="player-detail-avatar-initial">${p.name[0]}</span>`;
+    el.avatar.innerHTML = '<span class="player-detail-avatar-initial">' + p.name[0] + '</span>';
   }
 
   el.number.textContent = p.number;
   el.name.textContent = p.name;
   el.role.textContent = p.role;
-  el.role.className = "player-detail-role " + getPositionGroup(p.role);
+  el.role.className = 'player-detail-role ' + getPositionGroup(p.role);
   el.bio.textContent = p.bio;
 
   var mvpCount = (window.__mvpCounts && window.__mvpCounts[p.name]) || 0;
-  el.info.innerHTML = `
-    <div class="player-info-item">
-      <div class="player-info-value">${p.age != null ? p.age : "—"}</div>
-      <div class="player-info-label">年龄</div>
-    </div>
-    <div class="player-info-item">
-      <div class="player-info-value">${p.number}</div>
-      <div class="player-info-label">号码</div>
-    </div>
-    <div class="player-info-item">
-      <div class="player-info-value">${p.joinYear}</div>
-      <div class="player-info-label">入队</div>
-    </div>
-    <div class="player-info-item">
-      <div class="player-info-value mvp-count">${mvpCount}</div>
-      <div class="player-info-label">MVP</div>
-    </div>
-  `;
+  var g = p._goals || 0, a = p._assists || 0, apps = p._apps || 0, lv = p._leaves || 0;
+  el.info.innerHTML =
+    '<div class="player-info-item"><div class="player-info-value">' + (p.age != null ? p.age : '—') + '</div><div class="player-info-label">年龄</div></div>' +
+    '<div class="player-info-item"><div class="player-info-value">' + p.number + '</div><div class="player-info-label">号码</div></div>' +
+    '<div class="player-info-item"><div class="player-info-value">' + p.joinYear + '</div><div class="player-info-label">入队</div></div>' +
+    '<div class="player-info-item"><div class="player-info-value mvp-count">' + mvpCount + '</div><div class="player-info-label">MVP</div></div>';
 
-  el.strengths.innerHTML = p.strengths.map(s =>
-    `<span class="player-strength-tag">${s}</span>`
-  ).join("");
+  el.strengths.innerHTML = p.strengths.map(function (s) { return '<span class="player-strength-tag">' + s + '</span>'; }).join('');
 
-  el.overlay.classList.add("open");
-  document.body.style.overflow = "hidden";
+  // Stats summary row (17-B)
+  var statsRow = document.getElementById('playerStatsRow');
+  if (statsRow) {
+    if (g + a + apps > 0) {
+      statsRow.innerHTML =
+        '<div class="player-stat-item"><div class="player-stat-num">' + g + '</div><div class="player-stat-label">⚽进球</div></div>' +
+        '<div class="player-stat-item"><div class="player-stat-num">' + a + '</div><div class="player-stat-label">🅰助攻</div></div>' +
+        '<div class="player-stat-item"><div class="player-stat-num">' + mvpCount + '</div><div class="player-stat-label">⭐MVP</div></div>' +
+        '<div class="player-stat-item"><div class="player-stat-num">' + apps + '</div><div class="player-stat-label">👟出场</div></div>' +
+        (lv > 0 ? '<div class="player-stat-item"><div class="player-stat-num" style="color:#c0392b">' + lv + '</div><div class="player-stat-label">😴请假</div></div>' : '');
+    } else {
+      statsRow.innerHTML = '<div style="color:var(--text-faint);font-size:0.78rem;padding:8px">暂无数据</div>';
+    }
+  }
+
+  // Timeline (17-A) — load async
+  var timeline = document.getElementById('playerTimeline');
+  if (timeline) {
+    timeline.innerHTML = '<div style="color:var(--text-faint);font-size:0.72rem;text-align:center;padding:8px">加载中...</div>';
+    API.getPlayerHistory(p.name).then(function (events) {
+      if (!events.length) {
+        timeline.innerHTML = '<div style="color:var(--text-faint);font-size:0.72rem;text-align:center;padding:8px">暂无记录</div>';
+        return;
+      }
+      timeline.innerHTML = events.slice(0, 12).map(function (e) {
+        return '<div class="player-timeline-event"><div class="player-timeline-dot ' + e.type + '"></div><span class="player-timeline-date">' + e.date + '</span><span class="player-timeline-text">' + e.text + '</span><span class="player-timeline-detail">' + (e.detail || '') + '</span></div>';
+      }).join('');
+    }).catch(function () {
+      timeline.innerHTML = '<div style="color:var(--text-faint);font-size:0.72rem;text-align:center;padding:8px">加载失败</div>';
+    });
+  }
+
+  // Transfer joke button (20-D)
+  var tfBtn = document.getElementById('playerTransferBtn');
+  if (tfBtn) {
+    var val = p._value ? '¥' + (p._value / 1000).toFixed(1) + 'k' : '暂无估价';
+    tfBtn.style.display = 'block';
+    tfBtn.textContent = '💰 当前身价 ' + val + ' — 挂牌出售';
+    tfBtn.onclick = function () {
+      showToast('转会失败：队长拒绝放人 🤚', 'error');
+    };
+  }
+
+  el.overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 function closePlayerDetail() {

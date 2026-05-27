@@ -375,5 +375,136 @@ const API = {
   async deleteMatchPhoto(id) {
     await sb.from('match_photos').delete('id=eq.' + id);
     return { deleted: true };
+  },
+
+  // ===== 球员统计 =====
+  async getPlayerStats() {
+    try {
+      var matches = await sb.from('matches').select('scorers,assisters,result,date');
+      var regs = await sb.from('registrations').select('player_name,status');
+      var allVotes = await sb.from('votes').select('candidate_name,match_id,rank');
+
+      var stats = {}; // {playerName: {goals, assists, apps, leaves, mvpWins}}
+
+      // Process matches
+      matches.forEach(function (m) {
+        if (m.scorers) {
+          (Array.isArray(m.scorers) ? m.scorers : []).forEach(function (s) {
+            var name = s.name || '';
+            if (!stats[name]) stats[name] = { goals: 0, assists: 0, apps: 0, leaves: 0, mvpWins: 0 };
+            stats[name].goals += s.goals || 1;
+            stats[name].apps = 1; // mark appeared
+          });
+        }
+        if (m.assisters) {
+          (Array.isArray(m.assisters) ? m.assisters : []).forEach(function (a) {
+            var name = a.name || '';
+            if (!stats[name]) stats[name] = { goals: 0, assists: 0, apps: 0, leaves: 0, mvpWins: 0 };
+            stats[name].assists += a.assists || 1;
+            stats[name].apps = 1;
+          });
+        }
+      });
+
+      // Process registrations
+      regs.forEach(function (r) {
+        var name = r.player_name || '';
+        if (!stats[name]) stats[name] = { goals: 0, assists: 0, apps: 0, leaves: 0, mvpWins: 0 };
+        if (r.status === 'confirmed') stats[name].apps = 1;
+        if (r.status === 'cancelled') stats[name].leaves++;
+      });
+
+      // Process MVP
+      var matchPoints = {};
+      allVotes.forEach(function (v) {
+        var mid = String(v.match_id);
+        if (!matchPoints[mid]) matchPoints[mid] = {};
+        var pts = v.rank === 1 ? 3 : v.rank === 2 ? 2 : 1;
+        matchPoints[mid][v.candidate_name] = (matchPoints[mid][v.candidate_name] || 0) + pts;
+      });
+      Object.values(matchPoints).forEach(function (pts) {
+        var sorted = Object.entries(pts).sort(function (a, b) { return b[1] - a[1]; });
+        if (sorted.length) {
+          var name = sorted[0][0];
+          if (!stats[name]) stats[name] = { goals: 0, assists: 0, apps: 0, leaves: 0, mvpWins: 0 };
+          stats[name].mvpWins++;
+        }
+      });
+
+      return stats;
+    } catch (e) {
+      console.warn('[API] getPlayerStats 失败:', e.message);
+      return {};
+    }
+  },
+
+  async getPlayerHistory(playerName) {
+    try {
+      var matches = await sb.from('matches').select('date,home_team,away_team,scorers,assisters,result,venue').order('date');
+      var votes = await sb.from('votes').select('match_id,candidate_name,rank');
+      var regs = await sb.from('registrations').select('match_id,player_name,status');
+
+      var events = [];
+
+      // Goals / assists
+      matches.forEach(function (m) {
+        var d = (m.date || '').replace(/-/g, '.');
+        var vs = m.away_team || '';
+        if (m.scorers) {
+          (Array.isArray(m.scorers) ? m.scorers : []).forEach(function (s) {
+            if (s.name === playerName) {
+              events.push({ date: d, type: 'goal', text: '进球 ×' + (s.goals || 1), detail: 'vs ' + vs });
+            }
+          });
+        }
+        if (m.assisters) {
+          (Array.isArray(m.assisters) ? m.assisters : []).forEach(function (a) {
+            if (a.name === playerName) {
+              events.push({ date: d, type: 'assist', text: '助攻 ×' + (a.assists || 1), detail: 'vs ' + vs });
+            }
+          });
+        }
+      });
+
+      // MVP wins (per match)
+      var mvpMatchIds = {};
+      var mvpByMatch = {};
+      votes.forEach(function (v) {
+        var mid = String(v.match_id);
+        if (!mvpByMatch[mid]) mvpByMatch[mid] = {};
+        var pts = v.rank === 1 ? 3 : v.rank === 2 ? 2 : 1;
+        mvpByMatch[mid][v.candidate_name] = (mvpByMatch[mid][v.candidate_name] || 0) + pts;
+      });
+      Object.keys(mvpByMatch).forEach(function (mid) {
+        var sorted = Object.entries(mvpByMatch[mid]).sort(function (a, b) { return b[1] - a[1]; });
+        if (sorted.length && sorted[0][0] === playerName) mvpMatchIds[mid] = true;
+      });
+
+      // Map match IDs to dates
+      matches.forEach(function (m) {
+        var mid = String(m.id);
+        if (mvpMatchIds[mid]) {
+          events.push({ date: (m.date || '').replace(/-/g, '.'), type: 'mvp', text: 'MVP', detail: 'vs ' + (m.away_team || '') });
+        }
+      });
+
+      // Leaves
+      var leaveMatchDates = {};
+      matches.forEach(function (m) { leaveMatchDates[String(m.id)] = (m.date || '').replace(/-/g, '.'); });
+      regs.forEach(function (r) {
+        if (r.player_name === playerName && r.status === 'cancelled') {
+          var ld = leaveMatchDates[String(r.match_id)] || '';
+          if (ld) events.push({ date: ld, type: 'leave', text: '请假', detail: '' });
+        }
+      });
+
+      // Sort by date desc
+      events.sort(function (a, b) { return new Date(b.date.replace(/\./g, '-')) - new Date(a.date.replace(/\./g, '-')); });
+
+      return events;
+    } catch (e) {
+      console.warn('[API] getPlayerHistory 失败:', e.message);
+      return [];
+    }
   }
 };
