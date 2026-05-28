@@ -551,6 +551,17 @@ function getGroupOrder(role) {
 
 const GROUP_LABELS = { "": "教练", "role-gk": "门将", "role-df": "后场", "role-mf": "中场", "role-fw": "前场" };
 
+function imgFallback(img) {
+  var s = img.src;
+  if (~s.indexOf('.webp')) {
+    img.onerror = function() { imgFallback(img); };
+    img.src = s.replace('.webp', '.png');
+  } else if (~s.indexOf('.png')) {
+    img.onerror = null;
+    img.src = s.replace('.png', '.jpg');
+  }
+}
+
 function renderRoster(playersOverride) {
   const players = playersOverride || getDefaultPlayers();
 
@@ -588,7 +599,7 @@ function renderRoster(playersOverride) {
           '</div>' +
           '<div class="player-card-back">' +
             '<div class="player-card-bg">' +
-              '<img class="player-card-bg-img" src="images/players-bg/' + p.number + '.webp" onerror="var e=this;if(e.src.indexOf(\'.webp\')>0){e.onerror=null;e.src=e.src.replace(\'.webp\',\'.jpg\')}" alt="">' +
+              '<img class="player-card-bg-img" src="images/players-bg/' + p.number + '.webp" onerror="imgFallback(this)" alt="">' +
               '<div class="player-card-bg-watermark">' + p.number + '</div>' +
               '<div class="player-card-bg-glass"></div>' +
               '<div class="player-card-bg-name">' + p.name + '<span>' + p.number + '</span></div>' +
