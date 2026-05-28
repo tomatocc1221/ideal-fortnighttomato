@@ -13,10 +13,10 @@
   <link rel="icon" href="images/logo.jpg">
   <link rel="dns-prefetch" href="//jdrryazqzrcaspqzelkd.supabase.co">
   <link rel="preconnect" href="https://jdrryazqzrcaspqzelkd.supabase.co" crossorigin>
-  <link rel="preload" href="css/style.css?v=1.1.7" as="style">
+  <link rel="preload" href="css/style.css?v=1.1.8" as="style">
   <link rel="preload" href="images/logo.jpg" as="image">
-  <link rel="preload" href="js/main.js?v=1.1.7" as="script">
-  <link rel="preload" href="js/api.js?v=1.1.7" as="script">
+  <link rel="preload" href="js/main.js?v=1.1.8" as="script">
+  <link rel="preload" href="js/api.js?v=1.1.8" as="script">
   <link rel="prefetch" href="fixtures.html">
   <style>
     /* Critical: ensures hero renders before style.css loads */
@@ -40,7 +40,7 @@
     .nav-logo{width:32px;height:34px;border-radius:6px}
     .nav-name{font-family:var(--font-heading);font-size:1.15rem;color:var(--gold);letter-spacing:0.08em}
   </style>
-  <link rel="stylesheet" href="css/style.css?v=1.1.7" fetchpriority="high">
+  <link rel="stylesheet" href="css/style.css?v=1.1.8" fetchpriority="high">
 </head>
 <body>
 
@@ -213,7 +213,7 @@
       </div>
       <div class="footer-bottom">
         <p>&copy; 2026 今日说法足球俱乐部</p>
-        <p class="footer-version">v1.1.7 · <a href="admin.html">管理</a></p>
+        <p class="footer-version">v1.1.8 · <a href="admin.html">管理</a></p>
       </div>
     </div>
   </footer>
@@ -222,17 +222,36 @@
   <div class="player-overlay" id="playerOverlay" role="dialog" aria-modal="true" aria-label="球员详情">
     <button class="player-overlay-back" id="playerBack">← 返回</button>
     <div class="player-overlay-inner">
-      <div class="player-detail-avatar" id="playerDetailAvatar"></div>
-      <div class="player-detail-number" id="playerDetailNumber"></div>
-      <div class="player-detail-name" id="playerDetailName"></div>
-      <div class="player-detail-role" id="playerDetailRole"></div>
-      <div class="player-detail-divider"></div>
-      <div class="player-detail-bio" id="playerDetailBio"></div>
-      <div class="player-detail-info" id="playerDetailInfo"></div>
-      <div class="player-detail-stats" id="playerDetailStats"></div>
-      <div class="player-detail-attrs" id="playerDetailAttrs"></div>
-      <div class="player-detail-strengths" id="playerDetailStrengths"></div>
-      <div class="player-timeline" id="playerTimeline"></div>
+      <div class="pd-card pd-card-hero">
+        <div class="player-detail-avatar" id="playerDetailAvatar"></div>
+        <div class="player-detail-number" id="playerDetailNumber"></div>
+        <div class="player-detail-name" id="playerDetailName"></div>
+        <div class="player-detail-role" id="playerDetailRole"></div>
+      </div>
+      <div class="pd-card pd-card-bio">
+        <div class="pd-card-label">简介</div>
+        <div class="player-detail-bio" id="playerDetailBio"></div>
+      </div>
+      <div class="pd-card pd-card-info">
+        <div class="pd-card-label">资料</div>
+        <div class="player-detail-info" id="playerDetailInfo"></div>
+      </div>
+      <div class="pd-card pd-card-stats">
+        <div class="pd-card-label">赛季数据</div>
+        <div class="player-detail-stats" id="playerDetailStats"></div>
+      </div>
+      <div class="pd-card pd-card-attrs">
+        <div class="pd-card-label">能力值</div>
+        <div class="player-detail-attrs" id="playerDetailAttrs"></div>
+      </div>
+      <div class="pd-card pd-card-strengths">
+        <div class="pd-card-label">技术特点</div>
+        <div class="player-detail-strengths" id="playerDetailStrengths"></div>
+      </div>
+      <div class="pd-card pd-card-timeline">
+        <div class="pd-card-label">近期动态</div>
+        <div class="player-timeline" id="playerTimeline"></div>
+      </div>
       <button class="player-transfer-btn" id="playerTransferBtn" style="display:none">💰 转会市场</button>
     </div>
   </div>
@@ -352,13 +371,13 @@
 
 
 
-  <script defer src="js/common.js?v=1.1.7"></script>
-  <script defer src="js/supabase-init.js?v=1.1.7"></script>
-  <script defer src="js/api.js?v=1.1.7"></script>
-  <script defer src="data/fixtures.js?v=1.1.7"></script>
-  <script defer src="data/gallery.js?v=1.1.7"></script>
-  <script defer src="js/registration.js?v=1.1.7"></script>
-  <script defer src="js/voting.js?v=1.1.7"></script>
-  <script defer src="js/main.js?v=1.1.7"></script>
+  <script defer src="js/common.js?v=1.1.8"></script>
+  <script defer src="js/supabase-init.js?v=1.1.8"></script>
+  <script defer src="js/api.js?v=1.1.8"></script>
+  <script defer src="data/fixtures.js?v=1.1.8"></script>
+  <script defer src="data/gallery.js?v=1.1.8"></script>
+  <script defer src="js/registration.js?v=1.1.8"></script>
+  <script defer src="js/voting.js?v=1.1.8"></script>
+  <script defer src="js/main.js?v=1.1.8"></script>
 </body>
 </html>
