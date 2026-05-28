@@ -571,50 +571,25 @@ function renderRoster(playersOverride) {
       lastGroup = g;
     }
     var origIndex = players.indexOf(p);
-    var goals = p._goals || 0, asts = p._assists || 0, apps = p._apps || 0, lv = p._leaves || 0;
-    var mvp = (window.__mvpCounts && window.__mvpCounts[p.name]) || 0;
-    var attrs = p._attrs || { speed: 5, power: 5, shoot: 5, vision: 5, stamina: 5 };
-    var bars = [
-      { label: '速度', key: 'speed',  color: 'bar-green' },
-      { label: '力量', key: 'power',  color: 'bar-red' },
-      { label: '射门', key: 'shoot',  color: 'bar-gold' },
-      { label: '意识', key: 'vision', color: 'bar-blue' },
-      { label: '体能', key: 'stamina',color: 'bar-orange' }
-    ];
 
     html +=
       '<div class="player-card' + (p.captain ? ' captain' : '') + '" data-player-index="' + origIndex + '" onclick="flipCard(this)">' +
         '<div class="player-card-inner">' +
           '<div class="player-card-front">' +
-            '<div class="player-card-top">' +
-              '<div class="player-card-avatar">' +
-                (p._avatarUrl
-                  ? '<img src="' + p._avatarUrl + '" alt="' + p.name + '">'
-                  : '<span class="player-card-avatar-initial">' + p.name[0] + '</span>') +
-              '</div>' +
-              '<div class="player-card-info">' +
-                '<div class="player-card-num">' + p.number + '</div>' +
-                '<div class="player-card-name">' + p.name + '</div>' +
-                '<div class="player-card-role ' + getPositionGroup(p.role) + '">' + (p.role || '') + '</div>' +
-              '</div>' +
+            '<div class="player-card-avatar">' +
+              (p._avatarUrl
+                ? '<img src="' + p._avatarUrl + '" alt="' + p.name + '">'
+                : '<span class="player-card-avatar-initial">' + p.name[0] + '</span>') +
             '</div>' +
-            '<div class="player-card-stats">' +
-              '<div class="pcs-item"><div class="pcs-val">' + goals + '</div><div class="pcs-label">进球</div></div>' +
-              '<div class="pcs-item"><div class="pcs-val">' + asts + '</div><div class="pcs-label">助攻</div></div>' +
-              '<div class="pcs-item"><div class="pcs-val">' + mvp + '</div><div class="pcs-label">MVP</div></div>' +
-              '<div class="pcs-item"><div class="pcs-val">' + apps + '</div><div class="pcs-label">出场</div></div>' +
-              '<div class="pcs-item"><div class="pcs-val">' + lv + '</div><div class="pcs-label">请假</div></div>' +
-            '</div>' +
-            '<div class="player-card-bars">' +
-              bars.map(function (b) {
-                var v = attrs[b.key] || 5;
-                return '<div class="pcb-row"><span class="pcb-label">' + b.label + '</span><div class="pcb-track"><div class="pcb-fill ' + b.color + '" style="width:' + (v * 10) + '%"></div></div><span class="pcb-val">' + v + '</span></div>';
-              }).join('') +
-            '</div>' +
-            '<button class="player-card-detail-btn" onclick="event.stopPropagation(); openPlayerDetail(' + origIndex + ')">球员档案 →</button>' +
+            '<div class="player-card-num">' + p.number + '</div>' +
+            '<div class="player-card-name">' + p.name + '</div>' +
+            '<div class="player-card-role ' + getPositionGroup(p.role) + '">' + (p.role || '') + '</div>' +
+            '<button class="player-card-detail-btn" onclick="event.stopPropagation(); openPlayerDetail(' + origIndex + ')">球员档案</button>' +
           '</div>' +
           '<div class="player-card-back">' +
-            '<div class="player-card-bg" style="background-image:url(images/players-bg/' + p.number + '.webp)">' +
+            '<div class="player-card-bg">' +
+              '<img class="player-card-bg-img" src="images/players-bg/' + p.number + '.webp" onerror="var e=this;if(e.src.indexOf(\'.webp\')>0){e.onerror=null;e.src=e.src.replace(\'.webp\',\'.jpg\')}" alt="">' +
+              '<div class="player-card-bg-watermark">' + p.number + '</div>' +
               '<div class="player-card-bg-glass"></div>' +
               '<div class="player-card-bg-name">' + p.name + '<span>' + p.number + '</span></div>' +
             '</div>' +
@@ -1517,6 +1492,8 @@ function initPlayerDetail() {
     role: document.getElementById("playerDetailRole"),
     bio: document.getElementById("playerDetailBio"),
     info: document.getElementById("playerDetailInfo"),
+    stats: document.getElementById("playerDetailStats"),
+    attrs: document.getElementById("playerDetailAttrs"),
     strengths: document.getElementById("playerDetailStrengths"),
   };
 
@@ -1549,6 +1526,29 @@ function openPlayerDetail(index) {
     '<div class="player-info-item"><div class="player-info-value">' + p.number + '</div><div class="player-info-label">号码</div></div>' +
     '<div class="player-info-item"><div class="player-info-value">' + p.joinYear + '</div><div class="player-info-label">入队</div></div>' +
     '<div class="player-info-item"><div class="player-info-value mvp-count">' + mvpCount + '</div><div class="player-info-label">MVP</div></div>';
+
+  // Stats (goals, assists, apps, leaves, MVP)
+  var goals = p._goals || 0, asts = p._assists || 0, apps = p._apps || 0, lv = p._leaves || 0;
+  el.stats.innerHTML =
+    '<div class="pds-item"><div class="pds-val">' + goals + '</div><div class="pds-label">进球</div></div>' +
+    '<div class="pds-item"><div class="pds-val">' + asts + '</div><div class="pds-label">助攻</div></div>' +
+    '<div class="pds-item"><div class="pds-val">' + mvpCount + '</div><div class="pds-label">MVP</div></div>' +
+    '<div class="pds-item"><div class="pds-val">' + apps + '</div><div class="pds-label">出场</div></div>' +
+    '<div class="pds-item"><div class="pds-val">' + lv + '</div><div class="pds-label">请假</div></div>';
+
+  // Attribute bars
+  var attrs = p._attrs || { speed: 5, power: 5, shoot: 5, vision: 5, stamina: 5 };
+  var attrBars = [
+    { label: '速度', key: 'speed',  color: 'bar-green' },
+    { label: '力量', key: 'power',  color: 'bar-red' },
+    { label: '射门', key: 'shoot',  color: 'bar-gold' },
+    { label: '意识', key: 'vision', color: 'bar-blue' },
+    { label: '体能', key: 'stamina',color: 'bar-orange' }
+  ];
+  el.attrs.innerHTML = attrBars.map(function (b) {
+    var v = attrs[b.key] || 5;
+    return '<div class="pda-row"><span class="pda-dot ' + b.color + '"></span><span class="pda-label">' + b.label + '</span><div class="pda-track"><div class="pda-fill ' + b.color + '" style="width:' + (v * 10) + '%"></div></div><span class="pda-val">' + v + '</span></div>';
+  }).join('');
 
   el.strengths.innerHTML = p.strengths.map(function (s) { return '<span class="player-strength-tag">' + s + '</span>'; }).join('');
 

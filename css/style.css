@@ -425,7 +425,7 @@ img { max-width: 100%; display: block; }
 /* === Roster === */
 .roster-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 28px;
 }
 
@@ -458,7 +458,7 @@ img { max-width: 100%; display: block; }
 
 /* ── 球员卡片 ── */
 .player-card {
-  height: auto; min-height: 200px;
+  aspect-ratio: 3 / 4;
   perspective: 800px; cursor: pointer;
 }
 .player-card:hover .player-card-inner {
@@ -476,30 +476,85 @@ img { max-width: 100%; display: block; }
   border: 1px solid var(--border-default);
   background: var(--bg-card);
 }
-.player-card-front { padding: 16px; }
+.player-card-front {
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: 24px 20px 18px; text-align: center;
+  overflow: hidden;
+  border: 1px solid rgba(212,168,67,0.22);
+  outline: 1px solid rgba(212,168,67,0.07);
+  outline-offset: 3px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.003) 2px,
+      rgba(255,255,255,0.003) 4px
+    ),
+    var(--bg-card);
+  box-shadow: inset 0 1px 0 rgba(212,168,67,0.04);
+}
+.player-card-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 30%,
+    rgba(212,168,67,0.06) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.player-card:hover .player-card-front::after {
+  transform: translateX(100%);
+}
 .player-card-back {
   position: absolute; inset: 0;
   transform: rotateY(180deg); overflow: hidden;
-  padding: 0; border-color: rgba(201,169,97,0.25);
+  padding: 0; border-color: rgba(212,168,67,0.25);
+}
+.player-card-back::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255,255,255,0.08) 32%,
+    rgba(212,168,67,0.1) 38%,
+    rgba(255,130,130,0.07) 44%,
+    rgba(130,180,255,0.07) 50%,
+    rgba(212,168,67,0.1) 56%,
+    rgba(255,255,255,0.08) 62%,
+    transparent 74%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.player-card.flipped:hover .player-card-back::before {
+  transform: translateX(100%);
 }
 
 /* Back face with frosted glass */
 .player-card-bg {
   position: absolute; inset: 0; z-index: 1; overflow: hidden;
-  background-size: cover; background-position: center;
 }
-/* Blur via pseudo-element */
-.player-card-bg::before {
-  content: ''; position: absolute; inset: -4px;
-  background: inherit;
-  background-size: cover; background-position: center;
-  filter: blur(1px) brightness(0.92);
+.player-card-bg-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  filter: blur(0.6px) brightness(0.95);
 }
 .player-card-bg-glass {
-  position: absolute; inset: 0;
+  position: absolute; inset: 0; z-index: 1;
   background: linear-gradient(135deg,
-    rgba(255,255,255,0.06) 0%, transparent 40%,
-    transparent 60%, rgba(0,0,0,0.3) 100%);
+    rgba(0,0,0,0.1) 0%, transparent 40%,
+    transparent 55%, rgba(0,0,0,0.55) 100%);
 }
 .player-card-bg-name {
   position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
@@ -512,35 +567,46 @@ img { max-width: 100%; display: block; }
   line-height: 1; margin-top: 2px;
 }
 .player-card-photo-placeholder {
-  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  position: absolute; inset: 0; z-index: 0;
+  display: flex; align-items: center; justify-content: center;
   background: var(--bg-card-alt); color: var(--text-faint);
   font-size: 0.7rem; letter-spacing: 0.06em;
 }
+.player-card-bg-watermark {
+  position: absolute; inset: -20px; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10rem; font-weight: 900;
+  font-family: var(--font-heading);
+  color: rgba(212,168,67,0.05);
+  pointer-events: none;
+  user-select: none;
+}
 
-/* ——— Top: avatar + info ——— */
-.player-card-top {
-  display: flex; align-items: center; gap: 12px;
-  padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
-  margin-bottom: 10px;
+/* ——— Front: centered identity ——— */
+@keyframes avatar-breathe {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(212,168,67,0.35), 0 0 12px rgba(212,168,67,0.04); }
+  50% { box-shadow: 0 0 0 3px rgba(212,168,67,0.7), 0 0 32px rgba(212,168,67,0.18); }
 }
 .player-card-avatar {
-  width: 48px; height: 48px; border-radius: 50%;
+  width: 68px; height: 68px; border-radius: 50%;
   background: var(--border-default);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; color: #fff; flex-shrink: 0;
+  font-size: 1.5rem; color: #fff;
   overflow: hidden;
+  margin: 0 auto 14px;
+  box-shadow: 0 0 0 2px rgba(212,168,67,0.45), 0 0 18px rgba(212,168,67,0.08);
+  animation: avatar-breathe 2.8s ease-in-out infinite;
 }
 .player-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .player-card-avatar-initial { font-weight: 700; color: var(--gold); opacity: 0.8; }
-.player-card-info { flex: 1; min-width: 0; }
 .player-card-num {
-  font-size: 1.8rem; font-weight: 800; color: var(--gold);
-  font-family: var(--font-heading); line-height: 1; letter-spacing: 0.04em;
+  font-size: 2.6rem; font-weight: 900; color: var(--gold);
+  font-family: var(--font-heading); line-height: 1; letter-spacing: 0.02em;
 }
-.player-card-name { font-size: 0.9rem; font-weight: 600; color: #fff; }
+.player-card-name { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 2px; }
 .player-card-role {
-  display: inline-block; margin-top: 2px; padding: 1px 8px;
-  border-radius: 3px; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.06em;
+  display: inline-block; margin-top: 6px; padding: 2px 10px;
+  border-radius: 3px; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.06em;
   background: rgba(212,168,67,0.12); color: var(--gold);
 }
 .player-card-role.role-fw { background: rgba(248,113,113,0.15); color: var(--role-fw); }
@@ -548,57 +614,48 @@ img { max-width: 100%; display: block; }
 .player-card-role.role-df { background: rgba(96,165,250,0.15); color: var(--role-df); }
 .player-card-role.role-gk { background: rgba(251,146,60,0.15); color: var(--role-gk); }
 
-/* ——— Stats grid ——— */
-.player-card-stats {
-  display: grid; grid-template-columns: repeat(5, 1fr);
-  gap: 0; text-align: center; padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.04); margin-bottom: 8px;
+/* ——— Stat badges ——— */
+.player-card-badges {
+  display: flex; justify-content: center; align-items: center; gap: 0; margin-top: 16px;
 }
-.pcs-item { }
-.pcs-val {
-  font-size: 0.95rem; font-weight: 700; color: #fff;
+.pc-badge {
+  display: flex; align-items: baseline; gap: 4px;
+  font-size: 0.72rem; color: var(--text-dim);
+  background: none; border-radius: 0; padding: 0 10px;
+}
+.pc-badge-val {
+  font-size: 1.15rem; font-weight: 700; color: var(--gold);
   font-family: "SF Mono","Consolas",monospace;
 }
-.pcs-label { font-size: 0.52rem; color: var(--text-faint); letter-spacing: 0.06em; margin-top: 1px; }
-
-/* ——— Attribute bars ——— */
-.player-card-bars { display: flex; flex-direction: column; gap: 4px; }
-.pcb-row { display: flex; align-items: center; gap: 8px; }
-.pcb-label {
-  width: 28px; font-size: 0.58rem; color: var(--text-dim); text-align: right; flex-shrink: 0;
-}
-.pcb-track { flex: 1; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
-.pcb-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
-.pcb-fill.bar-green  { background: #4ade80; }
-.pcb-fill.bar-red    { background: #f87171; }
-.pcb-fill.bar-gold   { background: #c9a961; }
-.pcb-fill.bar-blue   { background: #60a5fa; }
-.pcb-fill.bar-orange { background: #fb923c; }
-.pcb-val {
-  width: 14px; text-align: right; font-size: 0.55rem; font-weight: 700;
-  color: #aaa; flex-shrink: 0; font-family: "SF Mono","Consolas",monospace;
+.pc-badge-sep {
+  width: 1px; height: 18px;
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
 }
 
 /* ——— Detail button ——— */
 .player-card-detail-btn {
-  display: block; width: 100%; margin-top: 10px; padding: 6px 0;
-  background: transparent; border: 1px solid rgba(201,169,97,0.15);
-  border-radius: 6px; color: var(--text-dim); font-size: 0.65rem;
+  display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 10px 0;
+  background: transparent; border: 1px solid rgba(212,168,67,0.2);
+  border-radius: 8px; color: var(--text-secondary); font-size: 0.75rem;
   letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s;
   font-family: inherit;
 }
 .player-card-detail-btn:hover {
-  border-color: rgba(201,169,97,0.4); color: var(--gold);
-  background: rgba(201,169,97,0.04);
+  border-color: var(--gold); color: var(--gold);
+  background: rgba(212,168,67,0.06);
 }
 
 /* ——— Captain ——— */
+.player-card.captain .player-card-front,
+.player-card.captain .player-card-back {
+  border-color: var(--gold);
+}
 .player-card.captain {
-  border-color: rgba(201,169,97,0.4);
-  box-shadow: 0 0 16px rgba(201,169,97,0.08);
+  box-shadow: 0 0 20px rgba(212,168,67,0.12);
 }
 .player-card.captain .player-card-avatar {
-  box-shadow: 0 0 10px rgba(201,169,97,0.25);
+  box-shadow: 0 0 12px rgba(212,168,67,0.4);
 }
 
 /* ——— 球员详情：时间线 ——— */
@@ -626,14 +683,14 @@ img { max-width: 100%; display: block; }
 .player-transfer-btn {
   display: block; margin: 20px auto 0;
   padding: 8px 24px; border-radius: 20px;
-  background: transparent; color: rgba(201,169,97,0.5);
-  border: 1px solid rgba(201,169,97,0.2);
+  background: transparent; color: rgba(212,168,67,0.5);
+  border: 1px solid rgba(212,168,67,0.2);
   font-size: 0.72rem; letter-spacing: 0.06em; cursor: pointer;
   transition: all 0.2s;
 }
 .player-transfer-btn:hover {
   border-color: var(--gold); color: var(--gold);
-  background: rgba(201,169,97,0.06);
+  background: rgba(212,168,67,0.06);
 }
 
 /* === Fixtures === */
@@ -1222,15 +1279,18 @@ img { max-width: 100%; display: block; }
   /* Roster */
   .roster-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .roster-group-title { font-size: 1rem; padding: 8px 16px; margin-bottom: 0; }
-  .player-card { padding: 12px; }
-  .player-card-avatar { width: 40px; height: 40px; }
-  .player-card-num { font-size: 1.5rem; }
-  .player-card-name { font-size: 0.82rem; }
-  .player-card-role { font-size: 0.54rem; }
-  .pcs-val { font-size: 0.82rem; }
-  .pcb-label { width: 24px; font-size: 0.54rem; }
-  .pcb-val { font-size: 0.5rem; }
-  .player-card-detail-btn { font-size: 0.6rem; padding: 5px 0; }
+  .player-card { aspect-ratio: auto; }
+  .player-card-front { padding: 20px 14px 16px; outline-offset: 2px; }
+  .player-card-avatar { width: 52px; height: 52px; font-size: 1.2rem; margin-bottom: 10px; }
+  .player-card-num { font-size: 2rem; }
+  .player-card-name { font-size: 0.85rem; }
+  .player-card-role { font-size: 0.56rem; }
+  .player-card-badges { margin-top: 14px; }
+  .pc-badge { font-size: 0.66rem; padding: 0 8px; }
+  .pc-badge-val { font-size: 1rem; }
+  .pc-badge-sep { height: 16px; }
+  .player-card-detail-btn { font-size: 0.7rem; padding: 10px 0; margin-top: 14px; min-height: 42px; }
+  .player-card-bg-watermark { font-size: 6rem; }
 
   /* Fixtures */
   .fixtures-columns { grid-template-columns: 1fr; gap: 36px; }
@@ -1291,16 +1351,17 @@ img { max-width: 100%; display: block; }
   .roster-group-title { font-size: 0.85rem; padding: 6px 10px; margin-bottom: 2px; }
   .carousel-slide-placeholder { font-size: 0.8rem; padding: 8px 16px; }
   .about-stats { grid-template-columns: 1fr; }
-  .player-card { padding: 10px; }
-  .player-card-avatar { width: 36px; height: 36px; }
-  .player-card-num { font-size: 1.3rem; }
-  .player-card-name { font-size: 0.75rem; }
-  .player-card-role { font-size: 0.5rem; padding: 1px 6px; }
-  .pcs-val { font-size: 0.75rem; }
-  .pcb-label { width: 22px; font-size: 0.5rem; }
-  .pcb-track { height: 2px; }
-  .pcb-val { font-size: 0.48rem; }
-  .player-card-detail-btn { font-size: 0.56rem; padding: 4px 0; margin-top: 8px; }
+  .player-card-front { padding: 16px 10px 14px; outline-offset: 2px; }
+  .player-card-avatar { width: 44px; height: 44px; font-size: 1.1rem; margin-bottom: 8px; }
+  .player-card-num { font-size: 1.7rem; }
+  .player-card-name { font-size: 0.78rem; }
+  .player-card-role { font-size: 0.52rem; padding: 1px 8px; }
+  .player-card-badges { margin-top: 12px; }
+  .pc-badge { font-size: 0.6rem; padding: 0 6px; }
+  .pc-badge-val { font-size: 0.9rem; }
+  .pc-badge-sep { height: 14px; }
+  .player-card-detail-btn { font-size: 0.65rem; padding: 10px 0; margin-top: 12px; min-height: 40px; }
+  .player-card-bg-watermark { font-size: 4.5rem; }
 }
 
 /* ========================================
@@ -1331,6 +1392,7 @@ img { max-width: 100%; display: block; }
   position: absolute;
   top: 28px;
   left: 28px;
+  z-index: 2;
   background: none;
   border: 1px solid var(--border-muted);
   color: var(--gold);
@@ -1347,11 +1409,23 @@ img { max-width: 100%; display: block; }
 }
 
 .player-overlay-inner {
+  position: relative;
+  z-index: 1;
   text-align: center;
   max-width: 460px;
+  max-height: 100vh;
+  width: 100%;
   padding: 40px 32px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   transform: translateX(40px);
   transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.player-overlay-inner::-webkit-scrollbar {
+  display: none;
 }
 
 .player-detail-avatar {
@@ -1479,6 +1553,70 @@ img { max-width: 100%; display: block; }
   letter-spacing: 0.04em;
 }
 
+/* ——— Detail stats grid ——— */
+.player-detail-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 24px;
+}
+.pds-item {
+  text-align: center;
+}
+.pds-val {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: "SF Mono","Consolas",monospace;
+}
+.pds-label {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* ——— Detail attribute bars ——— */
+.player-detail-attrs {
+  margin-top: 24px;
+  padding: 0 8px;
+}
+.pda-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.pda-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.pda-dot.bar-green  { background: #4ade80; }
+.pda-dot.bar-red    { background: #f87171; }
+.pda-dot.bar-gold   { background: var(--gold); }
+.pda-dot.bar-blue   { background: #60a5fa; }
+.pda-dot.bar-orange { background: #fb923c; }
+.pda-label {
+  width: 32px; font-size: 0.78rem; color: var(--text-secondary);
+  text-align: right; flex-shrink: 0;
+}
+.pda-track {
+  flex: 1; height: 8px; background: rgba(255,255,255,0.06);
+  border-radius: 4px; overflow: hidden;
+}
+.pda-fill {
+  height: 100%; border-radius: 4px; transition: width 0.6s ease;
+}
+.pda-fill.bar-green  { background: #4ade80; }
+.pda-fill.bar-red    { background: #f87171; }
+.pda-fill.bar-gold   { background: var(--gold); }
+.pda-fill.bar-blue   { background: #60a5fa; }
+.pda-fill.bar-orange { background: #fb923c; }
+.pda-val {
+  width: 18px; text-align: right; font-size: 0.75rem; font-weight: 700;
+  color: var(--text-secondary); flex-shrink: 0;
+  font-family: "SF Mono","Consolas",monospace;
+}
+
 .player-detail-strengths {
   display: flex;
   flex-wrap: wrap;
@@ -1498,13 +1636,18 @@ img { max-width: 100%; display: block; }
 /* overlay responsive */
 @media (max-width: 500px) {
   .player-overlay-back {
-    top: 16px;
-    left: 16px;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
     font-size: 0.85rem;
-    padding: 6px 14px;
+    padding: 10px 16px;
   }
   .player-overlay-inner {
-    padding: 24px 20px;
+    padding: 48px 20px 32px;
+    max-height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
   .player-detail-avatar {
     width: 100px;
@@ -1515,6 +1658,13 @@ img { max-width: 100%; display: block; }
   .player-detail-name { font-size: 1.3rem; }
   .player-detail-role { font-size: 0.95rem; padding: 6px 18px; }
   .player-detail-info { gap: 28px; }
+  .player-detail-stats { gap: 22px; margin-top: 20px; }
+  .pds-val { font-size: 1.1rem; }
+  .pds-label { font-size: 0.66rem; }
+  .player-detail-attrs { margin-top: 20px; padding: 0; }
+  .pda-label { width: 28px; font-size: 0.72rem; }
+  .pda-track { height: 7px; }
+  .pda-val { font-size: 0.7rem; width: 16px; }
 }
 
 /* ========================================
