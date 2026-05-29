@@ -200,9 +200,7 @@ function calcRegWindow(dateStr, timeStr) {
   const open = new Date(d);
   open.setDate(open.getDate() - 4);
   open.setHours(21, 0, 0, 0);
-  const close = new Date(d);
-  close.setDate(close.getDate() - 2);
-  close.setHours(12, 0, 0, 0);
+  const close = new Date(d.getTime() - 8 * 60 * 60 * 1000);
   return { open, close };
 }
 
