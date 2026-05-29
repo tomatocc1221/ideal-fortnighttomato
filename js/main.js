@@ -129,7 +129,7 @@ function loadOverrides() {
    ======================================== */
 function getDefaultPlayers() {
   return [
-    { number: 1,  name: "叶乙茏", role: "GK",       avatar: "🧤", age: 24, joinYear: "2025", strengths: ["门将", "反应快", "出击果断"],    bio: "" },
+    { number: 1,  name: "叶乙茏", role: "GK",       avatar: "🧤", age: 24, joinYear: "2025", strengths: ["门将", "反应快", "出击果断"],    bg: "叶乙茏", bio: "" },
     { number: 1,  name: "陈政忠", role: "GK",       avatar: "🧤", age: 27, joinYear: "2025", strengths: ["门将", "稳定", "经验丰富"],      bio: "" },
     { number: 2,  name: "曾松",   role: "LM",       avatar: "⚙️", age: 23, joinYear: "2025", strengths: ["左前卫", "传中精准", "耐力好"],   bio: "" },
     { number: 4,  name: "李云龙", role: "CB",       avatar: "🛡️", age: 26, joinYear: "2025", strengths: ["中后卫", "头球", "抢断"],         bio: "" },
@@ -599,7 +599,7 @@ function renderRoster(playersOverride) {
           '</div>' +
           '<div class="player-card-back">' +
             '<div class="player-card-bg">' +
-              '<img class="player-card-bg-img" src="images/players-bg/' + p.number + '.webp" onerror="imgFallback(this)" alt="">' +
+              '<img class="player-card-bg-img" src="images/players-bg/' + (p.bg || p.number) + '.webp" onerror="imgFallback(this)" alt="">' +
               '<div class="player-card-bg-watermark">' + p.number + '</div>' +
               '<div class="player-card-bg-glass"></div>' +
               '<div class="player-card-bg-name">' + p.name + '<span>' + p.number + '</span></div>' +
