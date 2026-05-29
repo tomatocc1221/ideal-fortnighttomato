@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiceBear 头像风格预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0d0d;
+    color: #ccc;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 40px 20px;
+  }
+  h1 { text-align: center; color: #c9a961; font-size: 1.8rem; margin-bottom: 6px; letter-spacing: 0.06em; }
+  .sub { text-align: center; color: #777; font-size: 0.85rem; margin-bottom: 8px; }
+  .sub a { color: #c9a961; }
+  .styles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; max-width: 1440px; margin: 0 auto 48px; }
+
+  .style-card {
+    background: #141414; border: 1px solid #222; border-radius: 14px;
+    padding: 24px 16px 20px; text-align: center;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .style-card:hover { border-color: rgba(201,169,97,0.35); transform: translateY(-2px); }
+  .style-name { font-size: 1.1rem; color: #eee; font-weight: 600; margin-bottom: 4px; }
+  .style-desc { font-size: 0.75rem; color: #888; margin-bottom: 16px; }
+  .avatars-row { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .avatar-wrap { text-align: center; }
+  .avatar-wrap img {
+    width: 100px; height: 100px; border-radius: 14px;
+    background: #1a1a1a; border: 1px solid #2a2a2a;
+    transition: border-color 0.2s;
+  }
+  .avatar-wrap img:hover { border-color: #c9a961; }
+  .avatar-wrap .tag { font-size: 0.7rem; color: #666; margin-top: 4px; }
+
+  .note { text-align: center; color: #555; font-size: 0.75rem; line-height: 1.8; max-width: 700px; margin: 0 auto; }
+  .note strong { color: #c9a961; }
+
+  .loading-dot { display: inline-block; width: 100px; height: 100px; line-height: 100px; color: #555; font-size: 0.7rem; background: #1a1a1a; border-radius: 14px; }
+</style>
+</head>
+<body>
+
+<h1>12 款 DiceBear 头像风格预览</h1>
+<p class="sub">免费开源 · URL 传参即生成 · 无需 API Key · <a href="https://www.dicebear.com/styles" target="_blank">官网查看更多</a></p>
+
+<div class="styles-grid" id="grid"></div>
+
+<p class="note">
+  <strong>选中风格后：</strong>为 27 位球员生成统一风格头像 → 导出 PNG 存入 images/players/ → 首页自动加载<br>
+  <strong>配色可定制：</strong>队服颜色、肤色、发型等参数可在 URL 中配置，确保 27 人头像风格统一又各具辨识度
+</p>
+
+<script>
+const seeds  = ['player7','player10','player5','player22','player9'];
+
+const styles = [
+  { id: 'adventurer',    name: 'Adventurer 冒险家',      desc: '精致卡通 · 五官丰富 · 支持服饰配饰' },
+  { id: 'adventurer-neutral', name: 'Adventurer 中性版',  desc: '同上风格 · 无性别特征 · 更简洁' },
+  { id: 'avataaars',     name: 'Avataaars 经典风',       desc: '扁平化角色 · 表情多样 · 辨识度极高' },
+  { id: 'avataaars-neutral', name: 'Avataaars 中性版',   desc: '同上风格 · 无胡须等性别特征' },
+  { id: 'lorelei',       name: 'Lorelei 小怪物',          desc: '圆润可爱 · 大眼萌 · 像卡通贴纸' },
+  { id: 'notionists',    name: 'Notionists 极简笔记',     desc: '黑白素描风 · Notion风格 · 极简高级' },
+  { id: 'notionists-neutral', name: 'Notionists 中性版',  desc: '同上 · 更统一的五官比例' },
+  { id: 'thumbs',        name: 'Thumbs 大拇指',           desc: '夸张卡通 · 美式漫画 · 表情生动' },
+  { id: 'bottts',        name: 'Bottts 机器人',           desc: '几何机器人 · 金属质感 · 科技感' },
+  { id: 'pixel-art',     name: 'Pixel Art 像素风',        desc: '8-bit复古 · 像素颗粒 · 怀旧游戏感' },
+  { id: 'micah',         name: 'Micah 手绘风',            desc: '水彩涂鸦 · 柔和色调 · 艺术感' },
+  { id: 'fun-emoji',     name: 'Fun Emoji 表情',           desc: '圆脸Emoji · 高饱和色 · 活泼醒目' },
+];
+
+const grid = document.getElementById('grid');
+
+styles.forEach(s => {
+  const card = document.createElement('div');
+  card.className = 'style-card';
+
+  let avatarsHTML = seeds.map(seed => {
+    const url = `https://api.dicebear.com/9.x/${s.id}/svg?seed=${seed}&size=100`;
+    return `<div class="avatar-wrap">
+      <img src="${url}" alt="${seed}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=loading-dot>加载中</div>'">
+      <div class="tag">#${seed.slice(6)}</div>
+    </div>`;
+  }).join('');
+
+  card.innerHTML = `
+    <div class="style-name">${s.name}</div>
+    <div class="style-desc">${s.desc}</div>
+    <div class="avatars-row">${avatarsHTML}</div>
+  `;
+  grid.appendChild(card);
+});
+</script>
+
+</body>
+</html>

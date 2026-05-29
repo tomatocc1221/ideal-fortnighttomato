@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今日说法 — UI 设计方案对比</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+/* ========================================
+   Style Showcase Shell (not part of any design)
+   ======================================== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #1a1a1a; color:#e0e0e0; line-height:1.6;
+}
+
+/* --- Page header --- */
+.showcase-header {
+  text-align:center; padding:60px 24px 40px;
+  background: linear-gradient(180deg, #0d0d0d 0%, #1a1a1a 100%);
+  border-bottom:1px solid #333;
+}
+.showcase-header h1 { font-family:"Bebas Neue", sans-serif; font-size:3rem; color:#c9a961; letter-spacing:0.08em; }
+.showcase-header p { color:#888; margin-top:8px; font-size:1rem; }
+
+/* --- Style TOC --- */
+.style-toc {
+  display:flex; justify-content:center; gap:12px; flex-wrap:wrap;
+  padding:28px 24px; background:#161616;
+  border-bottom:1px solid #2a2a2a; position:sticky; top:0; z-index:100;
+}
+.style-toc a {
+  padding:8px 18px; border:1px solid #444; border-radius:20px;
+  color:#aaa; font-size:0.82rem; text-decoration:none;
+  transition:all 0.2s; letter-spacing:0.04em;
+}
+.style-toc a:hover { border-color:#c9a961; color:#c9a961; }
+
+/* --- Style page --- */
+.style-page {
+  padding:0;
+  border-bottom: 2px solid #333;
+}
+.style-label {
+  display:flex; align-items:center; gap:14px;
+  padding:18px 28px; background:#111;
+  border-bottom:1px solid #2a2a2a;
+}
+.style-label .badge {
+  background:#c9a961; color:#0d0d0d; font-weight:700; font-size:0.72rem;
+  padding:4px 12px; border-radius:4px; letter-spacing:0.06em;
+}
+.style-label h2 { font-size:1.15rem; color:#ddd; font-weight:500; letter-spacing:0.04em; }
+
+/* Palettes */
+.palette-row {
+  display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
+}
+.palette-swatch {
+  width:36px; height:36px; border-radius:6px; border:1px solid rgba(255,255,255,0.1);
+  position:relative; cursor:default;
+}
+.palette-swatch:hover::after {
+  content:attr(data-hex); position:absolute; bottom:-20px; left:50%;
+  transform:translateX(-50%); font-size:0.65rem; color:#aaa; white-space:nowrap;
+}
+
+/* Layout helpers for mockups */
+.mock-section { padding:32px 28px; }
+.mock-section h3 { font-size:0.72rem; color:#666; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:16px; }
+.mock-row { display:flex; gap:16px; flex-wrap:wrap; }
+
+/* ============================================================
+   STYLE A — 极简白底 Modern Minimal White
+   ============================================================ */
+.style-a {
+  --a-bg: #fafafa;
+  --a-bg2: #f0f0f0;
+  --a-card: #ffffff;
+  --a-text: #1a1a1a;
+  --a-text2: #555;
+  --a-text3: #888;
+  --a-accent: #c9a961;
+  --a-accent2: #2c2c2c;
+  --a-border: #e5e5e5;
+  --a-radius: 10px;
+  background: var(--a-bg); color: var(--a-text); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding-bottom:24px;
+}
+
+/* Nav A */
+.nav-a {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 28px; background:rgba(255,255,255,0.85);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid #eee; position:sticky; top:0; z-index:10;
+}
+.nav-a .brand { display:flex; align-items:center; gap:10px; font-weight:700; color:var(--a-accent2); font-size:1.05rem; }
+.nav-a .brand .dot { width:32px; height:32px; background:var(--a-accent); border-radius:50%; }
+.nav-a .links { display:flex; gap:28px; }
+.nav-a .links span { font-size:0.82rem; color:var(--a-text2); letter-spacing:0.03em; }
+
+/* Hero A */
+.hero-a {
+  text-align:center; padding:72px 24px 56px;
+  background: linear-gradient(180deg, #fafafa 0%, #f0f0f0 100%);
+}
+.hero-a .logo-place { width:90px; height:90px; background:var(--a-accent); border-radius:50%; margin:0 auto 20px; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+.hero-a h1 { font-family:"Bebas Neue", sans-serif; font-size:4rem; color:var(--a-accent2); letter-spacing:0.12em; line-height:1; }
+.hero-a p { font-size:1.05rem; color:var(--a-text3); letter-spacing:0.1em; margin-top:10px; }
+
+/* Cards A */
+.card-a {
+  background:var(--a-card); border:1px solid var(--a-border); border-radius:var(--a-radius);
+  padding:28px 20px; text-align:center; flex:1; min-width:140px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.04); transition:transform 0.25s, box-shadow 0.25s;
+}
+.card-a:hover { transform:translateY(-4px); box-shadow:0 8px 30px rgba(0,0,0,0.08); }
+.card-a .num { font-size:2.2rem; font-weight:800; color:var(--a-accent); }
+.card-a .lbl { font-size:0.78rem; color:var(--a-text3); margin-top:6px; letter-spacing:0.04em; }
+
+/* Section title A */
+.title-a { text-align:center; margin-bottom:32px; }
+.title-a h2 { font-family:"Bebas Neue", sans-serif; font-size:2rem; letter-spacing:0.1em; color:var(--a-accent2); display:inline-block; }
+.title-a h2::after { content:""; display:block; width:40px; height:2px; background:var(--a-accent); margin:10px auto 0; }
+
+/* Fixture A */
+.fix-a { display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid var(--a-border); }
+.fix-a .d { font-size:0.78rem; color:var(--a-text3); min-width:72px; }
+.fix-a .t { flex:1; font-size:0.92rem; color:var(--a-text); }
+.fix-a .s { font-weight:700; padding:4px 10px; border-radius:4px; font-size:0.88rem; background:#f5f0e0; color:#b8941f; }
+
+/* === STYLE B — 经典绿茵 Classic Pitch Green === */
+.style-b {
+  --b-bg: #f2f7f2;
+  --b-dark: #0d2610;
+  --b-card: #ffffff;
+  --b-text: #1a1a1a;
+  --b-text2: #4a6b4a;
+  --b-accent: #c9a961;
+  --b-green: #2d7d2d;
+  --b-border: #d8e8d8;
+  background: var(--b-bg); color: var(--b-text); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding-bottom:24px;
+}
+
+.nav-b {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 28px; background:var(--b-dark); color:#fff;
+}
+.nav-b .brand { display:flex; align-items:center; gap:10px; font-weight:700; color:var(--b-accent); font-size:1.05rem; }
+.nav-b .brand .dot { width:32px; height:32px; background:var(--b-accent); border-radius:50%; }
+.nav-b .links { display:flex; gap:28px; }
+.nav-b .links span { font-size:0.82rem; color:#a0c0a0; letter-spacing:0.03em; }
+
+.hero-b {
+  text-align:center; padding:80px 24px 60px;
+  background: linear-gradient(180deg, #0d2610 0%, #153018 40%, #1a3a1a 100%);
+  position:relative; overflow:hidden;
+}
+.hero-b::before {
+  content:""; position:absolute; inset:0; opacity:0.06;
+  background: repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255,255,255,0.5) 20px, rgba(255,255,255,0.5) 21px);
+  pointer-events:none;
+}
+.hero-b > * { position:relative; z-index:1; }
+.hero-b .logo-place { width:90px; height:90px; background:var(--b-accent); border-radius:50%; margin:0 auto 20px; box-shadow:0 0 40px rgba(201,169,97,0.3); }
+.hero-b h1 { font-family:"Bebas Neue", sans-serif; font-size:4rem; color:#fff; letter-spacing:0.12em; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,0.3); }
+.hero-b p { font-size:1.05rem; color:#a0c0a0; letter-spacing:0.1em; margin-top:10px; }
+
+.card-b {
+  background:var(--b-card); border:1px solid var(--b-border); border-radius:10px;
+  padding:28px 20px; text-align:center; flex:1; min-width:140px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.03);
+  transition:transform 0.25s;
+}
+.card-b:hover { transform:translateY(-4px); }
+.card-b .num { font-size:2.2rem; font-weight:800; color:var(--b-green); }
+.card-b .lbl { font-size:0.78rem; color:var(--b-text2); margin-top:6px; letter-spacing:0.04em; }
+
+.title-b { text-align:center; margin-bottom:32px; }
+.title-b h2 { font-family:"Bebas Neue", sans-serif; font-size:2rem; letter-spacing:0.1em; color:var(--b-dark); display:inline-block; }
+.title-b h2::after { content:""; display:block; width:40px; height:3px; background:var(--b-green); margin:10px auto 0; border-radius:2px; }
+
+.fix-b { display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid var(--b-border); }
+.fix-b .d { font-size:0.78rem; color:var(--b-text2); min-width:72px; }
+.fix-b .t { flex:1; font-size:0.92rem; color:var(--b-text); }
+.fix-b .s { font-weight:700; padding:4px 10px; border-radius:4px; font-size:0.88rem; background:#e8f5e8; color:var(--b-green); }
+
+/* === STYLE C — 深蓝职业 Navy Professional === */
+.style-c {
+  --c-bg: #060b1a;
+  --c-bg2: #0d1430;
+  --c-card: #111d3a;
+  --c-text: #e0e4f0;
+  --c-text2: #8899bb;
+  --c-accent: #c0a860;
+  --c-blue: #3b7ddd;
+  --c-border: #1a2550;
+  background: var(--c-bg); color: var(--c-text); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding-bottom:24px;
+}
+
+.nav-c {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 28px; background:rgba(6,11,26,0.9);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--c-border);
+}
+.nav-c .brand { display:flex; align-items:center; gap:10px; font-weight:700; color:var(--c-accent); font-size:1.05rem; }
+.nav-c .brand .dot { width:32px; height:32px; background:linear-gradient(135deg, var(--c-accent), var(--c-blue)); border-radius:50%; }
+.nav-c .links { display:flex; gap:28px; }
+.nav-c .links span { font-size:0.82rem; color:var(--c-text2); letter-spacing:0.03em; }
+
+.hero-c {
+  text-align:center; padding:80px 24px 60px;
+  background: radial-gradient(ellipse at 50% 30%, rgba(59,125,221,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 70%, rgba(192,168,96,0.06) 0%, transparent 50%),
+              var(--c-bg);
+}
+.hero-c .logo-place { width:90px; height:90px; background:linear-gradient(135deg, var(--c-accent), #8b7320); border-radius:50%; margin:0 auto 20px; box-shadow:0 0 40px rgba(192,168,96,0.25); }
+.hero-c h1 { font-family:"Bebas Neue", sans-serif; font-size:4rem; color:#fff; letter-spacing:0.12em; line-height:1; }
+.hero-c p { font-size:1.05rem; color:var(--c-text2); letter-spacing:0.1em; margin-top:10px; }
+.hero-c .shield { display:inline-block; width:4px; height:24px; background:var(--c-blue); margin:0 8px; vertical-align:middle; border-radius:2px; }
+
+.card-c {
+  background:var(--c-card); border:1px solid var(--c-border); border-radius:8px;
+  padding:28px 20px; text-align:center; flex:1; min-width:140px;
+  transition:transform 0.25s, border-color 0.25s;
+}
+.card-c:hover { transform:translateY(-4px); border-color:var(--c-blue); }
+.card-c .num { font-size:2.2rem; font-weight:800; color:var(--c-accent); font-family:"Bebas Neue", sans-serif; }
+.card-c .lbl { font-size:0.78rem; color:var(--c-text2); margin-top:6px; letter-spacing:0.06em; text-transform:uppercase; }
+
+.title-c { text-align:center; margin-bottom:32px; }
+.title-c h2 { font-family:"Bebas Neue", sans-serif; font-size:2rem; letter-spacing:0.1em; color:#fff; display:inline-block; }
+.title-c h2::after { content:""; display:block; width:40px; height:2px; background:var(--c-blue); margin:10px auto 0; }
+
+.fix-c { display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+.fix-c .d { font-size:0.78rem; color:var(--c-text2); min-width:72px; }
+.fix-c .t { flex:1; font-size:0.92rem; color:var(--c-text); }
+.fix-c .s { font-weight:700; padding:4px 10px; border-radius:4px; font-size:0.88rem; background:rgba(192,168,96,0.12); color:var(--c-accent); }
+
+/* === STYLE D — 暗夜霓虹 Neon Dark === */
+.style-d {
+  --d-bg: #050510;
+  --d-bg2: #0a0a1a;
+  --d-card: #0e0e22;
+  --d-text: #e0e0f0;
+  --d-text2: #7777aa;
+  --d-neon-green: #39ff14;
+  --d-neon-pink: #ff2d55;
+  --d-neon-cyan: #00d4ff;
+  --d-gold: #ffd700;
+  --d-border: #1a1a3a;
+  background: var(--d-bg); color: var(--d-text); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding-bottom:24px;
+}
+
+.nav-d {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 28px; background:rgba(5,5,16,0.92);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(57,255,20,0.15);
+}
+.nav-d .brand { display:flex; align-items:center; gap:10px; font-weight:700; color:var(--d-neon-green); font-size:1.05rem; }
+.nav-d .brand .dot { width:32px; height:32px; background:var(--d-neon-green); border-radius:50%; box-shadow:0 0 16px rgba(57,255,20,0.4); }
+.nav-d .links { display:flex; gap:28px; }
+.nav-d .links span { font-size:0.82rem; color:var(--d-text2); letter-spacing:0.03em; text-shadow:0 0 8px transparent; transition:text-shadow 0.3s; }
+
+.hero-d {
+  text-align:center; padding:80px 24px 60px;
+  background: radial-gradient(ellipse at 50% 20%, rgba(57,255,20,0.06) 0%, transparent 55%),
+              radial-gradient(ellipse at 20% 60%, rgba(255,45,85,0.04) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 50%, rgba(0,212,255,0.04) 0%, transparent 50%),
+              var(--d-bg);
+  position:relative;
+}
+.hero-d::before {
+  content:""; position:absolute; inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+.hero-d > * { position:relative; z-index:1; }
+.hero-d .logo-place { width:90px; height:90px; background:var(--d-neon-green); border-radius:50%; margin:0 auto 20px; box-shadow:0 0 40px rgba(57,255,20,0.5), 0 0 80px rgba(57,255,20,0.2); }
+.hero-d h1 { font-family:"Bebas Neue", sans-serif; font-size:4rem; color:#fff; letter-spacing:0.12em; line-height:1; text-shadow:0 0 30px rgba(57,255,20,0.3); }
+.hero-d p { font-size:1.05rem; color:var(--d-text2); letter-spacing:0.1em; margin-top:10px; }
+
+.card-d {
+  background:var(--d-card); border:1px solid var(--d-border); border-radius:10px;
+  padding:28px 20px; text-align:center; flex:1; min-width:140px;
+  transition:transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+.card-d:hover { transform:translateY(-4px); border-color:var(--d-neon-cyan); box-shadow:0 0 24px rgba(0,212,255,0.1); }
+.card-d .num { font-size:2.2rem; font-weight:800; color:var(--d-neon-green); font-family:"Bebas Neue", sans-serif; text-shadow:0 0 12px rgba(57,255,20,0.4); }
+.card-d .lbl { font-size:0.78rem; color:var(--d-text2); margin-top:6px; letter-spacing:0.04em; }
+
+.title-d { text-align:center; margin-bottom:32px; }
+.title-d h2 { font-family:"Bebas Neue", sans-serif; font-size:2rem; letter-spacing:0.1em; color:#fff; display:inline-block; text-shadow:0 0 20px rgba(57,255,20,0.2); }
+.title-d h2::after { content:""; display:block; width:40px; height:2px; background:linear-gradient(90deg, var(--d-neon-green), var(--d-neon-cyan)); margin:10px auto 0; border-radius:2px; }
+
+.fix-d { display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.fix-d .d { font-size:0.78rem; color:var(--d-text2); min-width:72px; }
+.fix-d .t { flex:1; font-size:0.92rem; color:var(--d-text); }
+.fix-d .s { font-weight:700; padding:4px 10px; border-radius:4px; font-size:0.88rem; background:rgba(57,255,20,0.08); color:var(--d-neon-green); }
+
+/* neon accent row */
+.neon-dots { display:flex; gap:8px; align-items:center; margin-top:10px; }
+.neon-dot { width:10px; height:10px; border-radius:50%; }
+.neon-dot.g { background:var(--d-neon-green); box-shadow:0 0 8px var(--d-neon-green); }
+.neon-dot.p { background:var(--d-neon-pink); box-shadow:0 0 8px var(--d-neon-pink); }
+.neon-dot.c { background:var(--d-neon-cyan); box-shadow:0 0 8px var(--d-neon-cyan); }
+
+/* === STYLE E — 黑金进化 Premium Black-Gold Pro === */
+.style-e {
+  --e-bg: #080808;
+  --e-bg2: #0e0e0e;
+  --e-card: #111111;
+  --e-text: #e8e8e8;
+  --e-text2: #999;
+  --e-text3: #666;
+  --e-gold: #d4a843;
+  --e-gold-light: #e0c070;
+  --e-border: #1f1f1f;
+  --e-glass: rgba(255,255,255,0.03);
+  background: var(--e-bg); color: var(--e-text); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  padding-bottom:24px;
+}
+
+.nav-e {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 32px; margin:12px 20px 0;
+  background:rgba(17,17,17,0.8); border:1px solid rgba(255,255,255,0.06);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-radius:14px;
+}
+.nav-e .brand { display:flex; align-items:center; gap:10px; font-weight:700; color:var(--e-gold); font-size:1.05rem; }
+.nav-e .brand .dot { width:34px; height:34px; background:linear-gradient(135deg, #d4a843, #8b6914); border-radius:50%; box-shadow:0 0 16px rgba(212,168,67,0.3); }
+.nav-e .links { display:flex; gap:32px; }
+.nav-e .links span { font-size:0.82rem; color:var(--e-text2); letter-spacing:0.04em; }
+
+.hero-e {
+  text-align:center; padding:90px 24px 70px;
+  background: radial-gradient(ellipse at 50% 30%, rgba(212,168,67,0.1) 0%, transparent 55%),
+              radial-gradient(ellipse at 30% 60%, rgba(212,168,67,0.04) 0%, transparent 45%),
+              var(--e-bg);
+  position:relative; overflow:hidden;
+}
+.hero-e::before {
+  content:""; position:absolute; inset:0; opacity:0.03;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+.hero-e > * { position:relative; z-index:1; }
+.hero-e .logo-place {
+  width:100px; height:100px;
+  background:radial-gradient(circle at 40% 35%, #e0c070, #8b6914);
+  border-radius:50%; margin:0 auto 24px;
+  box-shadow:0 0 60px rgba(212,168,67,0.3), 0 0 120px rgba(212,168,67,0.1);
+}
+.hero-e h1 { font-family:"Bebas Neue", sans-serif; font-size:4.5rem; color:var(--e-gold); letter-spacing:0.15em; line-height:1; }
+.hero-e p { font-size:1rem; color:var(--e-text3); letter-spacing:0.15em; margin-top:12px; }
+.hero-e .ornament { display:inline-block; width:60px; height:1px; background:linear-gradient(90deg, transparent, var(--e-gold), transparent); margin:24px auto 0; }
+
+.card-e {
+  background:var(--e-card); border:1px solid var(--e-border); border-radius:12px;
+  padding:32px 24px; text-align:center; flex:1; min-width:140px;
+  position:relative; overflow:hidden;
+  transition:transform 0.3s cubic-bezier(0.22,0.61,0.36,1), border-color 0.3s;
+}
+.card-e::before {
+  content:""; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(212,168,67,0.3), transparent);
+  opacity:0; transition:opacity 0.3s;
+}
+.card-e:hover { transform:translateY(-6px); border-color:rgba(212,168,67,0.25); }
+.card-e:hover::before { opacity:1; }
+.card-e .num { font-size:2.4rem; font-weight:800; color:var(--e-gold); font-family:"Bebas Neue", sans-serif; letter-spacing:0.04em; }
+.card-e .lbl { font-size:0.78rem; color:var(--e-text3); margin-top:6px; letter-spacing:0.08em; text-transform:uppercase; }
+
+.title-e { text-align:center; margin-bottom:36px; }
+.title-e h2 { font-family:"Bebas Neue", sans-serif; font-size:2.2rem; letter-spacing:0.12em; color:var(--e-gold); display:inline-block; }
+.title-e h2::after { content:""; display:block; width:50px; height:2px; background:linear-gradient(90deg, transparent, var(--e-gold), transparent); margin:14px auto 0; }
+
+.fix-e { display:flex; align-items:center; gap:16px; padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.fix-e .d { font-size:0.78rem; color:var(--e-text3); min-width:72px; letter-spacing:0.04em; }
+.fix-e .t { flex:1; font-size:0.92rem; color:var(--e-text); }
+.fix-e .s { font-weight:700; padding:5px 12px; border-radius:5px; font-size:0.88rem; background:rgba(212,168,67,0.1); color:var(--e-gold); border:1px solid rgba(212,168,67,0.15); }
+
+/* === Comparison table === */
+.compare-section {
+  padding:32px 28px; background:#111;
+}
+.compare-table {
+  width:100%; border-collapse:collapse; font-size:0.85rem;
+}
+.compare-table th, .compare-table td {
+  padding:10px 14px; border:1px solid #2a2a2a; text-align:left;
+}
+.compare-table th { background:#1a1a1a; color:#c9a961; font-weight:600; letter-spacing:0.04em; }
+.compare-table td { color:#bbb; }
+.compare-table tr:hover td { background:rgba(255,255,255,0.02); }
+
+/* === Print === */
+@media print {
+  body { background:#fff; color:#000; }
+  .style-toc, .showcase-header { display:none; }
+  .style-page { break-before:page; border:none; page-break-after:always; }
+  .style-label { background:#f5f5f5; border-bottom:1px solid #ccc; }
+  .compare-section { break-before:page; }
+}
+
+/* Mobile responsive for the mockups themselves */
+@media (max-width: 768px) {
+  .nav-a .links, .nav-b .links, .nav-c .links, .nav-d .links, .nav-e .links { display:none; }
+  .hero-a h1, .hero-b h1, .hero-c h1, .hero-d h1, .hero-e h1 { font-size:2.4rem; }
+  .mock-row { flex-direction:column; }
+  .nav-e { margin:8px 8px 0; padding:12px 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="showcase-header">
+  <h1>今日说法 — UI 设计方案集</h1>
+  <p>5 种完整设计方向 &middot; 制作于 2026-05-25 &middot; 选择你喜欢的风格后敲定细节</p>
+</div>
+
+<nav class="style-toc">
+  <a href="#s-a">A · 极简白底</a>
+  <a href="#s-b">B · 经典绿茵</a>
+  <a href="#s-c">C · 深蓝职业</a>
+  <a href="#s-d">D · 暗夜霓虹</a>
+  <a href="#s-e">E · 黑金进化</a>
+  <a href="#s-compare">对比总表</a>
+</nav>
+
+<!-- ================================================================ -->
+<!-- STYLE A -->
+<!-- ================================================================ -->
+<div class="style-page" id="s-a">
+<div class="style-label"><span class="badge">STYLE A</span><h2>极简白底 — Modern Minimal White</h2></div>
+
+<div class="style-a">
+  <!-- Nav -->
+  <div class="nav-a">
+    <div class="brand"><div class="dot"></div>今日说法</div>
+    <div class="links"><span>球队介绍</span><span>队员阵容</span><span style="color:#c9a961">赛程战果</span><span>精彩瞬间</span><span>战术板</span></div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero-a">
+    <div class="logo-place"></div>
+    <h1>今日说法</h1>
+    <p>用脚说话，以球会友</p>
+  </div>
+
+  <!-- Sections -->
+  <div class="mock-section">
+    <div class="title-a"><h2>球队数据</h2></div>
+    <div class="mock-row">
+      <div class="card-a"><div class="num">28</div><div class="lbl">总场次</div></div>
+      <div class="card-a"><div class="num">15</div><div class="lbl">胜</div></div>
+      <div class="card-a"><div class="num">6</div><div class="lbl">平</div></div>
+      <div class="card-a"><div class="num">7</div><div class="lbl">负</div></div>
+    </div>
+  </div>
+
+  <div class="mock-section" style="background:var(--a-bg2)">
+    <div class="title-a"><h2>最新战报</h2></div>
+    <div class="fix-a"><span class="d">2025.06.14</span><span class="t">今日说法 vs 铁血防线</span><span class="s">3:1 胜</span></div>
+    <div class="fix-a"><span class="d">2025.06.07</span><span class="t">今日说法 vs 渝北联队</span><span class="s">2:2 平</span></div>
+    <div class="fix-a"><span class="d">2025.05.31</span><span class="t">今日说法 vs 蓝钻竞技</span><span class="s" style="background:#fee;color:#c0392b">1:3 负</span></div>
+  </div>
+
+  <!-- Palette -->
+  <div class="mock-section">
+    <h3>调色板</h3>
+    <div class="palette-row">
+      <div class="palette-swatch" style="background:#fafafa" data-hex="#fafafa"></div>
+      <div class="palette-swatch" style="background:#ffffff" data-hex="#ffffff"></div>
+      <div class="palette-swatch" style="background:#1a1a1a" data-hex="#1a1a1a"></div>
+      <div class="palette-swatch" style="background:#c9a961" data-hex="#c9a961"></div>
+      <div class="palette-swatch" style="background:#555555" data-hex="#555555"></div>
+      <div class="palette-swatch" style="background:#e5e5e5" data-hex="#e5e5e5"></div>
+    </div>
+    <p style="font-size:0.82rem;color:#888;margin-top:14px">
+      <strong>理念：</strong>纯白背景 + 极致留白 + 金点缀。参考 Apple / Stripe 设计语言，内容优先，适合照片多的场景。风险：白色背景在低端屏幕上刺眼，足球场的 "热血感" 略有减弱。
+    </p>
+  </div>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- STYLE B -->
+<!-- ================================================================ -->
+<div class="style-page" id="s-b">
+<div class="style-label"><span class="badge">STYLE B</span><h2>经典绿茵 — Classic Pitch Green</h2></div>
+
+<div class="style-b">
+  <div class="nav-b">
+    <div class="brand"><div class="dot"></div>今日说法</div>
+    <div class="links"><span>球队介绍</span><span>队员阵容</span><span style="color:#c9a961">赛程战果</span><span>精彩瞬间</span><span>战术板</span></div>
+  </div>
+
+  <div class="hero-b">
+    <div class="logo-place"></div>
+    <h1>今日说法</h1>
+    <p>用脚说话，以球会友</p>
+  </div>
+
+  <div class="mock-section">
+    <div class="title-b"><h2>球队数据</h2></div>
+    <div class="mock-row">
+      <div class="card-b"><div class="num">28</div><div class="lbl">总场次</div></div>
+      <div class="card-b"><div class="num">15</div><div class="lbl">胜</div></div>
+      <div class="card-b"><div class="num">6</div><div class="lbl">平</div></div>
+      <div class="card-b"><div class="num">7</div><div class="lbl">负</div></div>
+    </div>
+  </div>
+
+  <div class="mock-section" style="background:var(--b-dark); color:#fff">
+    <div class="title-b"><h2 style="color:#fff">最新战报</h2></div>
+    <div class="fix-b"><span class="d" style="color:#a0c0a0">2025.06.14</span><span class="t" style="color:#fff">今日说法 vs 铁血防线</span><span class="s">3:1 胜</span></div>
+    <div class="fix-b"><span class="d" style="color:#a0c0a0">2025.06.07</span><span class="t" style="color:#fff">今日说法 vs 渝北联队</span><span class="s">2:2 平</span></div>
+    <div class="fix-b" style="border-bottom:none"><span class="d" style="color:#a0c0a0">2025.05.31</span><span class="t" style="color:#fff">今日说法 vs 蓝钻竞技</span><span class="s" style="background:#fce8e8;color:#c0392b">1:3 负</span></div>
+  </div>
+
+  <div class="mock-section">
+    <h3>调色板</h3>
+    <div class="palette-row">
+      <div class="palette-swatch" style="background:#f2f7f2" data-hex="#f2f7f2"></div>
+      <div class="palette-swatch" style="background:#0d2610" data-hex="#0d2610"></div>
+      <div class="palette-swatch" style="background:#ffffff" data-hex="#ffffff"></div>
+      <div class="palette-swatch" style="background:#2d7d2d" data-hex="#2d7d2d"></div>
+      <div class="palette-swatch" style="background:#c9a961" data-hex="#c9a961"></div>
+      <div class="palette-swatch" style="background:#4a6b4a" data-hex="#4a6b4a"></div>
+    </div>
+    <p style="font-size:0.82rem;color:#888;margin-top:14px">
+      <strong>理念：</strong>深绿 + 浅绿 + 白底，球场草皮灵感贯穿全局。浅绿条纹、白色线条呼应真实足球场。适合强调 "足球" 属性的定位。风险：大面积绿色处理不好会显得廉价，浅色区域可能缺乏高级感。
+    </p>
+  </div>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- STYLE C -->
+<!-- ================================================================ -->
+<div class="style-page" id="s-c">
+<div class="style-label"><span class="badge">STYLE C</span><h2>深蓝职业 — Navy Professional</h2></div>
+
+<div class="style-c">
+  <div class="nav-c">
+    <div class="brand"><div class="dot"></div>今日说法</div>
+    <div class="links"><span>球队介绍</span><span>队员阵容</span><span style="color:#c0a860">赛程战果</span><span>精彩瞬间</span><span>战术板</span></div>
+  </div>
+
+  <div class="hero-c">
+    <div class="logo-place"></div>
+    <h1>今日说法</h1>
+    <p>用脚说话<span class="shield"></span>以球会友</p>
+  </div>
+
+  <div class="mock-section" style="background:var(--c-bg2)">
+    <div class="title-c"><h2>球队数据</h2></div>
+    <div class="mock-row">
+      <div class="card-c"><div class="num">28</div><div class="lbl">Matches</div></div>
+      <div class="card-c"><div class="num">15</div><div class="lbl">Wins</div></div>
+      <div class="card-c"><div class="num">6</div><div class="lbl">Draws</div></div>
+      <div class="card-c"><div class="num">7</div><div class="lbl">Losses</div></div>
+    </div>
+  </div>
+
+  <div class="mock-section">
+    <div class="title-c"><h2>最新战报</h2></div>
+    <div class="fix-c"><span class="d">2025.06.14</span><span class="t">今日说法 vs 铁血防线</span><span class="s">3:1 胜</span></div>
+    <div class="fix-c"><span class="d">2025.06.07</span><span class="t">今日说法 vs 渝北联队</span><span class="s">2:2 平</span></div>
+    <div class="fix-c" style="border-bottom:none"><span class="d">2025.05.31</span><span class="t">今日说法 vs 蓝钻竞技</span><span class="s" style="background:rgba(192,57,43,0.12);color:#c0392b">1:3 负</span></div>
+  </div>
+
+  <div class="mock-section" style="background:var(--c-bg2)">
+    <h3>调色板</h3>
+    <div class="palette-row">
+      <div class="palette-swatch" style="background:#060b1a" data-hex="#060b1a"></div>
+      <div class="palette-swatch" style="background:#0d1430" data-hex="#0d1430"></div>
+      <div class="palette-swatch" style="background:#111d3a" data-hex="#111d3a"></div>
+      <div class="palette-swatch" style="background:#c0a860" data-hex="#c0a860"></div>
+      <div class="palette-swatch" style="background:#3b7ddd" data-hex="#3b7ddd"></div>
+      <div class="palette-swatch" style="background:#8899bb" data-hex="#8899bb"></div>
+    </div>
+    <p style="font-size:0.82rem;color:var(--c-text2);margin-top:14px">
+      <strong>理念：</strong>深海军蓝 + 香槟金 + 皇家蓝。参考欧冠/英超品牌调性，专业、权威、有分量感。适合强调 "正规俱乐部" 的定位。风险：和现有黑金差异较大，需要全局翻新配色变量体系。
+    </p>
+  </div>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- STYLE D -->
+<!-- ================================================================ -->
+<div class="style-page" id="s-d">
+<div class="style-label"><span class="badge">STYLE D</span><h2>暗夜霓虹 — Neon Cyberpunk Dark</h2></div>
+
+<div class="style-d">
+  <div class="nav-d">
+    <div class="brand"><div class="dot"></div>今日说法</div>
+    <div class="links"><span>球队介绍</span><span>队员阵容</span><span style="color:#39ff14">赛程战果</span><span>精彩瞬间</span><span>战术板</span></div>
+  </div>
+
+  <div class="hero-d">
+    <div class="logo-place"></div>
+    <h1>今日说法</h1>
+    <p>用脚说话，以球会友</p>
+  </div>
+
+  <div class="mock-section" style="background:var(--d-bg2)">
+    <div class="title-d"><h2>球队数据</h2></div>
+    <div class="mock-row">
+      <div class="card-d"><div class="num">28</div><div class="lbl">总场次</div></div>
+      <div class="card-d"><div class="num">15</div><div class="lbl">胜</div></div>
+      <div class="card-d"><div class="num">6</div><div class="lbl">平</div></div>
+      <div class="card-d"><div class="num">7</div><div class="lbl">负</div></div>
+    </div>
+  </div>
+
+  <div class="mock-section">
+    <div class="title-d"><h2>最新战报</h2></div>
+    <div class="fix-d"><span class="d">2025.06.14</span><span class="t">今日说法 vs 铁血防线</span><span class="s">3:1 胜</span></div>
+    <div class="fix-d"><span class="d">2025.06.07</span><span class="t">今日说法 vs 渝北联队</span><span class="s">2:2 平</span></div>
+    <div class="fix-d" style="border-bottom:none"><span class="d">2025.05.31</span><span class="t">今日说法 vs 蓝钻竞技</span><span class="s" style="background:rgba(255,45,85,0.08);color:#ff2d55">1:3 负</span></div>
+  </div>
+
+  <div class="mock-section" style="background:var(--d-bg2)">
+    <h3>调色板 + 霓虹点缀</h3>
+    <div class="palette-row">
+      <div class="palette-swatch" style="background:#050510" data-hex="#050510"></div>
+      <div class="palette-swatch" style="background:#0e0e22" data-hex="#0e0e22"></div>
+      <div class="palette-swatch" style="background:#39ff14" data-hex="#39ff14"></div>
+      <div class="palette-swatch" style="background:#ff2d55" data-hex="#ff2d55"></div>
+      <div class="palette-swatch" style="background:#00d4ff" data-hex="#00d4ff"></div>
+      <div class="palette-swatch" style="background:#ffd700" data-hex="#ffd700"></div>
+    </div>
+    <div class="neon-dots">
+      <span style="color:var(--d-text2); font-size:0.78rem; margin-right:8px;">霓虹色</span>
+      <div class="neon-dot g"></div>
+      <div class="neon-dot p"></div>
+      <div class="neon-dot c"></div>
+    </div>
+    <p style="font-size:0.82rem;color:var(--d-text2);margin-top:14px">
+      <strong>理念：</strong>极致暗黑基底 + 霓虹绿/粉/青三色点缀。电竞/赛博朋克风格，年轻、冲击力强。适合吸引 20-30 岁球员群体。风险：风格偏小众，可能不适合所有人；高饱和霓虹色长时间阅读疲劳。
+    </p>
+  </div>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- STYLE E -->
+<!-- ================================================================ -->
+<div class="style-page" id="s-e">
+<div class="style-label"><span class="badge">STYLE E</span><h2>黑金进化 — Premium Black-Gold Pro &larr; 推荐</h2></div>
+
+<div class="style-e">
+  <div class="nav-e">
+    <div class="brand"><div class="dot"></div>今日说法</div>
+    <div class="links"><span>球队介绍</span><span>队员阵容</span><span style="color:#d4a843">赛程战果</span><span>精彩瞬间</span><span>战术板</span></div>
+  </div>
+
+  <div class="hero-e">
+    <div class="logo-place"></div>
+    <h1>今日说法</h1>
+    <p>用脚说话，以球会友</p>
+    <div class="ornament"></div>
+  </div>
+
+  <div class="mock-section" style="background:var(--e-bg2)">
+    <div class="title-e"><h2>球队数据</h2></div>
+    <div class="mock-row">
+      <div class="card-e"><div class="num">28</div><div class="lbl">总场次</div></div>
+      <div class="card-e"><div class="num">15</div><div class="lbl">胜</div></div>
+      <div class="card-e"><div class="num">6</div><div class="lbl">平</div></div>
+      <div class="card-e"><div class="num">7</div><div class="lbl">负</div></div>
+    </div>
+  </div>
+
+  <div class="mock-section">
+    <div class="title-e"><h2>最新战报</h2></div>
+    <div class="fix-e"><span class="d">2025.06.14</span><span class="t">今日说法 vs 铁血防线</span><span class="s">3:1 胜</span></div>
+    <div class="fix-e"><span class="d">2025.06.07</span><span class="t">今日说法 vs 渝北联队</span><span class="s">2:2 平</span></div>
+    <div class="fix-e" style="border-bottom:none"><span class="d">2025.05.31</span><span class="t">今日说法 vs 蓝钻竞技</span><span class="s" style="background:rgba(192,57,43,0.12);color:#c0392b;border-color:rgba(192,57,43,0.2)">1:3 负</span></div>
+  </div>
+
+  <div class="mock-section" style="background:var(--e-bg2)">
+    <h3>调色板</h3>
+    <div class="palette-row">
+      <div class="palette-swatch" style="background:#080808" data-hex="#080808"></div>
+      <div class="palette-swatch" style="background:#111111" data-hex="#111111"></div>
+      <div class="palette-swatch" style="background:#d4a843" data-hex="#d4a843"></div>
+      <div class="palette-swatch" style="background:#e0c070" data-hex="#e0c070"></div>
+      <div class="palette-swatch" style="background:#1f1f1f" data-hex="#1f1f1f"></div>
+      <div class="palette-swatch" style="background:#999999" data-hex="#999999"></div>
+    </div>
+    <p style="font-size:0.82rem;color:var(--e-text3);margin-top:14px">
+      <strong>理念：</strong>在现有黑金基础上大幅打磨质感。更深邃的黑底、更温润的金色、毛玻璃导航栏、卡片顶部金色光线、更精细的字重和间距。改动量最小但品质提升最大。风险：基本为零——这是对现有风格的进化而非革命，现有代码中约 80% 的 CSS 变量可以直接复用。
+    </p>
+  </div>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- COMPARISON TABLE -->
+<!-- ================================================================ -->
+<div class="style-page" id="s-compare">
+<div class="style-label"><span class="badge">OVERVIEW</span><h2>五方案对比总表</h2></div>
+
+<div class="compare-section">
+<table class="compare-table">
+  <thead>
+    <tr>
+      <th>维度</th>
+      <th>A · 极简白底</th>
+      <th>B · 经典绿茵</th>
+      <th>C · 深蓝职业</th>
+      <th>D · 暗夜霓虹</th>
+      <th>E · 黑金进化 ★</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>基底色</strong></td>
+      <td>白 #fafafa</td>
+      <td>浅绿 #f2f7f2 + 深绿 #0d2610</td>
+      <td>深海军蓝 #060b1a</td>
+      <td>极致黑 #050510</td>
+      <td>深邃黑 #080808</td>
+    </tr>
+    <tr>
+      <td><strong>主强调色</strong></td>
+      <td>暗金 #c9a961</td>
+      <td>草地绿 #2d7d2d</td>
+      <td>香槟金 #c0a860 + 皇家蓝 #3b7ddd</td>
+      <td>霓虹绿 #39ff14 + 粉 #ff2d55</td>
+      <td>温润金 #d4a843</td>
+    </tr>
+    <tr>
+      <td><strong>视觉温度</strong></td>
+      <td>冷 / 理性</td>
+      <td>暖 / 自然</td>
+      <td>冷 / 权威</td>
+      <td>冷 / 前卫</td>
+      <td>暖 / 奢华</td>
+    </tr>
+    <tr>
+      <td><strong>足球感</strong></td>
+      <td>⭐⭐</td>
+      <td>⭐⭐⭐⭐⭐</td>
+      <td>⭐⭐⭐</td>
+      <td>⭐⭐</td>
+      <td>⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>高级感</strong></td>
+      <td>⭐⭐⭐⭐</td>
+      <td>⭐⭐⭐</td>
+      <td>⭐⭐⭐⭐⭐</td>
+      <td>⭐⭐⭐</td>
+      <td>⭐⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>独特性</strong></td>
+      <td>⭐⭐</td>
+      <td>⭐⭐⭐⭐</td>
+      <td>⭐⭐⭐</td>
+      <td>⭐⭐⭐⭐⭐</td>
+      <td>⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>可读性</strong></td>
+      <td>⭐⭐⭐⭐⭐</td>
+      <td>⭐⭐⭐⭐</td>
+      <td>⭐⭐⭐⭐</td>
+      <td>⭐⭐⭐</td>
+      <td>⭐⭐⭐⭐</td>
+    </tr>
+    <tr>
+      <td><strong>改造成本</strong></td>
+      <td>中 — 需全局翻新变量</td>
+      <td>高 — 新增大量绿色系代码</td>
+      <td>高 — 配色体系完全不同</td>
+      <td>中高 — 霓虹特效需新 CSS</td>
+      <td>低 — 80% 现有 CSS 变量可直接复用</td>
+    </tr>
+    <tr>
+      <td><strong>移动端表现</strong></td>
+      <td>优秀 — 白色底节省电量</td>
+      <td>良好 — 绿色在 OLED 省电</td>
+      <td>良好 — 深蓝在 OLED 省电</td>
+      <td>最佳 — 纯黑 OLED 完美</td>
+      <td>优秀 — 深黑 OLED 省电</td>
+    </tr>
+    <tr>
+      <td><strong>适合场景</strong></td>
+      <td>企业/赞助商展示</td>
+      <td>纯足球社区/青训营</td>
+      <td>正规联赛/俱乐部</td>
+      <td>年轻球员招募/社媒</td>
+      <td>全能 — 业余俱乐部最佳选择</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="margin-top:28px; padding:20px; background:#1a1a1a; border:1px solid #333; border-radius:8px;">
+  <h3 style="color:#c9a961; font-size:0.95rem; letter-spacing:0.04em; margin-bottom:10px;">推荐建议</h3>
+  <p style="color:#aaa; font-size:0.88rem; line-height:1.8;">
+    <strong style="color:#d4a843">首选 E · 黑金进化：</strong>改动成本最低、品质提升最大。在现有代码基础上增量优化，不改变品牌识别。<br>
+    <strong style="color:#c0a860">备选 C · 深蓝职业：</strong>如果希望彻底焕新品牌形象，深蓝+金的俱乐部感是安全又高级的选择。<br>
+    <strong style="color:#39ff14">探索 D · 暗夜霓虹：</strong>如果想突出 "年轻、潮、敢玩" 的球队个性，这是差异化最大的方向。
+  </p>
+</div>
+</div>
+</div>
+
+<div style="text-align:center; padding:48px 24px; color:#666; font-size:0.85rem;">
+  <p>今日说法足球俱乐部 UI 设计方案集 &middot; 2026.05.25</p>
+  <p style="margin-top:6px; font-size:0.72rem; color:#555;">用浏览器打开本文件后按 Ctrl+P 即可导出 PDF</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素风头像预览 — 27名球员</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0d0d;
+    color: #ccc;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 40px 20px;
+  }
+  h1 { text-align: center; color: #c9a961; font-size: 1.6rem; margin-bottom: 4px; letter-spacing: 0.06em; }
+  .sub { text-align: center; color: #777; font-size: 0.78rem; margin-bottom: 36px; }
+
+  /* 位置分组 */
+  .group { max-width: 1200px; margin: 0 auto 32px; }
+  .group-title {
+    font-size: 0.95rem; color: #c9a961; font-weight: 600;
+    padding-bottom: 8px; margin-bottom: 16px;
+    border-bottom: 1px solid #222;
+    letter-spacing: 0.06em;
+  }
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .player-card {
+    background: #141414; border: 1px solid #1f1f1f;
+    border-radius: 12px; padding: 16px 10px 12px;
+    text-align: center;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .player-card:hover { border-color: rgba(201,169,97,0.3); transform: translateY(-2px); }
+  .player-card img {
+    width: 100px; height: 100px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    border-radius: 8px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+  }
+  .player-card .num {
+    display: inline-block;
+    background: #c9a961; color: #0d0d0d;
+    font-weight: 700; font-size: 0.75rem;
+    width: 24px; height: 24px; line-height: 24px;
+    border-radius: 50%; margin-top: 8px;
+  }
+  .player-card .name {
+    font-size: 0.88rem; color: #eee; margin-top: 4px; font-weight: 500;
+  }
+  .player-card .role {
+    font-size: 0.7rem; color: #777; margin-top: 2px;
+  }
+
+  .loading-tag { font-size: 0.7rem; color: #555; }
+</style>
+</head>
+<body>
+
+<h1>Pixel Art 像素风头像 · 全部球员预览</h1>
+<p class="sub">DiceBear pixel-art 风格 · seed=姓名+号码确保唯一 · 男性参数 · 可重新随机刷新</p>
+
+<div id="app"></div>
+
+<script>
+// ============================================================
+// 27 名球员数据（从 main.js 提取）
+// ============================================================
+const players = [
+  { number: 1,  name: "叶乙茏", role: "GK" },
+  { number: 1,  name: "陈政忠", role: "GK" },
+  { number: 2,  name: "曾松",   role: "LM" },
+  { number: 4,  name: "李云龙", role: "CB" },
+  { number: 6,  name: "周照航", role: "RB" },
+  { number: 7,  name: "刘畅",   role: "AM" },
+  { number: 8,  name: "王绪坤", role: "AM" },
+  { number: 9,  name: "张浩宇", role: "DM / LB" },
+  { number: 10, name: "向润杰", role: "SS" },
+  { number: 11, name: "张平",   role: "LM" },
+  { number: 13, name: "胡纪轩", role: "CB" },
+  { number: 14, name: "古培杰", role: "LIB" },
+  { number: 0,  name: "胡鑫",   role: "DM" },
+  { number: 15, name: "洪源",   role: "DM" },
+  { number: 17, name: "骆浩睿", role: "RW / LW" },
+  { number: 18, name: "唐文",   role: "CM" },
+  { number: 19, name: "蔡超",   role: "LB / RB / CB" },
+  { number: 21, name: "唐程伟", role: "教练" },
+  { number: 22, name: "李泽",   role: "CB" },
+  { number: 24, name: "巫名扬", role: "DM" },
+  { number: 25, name: "陈奎羽", role: "CF" },
+  { number: 26, name: "李毓庭", role: "OMF" },
+  { number: 30, name: "刘宇航", role: "RW / LW" },
+  { number: 69, name: "向桐玮", role: "RW / LW" },
+  { number: 77, name: "田佳鹭", role: "OMF" },
+  { number: 82, name: "游胡鑫", role: "CM" },
+  { number: 99, name: "范有为", role: "GK" },
+];
+
+// 按位置分组
+const groups = {
+  "🧤 门将 (GK)": players.filter(p => p.role === "GK"),
+  "🛡️ 后卫 (DF)": players.filter(p => ["CB","RB","LB","LB / RB / CB","LIB","LB / RB / CB"].includes(p.role)),
+  "⚙️ 中场 (MF)": players.filter(p => ["LM","AM","DM / LB","DM","CM","OMF","RM","LM"].includes(p.role)),
+  "🎯 前锋 (FW)": players.filter(p => ["SS","RW / LW","CF","RW / LW"].includes(p.role)),
+  "📋 教练/管理": players.filter(p => p.role === "教练" || p.name === "李泽"),
+};
+
+// 重置：让每个球员有唯一seed，确保头像各异
+// seed使用 "姓名_号码" 组合
+const app = document.getElementById('app');
+
+function avatarURL(name, num) {
+  // 使用简单参数：seed + 100%胡子 + 限定发型
+  const seed = `${name}_${num}`;
+  const params = new URLSearchParams();
+  params.set('seed', seed);
+  params.set('size', '100');
+  params.set('facialHairProbability', '100');  // 100% 胡子，杜绝女性外观
+  params.set('hairProbability', '100');
+  params.set('accessoriesProbability', '5');
+  params.set('glassesProbability', '5');
+  // 限定男式短发（重复 key，不用 [] 后缀）
+  ['short','shortFlat','shortRound','shortWaved','shortTextured','medium','bald','balding','cap','beanie'].forEach(h => params.append('hair', h));
+  return `https://api.dicebear.com/9.x/pixel-art/svg?${params.toString()}`;
+}
+
+function avatarURLSimple(name, num) {
+  const seed = `${name}_${num}`;
+  return `https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(seed)}&size=100&facialHairProbability=100`;
+}
+
+function renderAll() {
+  let html = '<div class="group"><div class="group-title" style="color:#e44;">如果下面头像加载不出来，说明 dicebear.com 被墙了，需走代理或换方案</div></div>';
+  for (const [title, members] of Object.entries(groups)) {
+    html += `<div class="group"><div class="group-title">${title} (${members.length}人)</div><div class="players-grid">`;
+    members.forEach(p => {
+      const url = avatarURLSimple(p.name, p.number);
+      const fallback = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%231a1a1a" width="100" height="100"/><text fill="%23999" x="50" y="52" text-anchor="middle" font-size="12" font-family="sans-serif">${p.number}</text></svg>`;
+      html += `
+        <div class="player-card">
+          <img src="${url}" alt="${p.name}" loading="lazy"
+               onerror="this.src='${fallback}';this.style.opacity='0.5'"
+               onload="this.style.opacity='1'"
+               style="opacity:0.6;transition:opacity 0.3s">
+          <div class="num">${p.number}</div>
+          <div class="name">${p.name}</div>
+          <div class="role">${p.role}</div>
+        </div>`;
+    });
+    html += '</div></div>';
+  }
+  app.innerHTML = html;
+}
+
+renderAll();
+</script>
+
+</body>
+</html>

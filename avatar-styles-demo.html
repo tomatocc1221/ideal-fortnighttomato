@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>球员卡片设计 — 十种风格预览</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #080808;
+  color: #e8e8e8;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  padding: 40px 20px;
+}
+
+h1 {
+  text-align: center;
+  font-family: Impact, "Arial Black", sans-serif;
+  font-size: 2.4rem;
+  color: #d4a843;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+}
+.subtitle {
+  text-align: center;
+  color: #888;
+  margin-bottom: 48px;
+  font-size: 0.95rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 36px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.section {
+  background: #0e0e0e;
+  border-radius: 16px;
+  padding: 32px 24px;
+  border: 1px solid #1f1f1f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.section h2 {
+  font-size: 0.85rem;
+  color: #d4a843;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 400;
+}
+
+.card-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 320px;
+}
+
+.hint {
+  font-size: 0.55rem;
+  color: #555;
+  margin-top: 4px;
+}
+
+/* =============================================
+   方案一：FIFA 传奇卡风格
+   ============================================= */
+.fifa-card {
+  width: 270px;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0d0d0d 60%);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid #d4a843;
+  box-shadow: 0 0 30px rgba(212,168,67,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
+  position: relative;
+}
+.fifa-card::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 11px;
+  border: 1px solid rgba(212,168,67,0.25);
+  pointer-events: none;
+}
+.fifa-card-top { position: relative; }
+.fifa-card-img {
+  width: 100%; height: 170px;
+  background: radial-gradient(circle at 50% 30%, #2a2a3a, #0d0d0d);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.fifa-card-img .avatar {
+  width: 96px; height: 96px; border-radius: 50%;
+  background: linear-gradient(135deg, #d4a843, #8b6914);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px; color: #0d0d0d; font-weight: 900;
+}
+.fifa-ovr {
+  position: absolute; top: 12px; left: 14px;
+  font-size: 2rem; font-weight: 900; font-family: Impact, sans-serif;
+  color: #d4a843; line-height: 1;
+}
+.fifa-pos {
+  position: absolute; top: 50px; left: 18px;
+  font-size: 0.7rem; color: #ccc; letter-spacing: 0.1em;
+}
+.fifa-card-body { padding: 14px 16px; }
+.fifa-name { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.fifa-num { font-size: 0.75rem; color: #d4a843; }
+.fifa-stats { display: flex; gap: 12px; margin-top: 10px; }
+.fifa-stat { text-align: center; }
+.fifa-stat-val { font-size: 1rem; font-weight: 700; color: #d4a843; font-family: Impact, sans-serif; }
+.fifa-stat-label { font-size: 0.52rem; color: #666; text-transform: uppercase; }
+
+/* =============================================
+   方案二：Liquid Glass 液态玻璃
+   ============================================= */
+.glass-wrapper {
+  background: radial-gradient(ellipse at center, #1a2a1a 0%, #0a0a0a 70%);
+  border-radius: 20px; padding: 24px;
+}
+.glass-card {
+  width: 260px;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: -30%; right: -20%;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(212,168,67,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.glass-card::after {
+  content: '';
+  position: absolute;
+  bottom: -15%; left: -15%;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.glass-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; color: #d4a843; font-weight: 700;
+  margin-bottom: 14px;
+  position: relative; z-index: 1;
+}
+.glass-name { font-size: 1.2rem; font-weight: 600; color: #fff; position: relative; z-index: 1; }
+.glass-meta { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 2px; position: relative; z-index: 1; }
+.glass-num {
+  font-size: 3rem; font-weight: 900; color: rgba(212,168,67,0.1);
+  position: absolute; right: 20px; bottom: 10px; font-family: Impact, sans-serif;
+}
+.glass-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 18px; position: relative; z-index: 1; }
+.glass-stat { text-align: center; }
+.glass-stat-val { font-size: 1rem; font-weight: 700; color: #d4a843; }
+.glass-stat-label { font-size: 0.52rem; color: rgba(255,255,255,0.3); }
+
+/* =============================================
+   方案三：Bento Grid 便当盒布局
+   ============================================= */
+.bento-card {
+  width: 300px;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 8px;
+}
+.bento-cell {
+  background: #141414;
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid #1f1f1f;
+  transition: border-color 0.3s;
+}
+.bento-cell.highlight { background: rgba(212,168,67,0.06); border-color: rgba(212,168,67,0.15); }
+.bento-cell:hover { border-color: #333; }
+.bento-avatar-cell {
+  grid-row: 1 / 3;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px;
+}
+.bento-avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: linear-gradient(135deg, #d4a843, #8b6914);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; color: #0d0d0d; font-weight: 900;
+}
+.bento-num { font-size: 1.6rem; font-weight: 900; color: #d4a843; font-family: Impact, sans-serif; }
+.bento-name { font-size: 1.1rem; font-weight: 700; }
+.bento-role {
+  font-size: 0.62rem; padding: 2px 10px; border-radius: 20px;
+  background: rgba(248,113,113,0.12); color: #f87171;
+  display: inline-block; width: fit-content;
+}
+.bento-stats-cell {
+  grid-column: 1 / -1;
+  display: flex; gap: 0;
+}
+.bento-stat {
+  flex: 1; text-align: center;
+  border-right: 1px solid #1f1f1f;
+  padding: 4px 0;
+}
+.bento-stat:last-child { border-right: none; }
+.bento-stat-val { font-size: 1rem; font-weight: 700; color: #d4a843; font-family: Impact, sans-serif; }
+.bento-stat-label { font-size: 0.52rem; color: #666; }
+
+.bento-bar-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.bento-bar-row:last-child { margin-bottom: 0; }
+.bento-bar-lbl { font-size: 0.5rem; color: #666; width: 18px; }
+.bento-bar-track { flex: 1; height: 3px; background: #1f1f1f; border-radius: 2px; overflow: hidden; }
+.bento-bar-fill { height: 100%; border-radius: 2px; }
+.bento-bar-fill.g { background: #4ade80; }
+.bento-bar-fill.r { background: #f87171; }
+.bento-bar-fill.k { background: #d4a843; }
+
+/* =============================================
+   方案四：Neo-Brutalism 新粗野主义
+   ============================================= */
+.brutal-card {
+  width: 270px;
+  border: 4px solid #000;
+  box-shadow: 8px 8px 0 #d4a843;
+  overflow: hidden;
+}
+.brutal-top {
+  background: #ff6b35;
+  padding: 20px;
+  display: flex; align-items: center; gap: 14px;
+  border-bottom: 4px solid #000;
+}
+.brutal-avatar {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: #fff; border: 3px solid #000;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; color: #000; font-weight: 900;
+}
+.brutal-name { font-size: 1.2rem; font-weight: 900; color: #000; }
+.brutal-role { font-size: 0.7rem; color: #000; opacity: 0.65; font-weight: 600; }
+.brutal-num { font-size: 2.2rem; font-weight: 900; color: rgba(0,0,0,0.12); margin-left: auto; font-family: Impact, sans-serif; }
+.brutal-body { padding: 14px 18px; background: #fff; display: flex; gap: 0; }
+.brutal-stat { flex: 1; text-align: center; }
+.brutal-stat-val { font-size: 1.2rem; font-weight: 900; color: #000; font-family: Impact, sans-serif; }
+.brutal-stat-label { font-size: 0.55rem; color: #666; font-weight: 700; text-transform: uppercase; }
+.brutal-bar { margin: 0 18px 14px; height: 6px; background: #eee; border: 2px solid #000; }
+.brutal-bar-fill { height: 100%; background: #ff6b35; width: 72%; }
+
+/* =============================================
+   方案五：Aurora Gradient 极光渐变
+   ============================================= */
+.aurora-card {
+  width: 270px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  background: #0d0d0d;
+}
+.aurora-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #1a0533 0%, #0d1f3c 30%, #1a3a1a 60%, #1a1a05 100%);
+}
+.aurora-wave {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 20% 40%, rgba(130,80,255,0.18) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 25%, rgba(0,200,200,0.13) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 85%, rgba(212,168,67,0.15) 0%, transparent 50%);
+  animation: auroraShift 8s ease-in-out infinite;
+}
+@keyframes auroraShift {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+.aurora-content {
+  position: relative; z-index: 1; padding: 28px 24px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.aurora-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; color: #d4a843; font-weight: 700;
+  box-shadow: 0 0 30px rgba(212,168,67,0.15);
+  margin-bottom: 14px;
+}
+.aurora-name { font-size: 1.2rem; font-weight: 700; color: #fff; }
+.aurora-num { font-size: 0.75rem; color: rgba(255,255,255,0.45); }
+.aurora-stats { display: flex; gap: 16px; margin-top: 18px; }
+.aurora-stat { text-align: center; }
+.aurora-stat-val { font-size: 1.05rem; font-weight: 700; color: #fff; }
+.aurora-stat-label { font-size: 0.52rem; color: rgba(255,255,255,0.35); }
+
+/* =============================================
+   方案六：Frosted Stats 磨砂数据卡（翻转）
+   ============================================= */
+.frosted-card {
+  width: 270px; height: 340px;
+  perspective: 1000px;
+}
+.frosted-card:hover .frosted-inner { transform: rotateY(180deg); }
+.frosted-inner {
+  position: relative; width: 100%; height: 100%;
+  transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transform-style: preserve-3d;
+}
+.frosted-front, .frosted-back {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.frosted-front {
+  background: #111;
+  border: 1px solid #222;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px;
+}
+.frosted-front .avatar {
+  width: 90px; height: 90px; border-radius: 50%;
+  background: linear-gradient(135deg, #d4a843, #8b6914);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 38px; color: #0d0d0d; font-weight: 900;
+}
+.frosted-front .name { font-size: 1.15rem; font-weight: 700; }
+.frosted-front .num { font-size: 0.95rem; color: #d4a843; }
+.frosted-front .hint-text { font-size: 0.6rem; color: #444; margin-top: 6px; letter-spacing: 0.06em; }
+.frosted-back {
+  background: rgba(14,14,14,0.97);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212,168,67,0.2);
+  transform: rotateY(180deg);
+  padding: 24px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.radar {
+  width: 130px; height: 130px;
+  position: relative;
+  margin: 8px 0;
+}
+.radar svg { width: 100%; height: 100%; }
+.frosted-stats-row { display: flex; gap: 18px; margin-top: 10px; }
+.fs-item { text-align: center; }
+.fs-val { font-size: 1.1rem; font-weight: 700; color: #d4a843; }
+.fs-label { font-size: 0.52rem; color: #666; }
+
+/* =============================================
+   方案七：3D Tilt Hover 倾斜悬浮
+   ============================================= */
+.tilt-card {
+  width: 270px;
+  perspective: 800px;
+}
+.tilt-inner {
+  background: #141414;
+  border-radius: 16px;
+  border: 1px solid #222;
+  padding: 26px 24px;
+  transition: transform 0.1s ease-out, box-shadow 0.2s ease-out;
+  transform-style: preserve-3d;
+  cursor: default;
+}
+.tilt-inner:hover {
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 20px rgba(212,168,67,0.08);
+}
+.tilt-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: linear-gradient(135deg, #d4a843, #8b6914);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; color: #0d0d0d; font-weight: 900;
+  margin: 0 auto 16px;
+  transform: translateZ(50px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.tilt-name { text-align: center; font-size: 1.2rem; font-weight: 700; transform: translateZ(40px); }
+.tilt-role { text-align: center; font-size: 0.7rem; color: #d4a843; transform: translateZ(35px); margin-top: 2px; }
+.tilt-stats { display: flex; gap: 12px; margin-top: 18px; }
+.tilt-stat { flex: 1; text-align: center; }
+.tilt-stat-val { font-size: 1.1rem; font-weight: 700; color: #d4a843; }
+.tilt-stat-label { font-size: 0.52rem; color: #666; }
+
+/* =============================================
+   方案八：Minimal Zen 极简禅意
+   ============================================= */
+.zen-card {
+  width: 270px;
+  background: #0a0a0a;
+  border-radius: 12px;
+  padding: 32px 24px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #1a1a1a;
+  transition: all 0.4s ease;
+}
+.zen-watermark {
+  position: absolute;
+  font-size: 8rem; font-weight: 900; font-family: Impact, sans-serif;
+  color: rgba(255,255,255,0.018);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: color 0.4s;
+}
+.zen-card:hover .zen-watermark { color: rgba(255,255,255,0.035); }
+.zen-avatar {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; color: #d4a843; font-weight: 300;
+  margin: 0 auto 20px;
+  position: relative; z-index: 1;
+  transition: box-shadow 0.4s;
+}
+.zen-card:hover .zen-avatar { box-shadow: 0 0 30px rgba(212,168,67,0.08); }
+.zen-name { font-size: 1.3rem; font-weight: 400; color: #ccc; position: relative; z-index: 1; }
+.zen-role { font-size: 0.7rem; color: #555; margin-top: 2px; position: relative; z-index: 1; }
+.zen-extras {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.5s ease, margin 0.5s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+.zen-card:hover .zen-extras {
+  max-height: 150px; opacity: 1; margin-top: 18px;
+}
+.zen-stats { display: flex; gap: 18px; justify-content: center; }
+.zen-stat { text-align: center; }
+.zen-stat-val { font-size: 1rem; font-weight: 600; color: #d4a843; }
+.zen-stat-label { font-size: 0.52rem; color: #555; }
+
+/* =============================================
+   方案九：Comic Strip 漫画分镜
+   ============================================= */
+.comic-card {
+  width: 270px;
+  background: #1a1a1a;
+  border: 3px solid #d4a843;
+  position: relative;
+  clip-path: polygon(0 12px, 12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  padding: 20px;
+}
+.comic-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 8px 8px;
+  pointer-events: none;
+}
+.comic-header { display: flex; align-items: center; gap: 12px; }
+.comic-avatar {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: #d4a843; border: 3px solid #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; color: #000; font-weight: 900;
+  transform: rotate(-4deg);
+}
+.comic-name { font-size: 1.15rem; font-weight: 900; color: #fff; }
+.comic-num {
+  font-size: 2rem; font-weight: 900; font-family: Impact, sans-serif;
+  color: #d4a843; -webkit-text-stroke: 1px #8b6914;
+  margin-left: auto;
+}
+.comic-stats { display: flex; gap: 8px; margin-top: 14px; }
+.comic-stat {
+  flex: 1; text-align: center; background: #111; padding: 8px 4px;
+  border: 2px solid #333;
+}
+.comic-stat-val { font-size: 1.3rem; font-weight: 900; color: #d4a843; font-family: Impact, sans-serif; }
+.comic-stat-val::before { content: '💥 '; font-size: 0.65rem; }
+.comic-stat-label { font-size: 0.52rem; color: #888; font-weight: 700; margin-top: 2px; }
+
+/* =============================================
+   方案十：Cyberpunk Neon 赛博霓虹
+   ============================================= */
+.cyber-card {
+  width: 270px;
+  background: #050508;
+  border: 1px solid rgba(212,168,67,0.25);
+  padding: 22px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.cyber-card::after {
+  content: '';
+  position: absolute; inset: -1px;
+  background: linear-gradient(180deg, rgba(212,168,67,0.15), transparent 35%, transparent 65%, rgba(0,200,255,0.1));
+  pointer-events: none;
+}
+.cyber-scanline {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
+  pointer-events: none; z-index: 1;
+}
+.cyber-content { position: relative; z-index: 2; }
+.cyber-avatar {
+  width: 68px; height: 68px; border-radius: 50%;
+  background: #0a0a0a;
+  border: 2px solid #d4a843;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; color: #00e5ff; font-weight: 700;
+  margin: 0 auto 14px;
+  box-shadow: 0 0 20px rgba(0,229,255,0.15), 0 0 40px rgba(0,229,255,0.04);
+  animation: cyberPulse 2.5s ease-in-out infinite;
+}
+@keyframes cyberPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,229,255,0.15), 0 0 40px rgba(0,229,255,0.04); }
+  50% { box-shadow: 0 0 28px rgba(0,229,255,0.3), 0 0 55px rgba(0,229,255,0.08); }
+}
+.cyber-name { text-align: center; font-size: 1.15rem; font-weight: 700; color: #fff; font-family: "Courier New", monospace; letter-spacing: 0.04em; }
+.cyber-id { text-align: center; font-size: 0.58rem; color: #00e5ff; font-family: "Courier New", monospace; margin-top: 2px; }
+.cyber-bars { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+.cyber-bar-row { display: flex; align-items: center; gap: 8px; }
+.cyber-bar-label { font-size: 0.52rem; color: #555; width: 26px; font-family: monospace; }
+.cyber-bar-track { flex: 1; height: 4px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+.cyber-bar-fill { height: 100%; border-radius: 2px; }
+.cyber-bar-fill.gold { background: linear-gradient(90deg, #8b6914, #d4a843); box-shadow: 0 0 6px rgba(212,168,67,0.4); }
+.cyber-bar-fill.cyan { background: linear-gradient(90deg, #00838f, #00e5ff); box-shadow: 0 0 6px rgba(0,229,255,0.4); }
+.cyber-bar-fill.purple { background: linear-gradient(90deg, #6200ea, #b388ff); box-shadow: 0 0 6px rgba(124,77,255,0.4); }
+.cyber-stats { display: flex; gap: 12px; margin-top: 14px; }
+.cyber-stat { flex: 1; text-align: center; }
+.cyber-stat-val { font-size: 0.95rem; font-weight: 700; color: #00e5ff; font-family: "Courier New", monospace; }
+.cyber-stat-label { font-size: 0.48rem; color: #444; text-transform: uppercase; font-family: monospace; }
+</style>
+</head>
+<body>
+
+<h1>球员卡片设计方案</h1>
+<p class="subtitle">同一球员（王小明 / #10 / 前锋）· 十种风格横向对比 · 可悬停交互</p>
+
+<div class="grid">
+
+  <!-- 方案一 -->
+  <div class="section">
+    <h2>1. FIFA 传奇卡</h2>
+    <div class="card-wrapper">
+      <div class="fifa-card">
+        <div class="fifa-card-top">
+          <div class="fifa-card-img"><div class="avatar">王</div></div>
+          <div class="fifa-ovr">85</div>
+          <div class="fifa-pos">FW</div>
+        </div>
+        <div class="fifa-card-body">
+          <div class="fifa-name">王小明</div>
+          <div class="fifa-num">#10 · 前锋</div>
+          <div class="fifa-stats">
+            <div class="fifa-stat"><div class="fifa-stat-val">12</div><div class="fifa-stat-label">进球</div></div>
+            <div class="fifa-stat"><div class="fifa-stat-val">8</div><div class="fifa-stat-label">助攻</div></div>
+            <div class="fifa-stat"><div class="fifa-stat-val">3</div><div class="fifa-stat-label">MVP</div></div>
+            <div class="fifa-stat"><div class="fifa-stat-val">22</div><div class="fifa-stat-label">出场</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">金色边框 + 评分徽章 + 双线内框，球星收藏卡风格</p>
+  </div>
+
+  <!-- 方案二 -->
+  <div class="section">
+    <h2>2. Liquid Glass 液态玻璃</h2>
+    <div class="card-wrapper">
+      <div class="glass-wrapper">
+        <div class="glass-card">
+          <div class="glass-avatar">王</div>
+          <div class="glass-name">王小明</div>
+          <div class="glass-meta">#10 · 前锋</div>
+          <div class="glass-num">10</div>
+          <div class="glass-stats">
+            <div class="glass-stat"><div class="glass-stat-val">12</div><div class="glass-stat-label">进球</div></div>
+            <div class="glass-stat"><div class="glass-stat-val">8</div><div class="glass-stat-label">助攻</div></div>
+            <div class="glass-stat"><div class="glass-stat-val">3</div><div class="glass-stat-label">MVP</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">毛玻璃模糊 + 微边框 + 光斑，Apple iOS 风格</p>
+  </div>
+
+  <!-- 方案三 -->
+  <div class="section">
+    <h2>3. Bento Grid 便当盒</h2>
+    <div class="card-wrapper">
+      <div class="bento-card">
+        <div class="bento-cell bento-avatar-cell">
+          <div class="bento-avatar">王</div>
+          <div class="bento-num">10</div>
+        </div>
+        <div class="bento-cell highlight">
+          <div class="bento-name">王小明</div>
+          <div class="bento-role">前锋</div>
+        </div>
+        <div class="bento-cell">
+          <div style="font-size:0.55rem;color:#777;margin-bottom:6px;">属性</div>
+          <div class="bento-bar-row"><span class="bento-bar-lbl">速</span><div class="bento-bar-track"><div class="bento-bar-fill g" style="width:80%"></div></div></div>
+          <div class="bento-bar-row"><span class="bento-bar-lbl">力</span><div class="bento-bar-track"><div class="bento-bar-fill r" style="width:70%"></div></div></div>
+          <div class="bento-bar-row"><span class="bento-bar-lbl">射</span><div class="bento-bar-track"><div class="bento-bar-fill k" style="width:90%"></div></div></div>
+        </div>
+        <div class="bento-cell bento-stats-cell highlight">
+          <div class="bento-stat"><div class="bento-stat-val">12</div><div class="bento-stat-label">进球</div></div>
+          <div class="bento-stat"><div class="bento-stat-val">8</div><div class="bento-stat-label">助攻</div></div>
+          <div class="bento-stat"><div class="bento-stat-val">3</div><div class="bento-stat-label">MVP</div></div>
+          <div class="bento-stat"><div class="bento-stat-val">22</div><div class="bento-stat-label">出场</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">模块化网格 + 独立格子，Apple 小组件风格</p>
+  </div>
+
+  <!-- 方案四 -->
+  <div class="section">
+    <h2>4. Neo-Brutalism 粗野</h2>
+    <div class="card-wrapper">
+      <div class="brutal-card">
+        <div class="brutal-top">
+          <div class="brutal-avatar">王</div>
+          <div>
+            <div class="brutal-name">王小明</div>
+            <div class="brutal-role">前锋 · #10</div>
+          </div>
+          <div class="brutal-num">10</div>
+        </div>
+        <div class="brutal-body">
+          <div class="brutal-stat"><div class="brutal-stat-val">12</div><div class="brutal-stat-label">G</div></div>
+          <div class="brutal-stat"><div class="brutal-stat-val">8</div><div class="brutal-stat-label">A</div></div>
+          <div class="brutal-stat"><div class="brutal-stat-val">3</div><div class="brutal-stat-label">MVP</div></div>
+          <div class="brutal-stat"><div class="brutal-stat-val">22</div><div class="brutal-stat-label">APP</div></div>
+        </div>
+        <div class="brutal-bar"><div class="brutal-bar-fill"></div></div>
+      </div>
+    </div>
+    <p class="hint">粗黑边框 + 硬阴影 + 高饱和撞色，视觉冲击强</p>
+  </div>
+
+  <!-- 方案五 -->
+  <div class="section">
+    <h2>5. Aurora 极光渐变</h2>
+    <div class="card-wrapper">
+      <div class="aurora-card">
+        <div class="aurora-bg"></div>
+        <div class="aurora-wave"></div>
+        <div class="aurora-content">
+          <div class="aurora-avatar">王</div>
+          <div class="aurora-name">王小明</div>
+          <div class="aurora-num">#10 · 前锋</div>
+          <div class="aurora-stats">
+            <div class="aurora-stat"><div class="aurora-stat-val">12</div><div class="aurora-stat-label">进球</div></div>
+            <div class="aurora-stat"><div class="aurora-stat-val">8</div><div class="aurora-stat-label">助攻</div></div>
+            <div class="aurora-stat"><div class="aurora-stat-val">3</div><div class="aurora-stat-label">MVP</div></div>
+            <div class="aurora-stat"><div class="aurora-stat-val">22</div><div class="aurora-stat-label">出场</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">紫色→青蓝→金色渐变流动，极光视觉效果</p>
+  </div>
+
+  <!-- 方案六 -->
+  <div class="section">
+    <h2>6. Frosted Stats 翻转卡</h2>
+    <div class="card-wrapper">
+      <div class="frosted-card">
+        <div class="frosted-inner">
+          <div class="frosted-front">
+            <div class="avatar">王</div>
+            <div class="name">王小明</div>
+            <div class="num">#10 · 前锋</div>
+            <div class="hint-text">悬停翻转 →</div>
+          </div>
+          <div class="frosted-back">
+            <div style="font-size:0.9rem;font-weight:700;color:#d4a843;letter-spacing:0.06em;">数据仪表盘</div>
+            <div class="radar">
+              <svg viewBox="0 0 130 130">
+                <polygon points="65,18 102,50 96,96 34,96 28,50" fill="rgba(212,168,67,0.08)" stroke="#d4a843" stroke-width="1.2"/>
+                <polygon points="65,34 90,56 86,84 44,84 40,56" fill="rgba(212,168,67,0.15)" stroke="#d4a843" stroke-width="1"/>
+                <polygon points="65,50 75,62 73,74 57,74 55,62" fill="rgba(212,168,67,0.25)" stroke="#d4a843" stroke-width="1"/>
+                <circle cx="65" cy="62" r="2.5" fill="#d4a843"/>
+              </svg>
+            </div>
+            <div class="frosted-stats-row">
+              <div class="fs-item"><div class="fs-val">12</div><div class="fs-label">进球</div></div>
+              <div class="fs-item"><div class="fs-val">8</div><div class="fs-label">助攻</div></div>
+              <div class="fs-item"><div class="fs-val">3</div><div class="fs-label">MVP</div></div>
+              <div class="fs-item"><div class="fs-val">22</div><div class="fs-label">出场</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">正面头像 + 反面雷达数据，与当前设计最接近</p>
+  </div>
+
+  <!-- 方案七 -->
+  <div class="section">
+    <h2>7. 3D Tilt 倾斜悬浮</h2>
+    <div class="card-wrapper">
+      <div class="tilt-card" id="tiltDemo">
+        <div class="tilt-inner" id="tiltInner">
+          <div class="tilt-avatar">王</div>
+          <div class="tilt-name">王小明</div>
+          <div class="tilt-role">#10 · 前锋</div>
+          <div class="tilt-stats">
+            <div class="tilt-stat"><div class="tilt-stat-val">12</div><div class="tilt-stat-label">进球</div></div>
+            <div class="tilt-stat"><div class="tilt-stat-val">8</div><div class="tilt-stat-label">助攻</div></div>
+            <div class="tilt-stat"><div class="tilt-stat-val">3</div><div class="tilt-stat-label">MVP</div></div>
+            <div class="tilt-stat"><div class="tilt-stat-val">22</div><div class="tilt-stat-label">出场</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">鼠标移动控制3D倾斜，立体悬浮感</p>
+  </div>
+
+  <!-- 方案八 -->
+  <div class="section">
+    <h2>8. Minimal Zen 极简</h2>
+    <div class="card-wrapper">
+      <div class="zen-card">
+        <div class="zen-watermark">10</div>
+        <div class="zen-avatar">王</div>
+        <div class="zen-name">王小明</div>
+        <div class="zen-role">前锋 · #10</div>
+        <div class="zen-extras">
+          <div class="zen-stats">
+            <div class="zen-stat"><div class="zen-stat-val">12</div><div class="zen-stat-label">进球</div></div>
+            <div class="zen-stat"><div class="zen-stat-val">8</div><div class="zen-stat-label">助攻</div></div>
+            <div class="zen-stat"><div class="zen-stat-val">3</div><div class="zen-stat-label">MVP</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">悬停显示隐藏数据，号码做背景水印</p>
+  </div>
+
+  <!-- 方案九 -->
+  <div class="section">
+    <h2>9. Comic 漫画分镜</h2>
+    <div class="card-wrapper">
+      <div class="comic-card">
+        <div class="comic-header">
+          <div class="comic-avatar">王</div>
+          <div>
+            <div class="comic-name">王小明</div>
+            <div style="font-size:0.6rem;color:#888;font-weight:700;">前锋</div>
+          </div>
+          <div class="comic-num">10</div>
+        </div>
+        <div class="comic-stats">
+          <div class="comic-stat"><div class="comic-stat-val">12</div><div class="comic-stat-label">GOALS</div></div>
+          <div class="comic-stat"><div class="comic-stat-val">8</div><div class="comic-stat-label">ASTS</div></div>
+          <div class="comic-stat"><div class="comic-stat-val">3</div><div class="comic-stat-label">MVP</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">斜切角 + 网点纹理 + 爆炸emoji，轻松有趣</p>
+  </div>
+
+  <!-- 方案十 -->
+  <div class="section">
+    <h2>10. Cyberpunk 赛博霓虹</h2>
+    <div class="card-wrapper">
+      <div class="cyber-card">
+        <div class="cyber-scanline"></div>
+        <div class="cyber-content">
+          <div class="cyber-avatar">王</div>
+          <div class="cyber-name">WANG XIAOMING</div>
+          <div class="cyber-id">PLAYER_ID://FW-10</div>
+          <div class="cyber-bars">
+            <div class="cyber-bar-row"><span class="cyber-bar-label">SPD</span><div class="cyber-bar-track"><div class="cyber-bar-fill gold" style="width:80%"></div></div></div>
+            <div class="cyber-bar-row"><span class="cyber-bar-label">POW</span><div class="cyber-bar-track"><div class="cyber-bar-fill cyan" style="width:70%"></div></div></div>
+            <div class="cyber-bar-row"><span class="cyber-bar-label">SHT</span><div class="cyber-bar-track"><div class="cyber-bar-fill gold" style="width:90%"></div></div></div>
+            <div class="cyber-bar-row"><span class="cyber-bar-label">VIS</span><div class="cyber-bar-track"><div class="cyber-bar-fill purple" style="width:75%"></div></div></div>
+          </div>
+          <div class="cyber-stats">
+            <div class="cyber-stat"><div class="cyber-stat-val">12</div><div class="cyber-stat-label">GOALS</div></div>
+            <div class="cyber-stat"><div class="cyber-stat-val">8</div><div class="cyber-stat-label">ASTS</div></div>
+            <div class="cyber-stat"><div class="cyber-stat-val">3</div><div class="cyber-stat-label">MVP</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">扫描线 + 霓虹光管 + 等宽科技字体，未来感</p>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var card = document.getElementById('tiltDemo');
+  var inner = document.getElementById('tiltInner');
+  if (!card || !inner) return;
+  card.addEventListener('mousemove', function(e) {
+    var rect = card.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+    var centerX = rect.width / 2;
+    var centerY = rect.height / 2;
+    var rotateX = (y - centerY) / centerY * -8;
+    var rotateY = (x - centerX) / centerX * 8;
+    inner.style.transform = 'rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg)';
+  });
+  card.addEventListener('mouseleave', function() {
+    inner.style.transform = 'rotateX(0deg) rotateY(0deg)';
+  });
+})();
+</script>
+
+</body>
+</html>
