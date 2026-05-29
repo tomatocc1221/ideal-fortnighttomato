@@ -752,10 +752,16 @@ async function renderFixtures() {
   apiMatches.forEach(function (m) {
     if (m.home_score != null) return; // 有比分 = 已结束，跳过
     var dateStr = (m.date || '').replace(/-/g, '.');
-    var exists = upcoming.some(function (u) {
+    var existing = upcoming.find(function (u) {
       return u.date === dateStr && u.away === m.away_team;
     });
-    if (exists) return;
+    if (existing) {
+      // 用 API 最新数据更新已有条目（reg_close_at 等可能已变更）
+      existing._apiMatch = m;
+      existing.reg_close_at = m.reg_close_at;
+      existing.reg_open_at = m.reg_open_at;
+      return;
+    }
     var t = new Date((m.date || '') + 'T' + (m.time || '14:40') + ':00');
     if (now >= new Date(t.getTime() + MATCH_DURATION_HOURS * 60 * 60 * 1000)) return; // 已结束
     upcoming.push({
