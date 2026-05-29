@@ -1951,9 +1951,14 @@ img { max-width: 100%; display: block; }
   max-width: 480px;
   max-height: 85vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0;
   position: relative;
   box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .reg-close {
@@ -2149,7 +2154,7 @@ img { max-width: 100%; display: block; }
 /* ——— 移动端 ——— */
 @media (max-width: 768px) {
   .reg-overlay { padding: 8px; align-items: flex-start; }
-  .reg-panel { max-height: calc(100vh - 16px); border-radius: 10px; overflow-y: auto; }
+  .reg-panel { max-height: calc(100dvh - 16px); border-radius: 10px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; }
   .reg-match { padding: 20px 16px 0; }
   .reg-match-teams { font-size: 1.1rem; }
   .reg-body { padding: 16px 16px 20px; }
@@ -2287,14 +2292,8 @@ img { max-width: 100%; display: block; }
   animation: panelSlideIn 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Custom scrollbar for reg panel */
-.reg-panel::-webkit-scrollbar { width: 4px; }
-.reg-panel::-webkit-scrollbar-track { background: transparent; }
-.reg-panel::-webkit-scrollbar-thumb {
-  background: rgba(212,168,67,0.2);
-  border-radius: 4px;
-}
-.reg-panel::-webkit-scrollbar-thumb:hover { background: rgba(212,168,67,0.35); }
+/* Hide scrollbar for reg panel */
+.reg-panel::-webkit-scrollbar { display: none; }
 
 /* === Voting Panel === */
 .vote-overlay {
