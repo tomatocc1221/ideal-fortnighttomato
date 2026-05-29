@@ -263,6 +263,37 @@ function resetMatchForm() {
   document.getElementById('matchCancelBtn').style.display = 'none';
 }
 
+
+// ===== 一键修复截止时间 =====
+document.getElementById('fixRegCloseBtn').addEventListener('click', async function () {
+  const btn = this;
+  const msg = document.getElementById('fixRegCloseMsg');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  msg.textContent = '更新中...';
+  msg.style.color = 'var(--text-dim)';
+  let updated = 0;
+  try {
+    for (const m of allMatches) {
+      const { close } = calcRegWindow(m.date, m.time);
+      const newClose = close.toISOString();
+      if (m.reg_close_at !== newClose) {
+        await API.updateMatch(m.id, { reg_close_at: newClose });
+        m.reg_close_at = newClose;
+        updated++;
+      }
+    }
+    if (updated > 0) renderMatchTable();
+    msg.textContent = '已更新 ' + updated + ' 场比赛！';
+    msg.style.color = '#4caf50';
+  } catch (e) {
+    msg.textContent = '更新失败：' + e.message;
+    msg.style.color = '#f44336';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 document.getElementById('matchSaveBtn').addEventListener('click', async function () {
   const btn = this;
   if (btn.disabled) return;
